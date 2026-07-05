@@ -12,6 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa303edfcc3402445946bcb5f66ad837, type: 3}
   m_Name: Grunt
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
-  Sprite: {fileID: 0}
   SizeRows: 1
   SizeCols: 1
+  Sprite: {fileID: 0}
+  ImageType: 0
+  PreserveAspect: 0
+  PixelsPerUnitMultiplier: 1
+  FillCenter: 1
+  FillMethod: 4
+  FillAmount: 1
+  ColorOverlay: {r: 1, g: 0, b: 0, a: 1}
+  Material: {fileID: 0}
+  RaycastTarget: 0
+  SizeMode: 0
+  FootprintScale: {x: 1, y: 1}
+  FixedPixelSize: {x: 72, y: 72}
+  VisualOffset: {x: 0, y: 0}

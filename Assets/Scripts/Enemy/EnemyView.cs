@@ -36,9 +36,9 @@ namespace SlidingSiege
             return list;
         }
 
-        /// Ensures exactly `count` pieces exist, all configured with the
-        /// enemy's sprite and footprint pixel size.
-        public void EnsurePieceCount(int count, Sprite sprite, Vector2 footprintSizePx)
+        /// Ensures exactly `count` pieces exist, all configured from the
+        /// enemy definition (sprite, image type, tint, material, sizing).
+        public void EnsurePieceCount(int count, EnemyDefinition def, Vector2 footprintSizePx)
         {
             while (_pieces.Count < count)
             {
@@ -51,21 +51,26 @@ namespace SlidingSiege
                 _pieces.RemoveAt(_pieces.Count - 1);
                 _releasePiece(last);
             }
+            _visualOffset = def.VisualAnchorOffset(footprintSizePx);
+            Vector2 visualSize = def.VisualSize(footprintSizePx);
             foreach (var img in _pieces)
             {
-                img.sprite = sprite;
+                def.ApplyTo(img);
                 var rt = img.rectTransform;
                 rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f); // top-left of Enemy Layer
                 rt.pivot = new Vector2(0f, 1f);
-                rt.sizeDelta = footprintSizePx;
+                rt.sizeDelta = visualSize;
             }
         }
 
-        /// Snap all pieces to the given anchored positions (piece i -> pos i).
+        private Vector2 _visualOffset;
+
+        /// Snap all pieces to the given footprint anchored positions; the
+        /// definition's visual size/offset is applied on top (piece i -> pos i).
         public void SnapPieces(IReadOnlyList<Vector2> positions)
         {
             for (int i = 0; i < _pieces.Count && i < positions.Count; i++)
-                _pieces[i].rectTransform.anchoredPosition = positions[i];
+                _pieces[i].rectTransform.anchoredPosition = positions[i] + _visualOffset;
         }
 
         public void ReleaseAll()
