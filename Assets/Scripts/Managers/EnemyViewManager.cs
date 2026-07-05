@@ -96,7 +96,7 @@ namespace SlidingSiege
             if (!_views.TryGetValue(en.Id, out var view)) return;
             var origins = PieceOrigins(en, en.Anchor);
             origins.RemoveAll(o => !OverlapsGrid(en, o));
-            view.EnsurePieceCount(origins.Count, en.Definition.Sprite, FootprintSizePx(en));
+            view.EnsurePieceCount(origins.Count, en.Definition, FootprintSizePx(en));
             var positions = new List<Vector2>(origins.Count);
             foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
             view.SnapPieces(positions);
@@ -153,7 +153,7 @@ namespace SlidingSiege
                 }
 
                 var origins = new List<Vector2Int>(originSet);
-                view.EnsurePieceCount(origins.Count, en.Definition.Sprite, FootprintSizePx(en));
+                view.EnsurePieceCount(origins.Count, en.Definition, FootprintSizePx(en));
                 var positions = new List<Vector2>(origins.Count);
                 foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
                 view.SnapPieces(positions);
@@ -198,22 +198,5 @@ namespace SlidingSiege
             _views.Clear();
             foreach (var en in _state.Enemies.Values) HandleSpawned(en);
         }
-    }
-
-    /// Pixel metrics shared by the grid builder and enemy views.
-    [Serializable]
-    public class GridLayoutMetrics
-    {
-        [Tooltip("Computed at build time from the stretched Grid Panel rect.")]
-        public float CellSize = 72f;
-        public float Spacing = 4f;
-        /// Top-left offset (in pixels, +x right / +y down) of the centered
-        /// cell content inside the Enemy Layer's stretched rect. Set by
-        /// GridUIBuilder.Build().
-        [NonSerialized] public Vector2 ContentOffset;
-        public float Stride => CellSize + Spacing;
-        public Vector2 GridPixelSize(int rows, int cols) => new Vector2(
-            cols * CellSize + (cols - 1) * Spacing,
-            rows * CellSize + (rows - 1) * Spacing);
     }
 }
