@@ -26,6 +26,7 @@ namespace SlidingSiege
     public class GridUIBuilder : MonoBehaviour
     {
         [Header("Hierarchy")]
+        [SerializeField] private RectTransform gridRoot;      // the "Grid" object (center-anchored, non-stretch)
         [SerializeField] private GridLayoutGroup gridPanel;
         [SerializeField] private GridLayoutGroup leftTrack;
         [SerializeField] private GridLayoutGroup topTrack;
@@ -75,14 +76,23 @@ namespace SlidingSiege
             EnsurePools();
             Clear();
 
-            // Make sure stretched rects have valid sizes before we measure them.
+            // ---- Size the Grid root from grid size, cell size, spacing, and
+            //      padding. Grid is center-anchored/non-stretch; its stretch-
+            //      anchored children (panel, enemy layer, tracks) follow it.
+            //      Button tracks live on the Grid's outer rims, so thickness
+            //      is not added here.
+            Vector2 contentSize = metrics.GridPixelSize(rows, cols);
+            gridRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,
+                contentSize.x + padding.left + padding.right);
+            gridRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                contentSize.y + padding.top + padding.bottom);
+
+            // Make sure stretched child rects reflect the new root size
+            // before we measure them.
             Canvas.ForceUpdateCanvases();
 
             var panelRT = (RectTransform)gridPanel.transform;
             Rect panelRect = panelRT.rect;
-
-            // ---- Compute cell size from the stretched panel rect ----
-            Vector2 contentSize = metrics.GridPixelSize(rows, cols);
 
             // ---- Grid Panel: configure layout only, never resize it ----
             ConfigureGridGroup(gridPanel, metrics.CellSize, metrics.CellSize, cols, TextAnchor.MiddleCenter, padding);
@@ -101,8 +111,8 @@ namespace SlidingSiege
             //      within the same parent).
             Rect layerRect = enemyLayer.rect;
             metrics.ContentOffset = new Vector2(
-                (layerRect.width  - contentSize.x) * 0.5f,
-                (layerRect.height - contentSize.y) * 0.5f);
+                padding.left + (layerRect.width  - padding.left - padding.right  - contentSize.x) * 0.5f,
+                padding.top  + (layerRect.height - padding.top  - padding.bottom - contentSize.y) * 0.5f);
 
             // ---- Tracks: only the cross axis gets a thickness; the
             //      stretched axis is left entirely alone. Content is
