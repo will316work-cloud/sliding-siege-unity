@@ -1,13 +1,12 @@
 // ============================================================
-// GAME MANAGER (MonoBehaviour singleton)
-// Translated from: main.js — the entry point. Owns the one
-// GameState, seeds it from the definition registry (replacing
-// newRunState()'s hardcoded charge/item tables), and runs the
-// init() sequence as a coroutine.
-//
-// SCENE SETUP (see the setup instructions for this bunch):
-//   Put this on an empty root GameObject named "GameManager" in
-//   the Game scene and assign the DefinitionDatabase asset.
+// GAME MANAGER  (*** PATCHED in Bunch 3 — replaces the Bunch 1 file ***)
+// CHANGE LOG vs Bunch 1:
+//   + Awake() calls EnemyBehaviours.RegisterAll() after Registry.Build
+//     (the C# stand-in for index.html's script load order).
+//   + static Run(IEnumerator) so static logic classes (attack
+//     resolution, turn cycle) can start coroutines — the C# home
+//     for every JS `await`.
+// See Bunch 1 header for the original translation notes.
 // ============================================================
 
 using System.Collections;
@@ -16,9 +15,6 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-
-    /// <summary>Global state shortcut. C# equivalent of the JS global `state`.
-    /// Usage everywhere: GameManager.S.Charges["axe"] etc.</summary>
     public static GameState S => Instance != null ? Instance.State : null;
 
     [SerializeField] private DefinitionDatabase database;
@@ -36,48 +32,44 @@ public class GameManager : MonoBehaviour
             return;
         }
         Registry.Build(database);
+        EnemyBehaviours.RegisterAll();   // NEW — behavioral registry
     }
 
     private void Start()
     {
-        // JS: init(); — called at the bottom of main.js after all scripts loaded.
         StartCoroutine(InitRun());
     }
 
-    /// <summary>JS: newRunState(). Hardcoded tables become registry-driven seeding.</summary>
+    /// <summary>Coroutine host for static logic classes. JS: `await fn()`
+    /// anywhere → `yield return ...` inside a routine started here.</summary>
+    public static Coroutine Run(IEnumerator routine) => Instance.StartCoroutine(routine);
+
     public GameState NewRunState()
     {
         var s = new GameState();
-
         foreach (var kv in Registry.Attacks)
         {
-            s.Charges[kv.Key] = kv.Value.StartingCharges;      // JS: charges: { axe: 2, ... }
-            s.AttackBaseDmg[kv.Key] = kv.Value.BaseDmg;        // pristine copy; shop upgrades mutate this
+            s.Charges[kv.Key] = kv.Value.StartingCharges;
+            s.AttackBaseDmg[kv.Key] = kv.Value.BaseDmg;
         }
         foreach (var kv in Registry.Items)
-            s.Items[kv.Key] = kv.Value.StartingUses;           // JS: items: { extraSwing: 2, ... }
-
+            s.Items[kv.Key] = kv.Value.StartingUses;
         return s;
     }
 
-    /// <summary>JS: async function init(). The floor-setup animation arrives in
-    /// Bunch 9 (FloorController.AnimateFloorSetup); until then this boots an
-    /// empty board so every earlier bunch is testable in Play Mode.</summary>
     public IEnumerator InitRun()
     {
         Session.Clear();
         State = NewRunState();
         State.EnemyPhaseActive = true;
 
-        // Bunch 9 replaces this line with:
-        //   yield return FloorController.Instance.AnimateFloorSetup(1);
+        // Bunch 9 replaces with: yield return FloorController.AnimateFloorSetup(1);
         yield return null;
 
         State.EnemyPhaseActive = false;
-        GameEvents.RaiseStateChanged();   // JS: render();
+        GameEvents.RaiseStateChanged();
     }
 
-    /// <summary>JS: the restart button's confirmed path — wipe and re-init.</summary>
     public void RestartRun()
     {
         StopAllCoroutines();

@@ -1,18 +1,14 @@
 // ============================================================
-// SESSION (targeting / selection / pending-visual state)
-// Translated from: the loose module-level vars in global-state.js
-// that deliberately did NOT live on `state` (they reset freely and
-// are never snapshotted by shift history).
-//
-// Static class = the direct C# equivalent of those globals.
-// Session.Clear() is called by GameManager.NewRun().
+// SESSION  (*** PATCHED in Bunch 3 — replaces the Bunch 1 file ***)
+// CHANGE LOG vs Bunch 1: PendingDamageText now mirrors the exact
+// JS queue tuple from queueDamageTextAt() in animation-rendering.js:
+// [r, c, amount, isHeal, enemyId]. PendingComboText unchanged.
+// See Bunch 1 header for the loose-globals rationale.
 // ============================================================
 
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>JS: previewTarget / pendingTarget object shape
-/// { attack, r, c, variant }.</summary>
 public class AttackTarget
 {
     public string Attack;
@@ -24,22 +20,18 @@ public class AttackTarget
 public static class Session
 {
     // ---------------- Attack targeting ----------------
-    /// <summary>Attack key currently in targeting mode, or null. JS: targetingMode.</summary>
     public static string TargetingMode = null;
     public static AttackTarget PreviewTarget = null;
-    /// <summary>Set when Confirm is pressed; consumed by QTE resolution. JS: pendingTarget.</summary>
     public static AttackTarget PendingTarget = null;
 
     // ---------------- Item targeting ----------------
-    public static string SelectedItem = null;                 // JS: selectedItem
-    public static string ItemTargetingMode = null;            // JS: itemTargetingMode
-    public static Vector2Int? ItemPreviewCell = null;         // JS: itemPreviewCell
-    public static Vector2Int? ItemSecondTarget = null;        // JS: itemSecondTarget (teleport destination)
+    public static string SelectedItem = null;
+    public static string ItemTargetingMode = null;
+    public static Vector2Int? ItemPreviewCell = null;
+    public static Vector2Int? ItemSecondTarget = null;
     public static List<Vector2Int> ItemSecondTargetFootprint = new List<Vector2Int>();
 
     // ---------------- Pending visual queues ----------------
-    // Written by logic during resolution, flushed by the view layer on the
-    // next refresh (JS: flushDamageTexts()/flushComboText() in grid-rendering.js).
     public static List<PendingDamageText> PendingDamageTexts = new List<PendingDamageText>();
     public static PendingComboText PendingCombo = null;
 
@@ -58,12 +50,16 @@ public static class Session
     }
 }
 
+/// <summary>JS: pendingDamageTexts entries [r, c, amount, isHeal, enemyId].</summary>
 public class PendingDamageText
 {
     public int R;
     public int C;
-    public string Text;
-    public Color Color = Color.white;
+    public int Amount;
+    public bool IsHeal;
+    /// <summary>Null = anchor to the cell; otherwise anchor to the element
+    /// carrying that enemy's name/HP text (JS: findEnemyTextEl).</summary>
+    public int? EnemyId;
 }
 
 public class PendingComboText

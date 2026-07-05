@@ -1,19 +1,12 @@
 // ============================================================
 // ENEMY (runtime instance)
-// (*** PATCHED in Bunch 2 — replaces the Bunch 1 file ***)
-//
-// CHANGE LOG vs Bunch 1:
-//   - Runtime footprint is `Size` (JS: en.size — what placeEnemyAt,
-//     recomputeAnchors, enemyWraps and linkedLinesForAxis all read).
-//     The definition's BaseSize seeds it at spawn; `BaseSize` was
-//     removed from this class (it lives on EnemyDefinition).
-//   - Added the rolly stretch fields (en.stretchAxis / stretchBefore /
-//     stretchAfter) and PendingSpawn / PendingDetonation flags —
-//     grid logic and rendering read all of these.
-//
-// Still *** PARTIAL ***: Bunch 3 adds status-effect counters and
-// the remaining per-type fields (songCounter, disabledAttackKey,
-// queuedShape, ...).
+// (*** PATCHED in Bunch 4 — replaces the Bunch 3 file ***)
+// CHANGE LOG vs Bunch 3:
+//   + ClusterId    (JS: en.clusterId — slime cluster key)
+//   + MustOneShot  (JS: en.mustOneShot — slime cluster mechanic flag)
+//   + StretchAnim  (JS: en._stretchAnim — 'rolly-stretch-grow' |
+//                   'rolly-stretch-shrink' | null; rendering reads it)
+// All other fields unchanged — see Bunch 3 header.
 // ============================================================
 
 using System.Collections.Generic;
@@ -23,36 +16,37 @@ using UnityEngine;
 public class Enemy
 {
     public int Id;
-    public string Type;      // registry key, e.g. "slime"
+    public string Type;
     public string Label;
 
     public int Hp;
     public int MaxHp;
 
-    /// <summary>Anchor cell. Convention: Vector2Int(x = row, y = col).</summary>
     public Vector2Int Anchor;
-
-    /// <summary>Runtime footprint (JS: en.size). x = rows, y = cols.</summary>
     public Vector2Int Size = new Vector2Int(1, 1);
 
-    /// <summary>Per-type variant key (e.g. bomb blast pattern). JS: en.variant</summary>
     public string Variant;
-
     public List<int> LinkedIds = new List<int>();
 
-    // ---------------- Rolly stretch state (rolly-enemy-logic.js) ----------------
-    /// <summary>null = not stretched; "row" = stretched along its row
-    /// (varying column); "col" = stretched along its column. Kept as the
-    /// exact JS strings so translated comparisons read identically.</summary>
+    // ---- Rolly stretch state ----
     public string StretchAxis = null;
     public int StretchBefore = 0;
     public int StretchAfter = 0;
+    /// <summary>JS: en._stretchAnim — transient animation hint read by
+    /// EnemyLayerView/RollyBlockRenderer to play grow/shrink scale.</summary>
+    public string StretchAnim = null;
 
-    // ---------------- Flags read by grid rendering ----------------
-    /// <summary>JS: en.pendingSpawn — mid-spawn-animation, skip normal draw.</summary>
+    // ---- Flags read by rendering ----
     public bool PendingSpawn = false;
-    /// <summary>JS: en.pendingDetonation — golem critical state.</summary>
     public bool PendingDetonation = false;
+    public bool PendingHitThisCycle = false;
 
-    // -------- Expanded in Bunch 3 / Bunch 8: status counters etc. --------
+    // ---- Per-type fields ----
+    public int SongCounter = 0;
+    public string QueuedShape = null;
+    public string DisabledAttackKey = null;
+
+    // ---- Slime ----
+    public int ClusterId = 0;
+    public bool MustOneShot = false;
 }
