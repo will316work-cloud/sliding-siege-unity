@@ -1,14 +1,9 @@
 // ============================================================
 // DEFINITION DATABASE + REGISTRY
-// The C# replacement for the JS self-registration pattern
-// (every module file doing ENEMY_CONSTRUCTORS.x = ... /
-// ATTACK_DEFS.x = ... at script-load time, ordered by index.html).
-//
-// In Unity, "load order via script tags" becomes: drag every
-// definition asset into ONE DefinitionDatabase asset, assign that
-// to GameManager, and BuildRegistries() runs once in Awake().
-// Deterministic, inspectable, and adding content = adding an
-// asset to a list.
+// (*** PATCHED in Bunch 3 — replaces the Bunch 1 file ***)
+// CHANGE LOG vs Bunch 1: Registry gains the Behaviours dictionary
+// (the code half of ENEMY_CONSTRUCTORS), RegisterBehaviour(), and
+// GetBehaviour(). See Bunch 1 header for the original notes.
 // ============================================================
 
 using System.Collections.Generic;
@@ -22,22 +17,22 @@ public class DefinitionDatabase : ScriptableObject
     public List<EnemyDefinition> Enemies = new List<EnemyDefinition>();
 }
 
-/// <summary>Static lookup tables — the direct equivalents of ATTACK_DEFS,
-/// ITEM_DEFS and ENEMY_CONSTRUCTORS. Populated once by GameManager.</summary>
 public static class Registry
 {
     public static readonly Dictionary<string, AttackDefinition> Attacks = new Dictionary<string, AttackDefinition>();
     public static readonly Dictionary<string, ItemDefinition> Items = new Dictionary<string, ItemDefinition>();
     public static readonly Dictionary<string, EnemyDefinition> Enemies = new Dictionary<string, EnemyDefinition>();
 
-    // Bunch 3 adds: Dictionary<string, EnemyBehaviour> Behaviours —
-    // the constructor-function / phase-logic half of ENEMY_CONSTRUCTORS.
+    /// <summary>The behavioral half of ENEMY_CONSTRUCTORS. Populated by
+    /// EnemyBehaviours.RegisterAll() from GameManager.Awake().</summary>
+    public static readonly Dictionary<string, EnemyBehaviour> Behaviours = new Dictionary<string, EnemyBehaviour>();
 
     public static void Build(DefinitionDatabase db)
     {
         Attacks.Clear();
         Items.Clear();
         Enemies.Clear();
+        Behaviours.Clear();
 
         foreach (var a in db.Attacks)
         {
@@ -56,7 +51,18 @@ public static class Registry
         }
     }
 
-    /// <summary>JS: randomKey(obj) in shop-logic.js — random key from a registry.</summary>
+    public static void RegisterBehaviour(EnemyBehaviour behaviour)
+    {
+        if (behaviour == null || string.IsNullOrEmpty(behaviour.Key))
+        { Debug.LogError("EnemyBehaviour with missing key"); return; }
+        if (!Behaviours.TryAdd(behaviour.Key, behaviour))
+            Debug.LogError($"Duplicate behaviour key: {behaviour.Key}");
+    }
+
+    /// <summary>Null = no registered behaviour (pure-generic enemy).</summary>
+    public static EnemyBehaviour GetBehaviour(string key)
+        => Behaviours.TryGetValue(key, out var b) ? b : null;
+
     public static string RandomKey<T>(Dictionary<string, T> dict)
     {
         var keys = new List<string>(dict.Keys);
