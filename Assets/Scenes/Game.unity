@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 22263075}
   - component: {fileID: 22263076}
+  - component: {fileID: 22263077}
   m_Layer: 5
   m_Name: Grid
   m_TagString: Untagged
@@ -154,12 +155,13 @@ RectTransform:
   - {fileID: 238904586}
   - {fileID: 545840624}
   - {fileID: 382415537}
+  - {fileID: 1913380241}
   - {fileID: 888067551}
   m_Father: {fileID: 832634355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -400, y: 0}
+  m_AnchoredPosition: {x: 82.3, y: 0}
   m_SizeDelta: {x: 550, y: 550}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &22263076
@@ -176,10 +178,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.GridUIBuilder
   gridRoot: {fileID: 22263075}
   gridPanel: {fileID: 545840627}
-  leftTrack: {fileID: 584266731}
-  topTrack: {fileID: 725443790}
-  rightTrack: {fileID: 284461543}
-  bottomTrack: {fileID: 238904587}
   enemyLayer: {fileID: 382415537}
   cellPrefab: {fileID: 3636118875240870077, guid: 7314f90e33736dd40978bfc7fdf1193f, type: 3}
   shiftButtonPrefab: {fileID: 146354710504832982, guid: 85d1a7536f960814b8bbe2a473564f83, type: 3}
@@ -192,6 +190,31 @@ MonoBehaviour:
     m_Top: 20
     m_Bottom: 20
   buttonThickness: 80
+--- !u!114 &22263077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 22263074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4bd2e9816f25504c9f580ec86d74f10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ShiftPreviewOverlay
+  overlayRoot: {fileID: 1913380241}
+  stretchOffsets:
+    m_Left: 50
+    m_Right: 50
+    m_Top: 50
+    m_Bottom: 50
+  highlightColor: {r: 0, g: 0.7490196, b: 1, a: 0.29803923}
+  arrowSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  arrowColor: {r: 0.67058825, g: 0.91764706, b: 1, a: 0.6}
+  arrowSize: 24
+  scrollSpeed: 60
+  fadeDuration: 0.15
+  nudgeFraction: 0.15
 --- !u!1 &238904585
 GameObject:
   m_ObjectHideFlags: 0
@@ -208,7 +231,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &238904586
 RectTransform:
   m_ObjectHideFlags: 0
@@ -268,7 +291,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &284461542
 RectTransform:
   m_ObjectHideFlags: 0
@@ -532,7 +555,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &584266730
 RectTransform:
   m_ObjectHideFlags: 0
@@ -729,7 +752,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &725443789
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1016,12 +1039,14 @@ MonoBehaviour:
   uiBuilder: {fileID: 22263076}
   enemyViewManager: {fileID: 382415542}
   dragInput: {fileID: 888067552}
+  shiftPreviewOverlay: {fileID: 22263077}
   shiftDuration: 0.1
   shiftEase: 10
   testSpawns:
   - {fileID: 11400000, guid: c7f6c816ae9598448a780655ac9cc52a, type: 2}
   - {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
   - {fileID: 11400000, guid: c7f6c816ae9598448a780655ac9cc52a, type: 2}
+  - {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
   testSpawnCells:
   - {x: 0, y: 1}
   - {x: 2, y: 1}
@@ -1078,6 +1103,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.GridDragInput
   gridArea: {fileID: 382415537}
+  previewOverlay: {fileID: 22263077}
   OnEnemyTapped:
     m_PersistentCalls:
       m_Calls: []
@@ -1462,6 +1488,95 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1913380240
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1913380241}
+  - component: {fileID: 1913380243}
+  - component: {fileID: 1913380242}
+  - component: {fileID: 1913380244}
+  m_Layer: 5
+  m_Name: Shift Preview Overlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1913380241
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913380240}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 22263075}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1913380242
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913380240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1913380243
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913380240}
+  m_CullTransparentMesh: 1
+--- !u!114 &1913380244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913380240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Mask
+  m_ShowMaskGraphic: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

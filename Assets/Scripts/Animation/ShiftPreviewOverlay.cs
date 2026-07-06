@@ -6,17 +6,24 @@ using DG.Tweening;
 
 namespace SlidingSiege
 {
-    /// Drag shift preview: translucent highlight bars over every linked line
-    /// that will move, tiled arrows (one per cell) scrolling continuously in
-    /// the shift direction, and a small nudge of the affected enemies toward
-    /// the drag direction. Fades in/out with DOTween. Rendered OVER the
-    /// enemies: overlayRoot must be the LAST child of the Enemy Layer (so it
-    /// is masked and draws on top of enemy pieces).
+    /// Drag shift preview. The overlay root itself is never resized or moved
+    /// by this script — only the bars and arrows extend beyond it:
+    ///  - highlight bars span the line's full length EXPANDED per side by the
+    ///    stretch offsets (fixed to CellSize on the other axis),
+    ///  - arrows tile one per stride along the line, scrolling in the shift
+    ///    direction; each arrow stays visible until it travels past the grid
+    ///    edge by the stretch offset (then despawns), while new arrows spawn
+    ///    in from beyond the opposite boundary.
+    /// Enemies on all linked lines get a fixed nudge toward the direction.
     public class ShiftPreviewOverlay : MonoBehaviour
     {
         [Header("Wiring")]
-        [Tooltip("Empty RectTransform, last child of the Enemy Layer, stretched to fill it.")]
+        [Tooltip("Overlay RectTransform: sibling AFTER the Enemy Layer, same rect. Not modified by this script.")]
         [SerializeField] private RectTransform overlayRoot;
+
+        [Header("Stretch offsets (px beyond the grid edge, per side)")]
+        [Tooltip("How far bars extend and arrows travel beyond the grid edge before despawning. Live-updates in Play mode.")]
+        [SerializeField] private RectOffset stretchOffsets = new RectOffset();
 
         [Header("Appearance")]
         [Tooltip("Color overlay of the highlighted lines (alpha = translucency).")]
@@ -48,6 +55,11 @@ namespace SlidingSiege
         private int _dir;
         private HashSet<int> _lines = new HashSet<int>();
         private float _scrollT;
+        private bool _pendingValidate;
+
+        // Visible travel bounds along the scroll axis (top-left-down space),
+        // recomputed per build: grid edge expanded by the stretch offsets.
+        private float _travelMin, _travelMax;
 
         public void Initialize(GridState state, GridLayoutMetrics metrics, EnemyViewManager viewManager)
         {
@@ -71,7 +83,7 @@ namespace SlidingSiege
                     return img;
                 },
                 actionOnGet: img => { img.gameObject.SetActive(true); img.transform.SetParent(overlayRoot, false); },
-                actionOnRelease: img => img.gameObject.SetActive(false),
+                actionOnRelease: img => { img.enabled = true; img.gameObject.SetActive(false); },
                 actionOnDestroy: img => Destroy(img.gameObject),
                 defaultCapacity: 24);
         }
@@ -122,15 +134,42 @@ namespace SlidingSiege
             _viewManager.ClearNudges(fadeDuration);
         }
 
+        private void OnValidate()
+        {
+            if (!Application.isPlaying || _state == null) return;
+            _pendingValidate = true; // hierarchy work is deferred to Update
+        }
+
         private void Update()
         {
+            if (_pendingValidate)
+            {
+                _pendingValidate = false;
+                if (_visible)
+                {
+                    ReleaseVisuals();
+                    BuildVisuals(_isRow, _lines);
+                    ApplyArrowDirection(_isRow, _dir);
+                }
+            }
+
             if (!_visible || _arrows.Count == 0) return;
             // scrollSpeed is read every frame, so Inspector changes apply live.
             _scrollT += Time.deltaTime * scrollSpeed;
             float s = Mathf.Repeat(_scrollT, _metrics.Stride) * _dir;
             Vector2 offset = _isRow ? new Vector2(s, 0f) : new Vector2(0f, -s);
+
             for (int i = 0; i < _arrows.Count; i++)
-                _arrows[i].rectTransform.anchoredPosition = _arrowBasePos[i] + offset;
+            {
+                var img = _arrows[i];
+                Vector2 pos = _arrowBasePos[i] + offset;
+                img.rectTransform.anchoredPosition = pos;
+                // Despawn/spawn at the stretch boundaries: an arrow is only
+                // drawn while its center is within the extended travel range.
+                float axisCoord = _isRow ? pos.x : -pos.y;
+                bool inRange = axisCoord >= _travelMin && axisCoord <= _travelMax;
+                if (img.enabled != inRange) img.enabled = inRange;
+            }
         }
 
         // ---------------- Visual construction ----------------
@@ -138,9 +177,23 @@ namespace SlidingSiege
         private void BuildVisuals(bool isRow, HashSet<int> lines)
         {
             Vector2 gridPx = _metrics.GridPixelSize(_state.Rows, _state.Cols);
+            float stride = _metrics.Stride;
+
+            // Extended travel bounds along the scroll axis (top-left-down space).
+            if (isRow)
+            {
+                _travelMin = _metrics.ContentOffset.x - stretchOffsets.left;
+                _travelMax = _metrics.ContentOffset.x + gridPx.x + stretchOffsets.right;
+            }
+            else
+            {
+                _travelMin = _metrics.ContentOffset.y - stretchOffsets.top;
+                _travelMax = _metrics.ContentOffset.y + gridPx.y + stretchOffsets.bottom;
+            }
+
             foreach (int line in lines)
             {
-                // Highlight bar covering the whole line.
+                // Highlight bar: line length expanded per side, CellSize across.
                 var bar = _imagePool.Get();
                 bar.sprite = null;
                 bar.color = highlightColor;
@@ -148,20 +201,27 @@ namespace SlidingSiege
                 SetTopLeft(barRT);
                 if (isRow)
                 {
-                    barRT.sizeDelta = new Vector2(gridPx.x, _metrics.CellSize);
-                    barRT.anchoredPosition = CellTopLeft(line, 0);
+                    barRT.sizeDelta = new Vector2(gridPx.x + stretchOffsets.left + stretchOffsets.right, _metrics.CellSize);
+                    barRT.anchoredPosition = new Vector2(_metrics.ContentOffset.x - stretchOffsets.left, CellTopLeft(line, 0).y);
                 }
                 else
                 {
-                    barRT.sizeDelta = new Vector2(_metrics.CellSize, gridPx.y);
-                    barRT.anchoredPosition = CellTopLeft(0, line);
+                    barRT.sizeDelta = new Vector2(_metrics.CellSize, gridPx.y + stretchOffsets.top + stretchOffsets.bottom);
+                    barRT.anchoredPosition = new Vector2(CellTopLeft(0, line).x, -(_metrics.ContentOffset.y - stretchOffsets.top));
                 }
                 barRT.SetAsFirstSibling(); // bars under arrows
                 _bars.Add(bar);
 
-                // One arrow per cell along the line.
-                int count = isRow ? _state.Cols : _state.Rows;
-                for (int i = 0; i < count; i++)
+                // Arrows: tiled one per stride from cell centers, extended one
+                // stride beyond each travel boundary so entering arrows are
+                // already positioned when they cross into the visible range.
+                float firstCenter = isRow
+                    ? CellCenter(line, 0).x
+                    : -CellCenter(0, line).y; // top-left-down space, positive
+                int iMin = Mathf.FloorToInt((_travelMin - stride - firstCenter) / stride);
+                int iMax = Mathf.CeilToInt((_travelMax + stride - firstCenter) / stride);
+
+                for (int i = iMin; i <= iMax; i++)
                 {
                     var arrow = _imagePool.Get();
                     arrow.sprite = arrowSprite;
@@ -169,8 +229,12 @@ namespace SlidingSiege
                     var rt = arrow.rectTransform;
                     SetCentered(rt);
                     rt.sizeDelta = new Vector2(arrowSize, arrowSize);
-                    Vector2 basePos = isRow ? CellCenter(line, i) : CellCenter(i, line);
+                    float axisCoord = firstCenter + i * stride;
+                    Vector2 basePos = isRow
+                        ? new Vector2(axisCoord, CellCenter(line, 0).y)
+                        : new Vector2(CellCenter(0, line).x, -axisCoord);
                     rt.anchoredPosition = basePos;
+                    arrow.enabled = axisCoord >= _travelMin && axisCoord <= _travelMax;
                     _arrows.Add(arrow);
                     _arrowBasePos.Add(basePos);
                 }
@@ -214,6 +278,8 @@ namespace SlidingSiege
             rt.pivot = new Vector2(0.5f, 0.5f);
         }
 
+        /// Cell coords in overlay-local top-left space (overlay rect assumed
+        /// to match the Enemy Layer rect; the root is never modified).
         private Vector2 CellTopLeft(int r, int c) => new Vector2(
             _metrics.ContentOffset.x + c * _metrics.Stride,
             -(_metrics.ContentOffset.y + r * _metrics.Stride));
