@@ -115,6 +115,23 @@ namespace SlidingSiege
         public ShiftResult ShiftRow(int row, int dir) => Shift(true, row, dir);
         public ShiftResult ShiftCol(int col, int dir) => Shift(false, col, dir);
 
+        /// Ids of all enemies whose footprint intersects any of the given
+        /// lines on the given axis (i.e. the enemies a shift of those lines
+        /// will actually move).
+        public HashSet<int> EnemiesOnLines(bool rowAxis, HashSet<int> lines)
+        {
+            var ids = new HashSet<int>();
+            foreach (var en in Enemies.Values)
+            {
+                int axisSize = rowAxis ? en.SizeRows : en.SizeCols;
+                int anchorOnAxis = rowAxis ? en.Anchor.x : en.Anchor.y;
+                int gridSize = rowAxis ? Rows : Cols;
+                for (int i = 0; i < axisSize; i++)
+                    if (lines.Contains(Wrap(anchorOnAxis + i, gridSize))) { ids.Add(en.Id); break; }
+            }
+            return ids;
+        }
+
         private ShiftResult Shift(bool rowAxis, int seed, int dir)
         {
             var lines = LinkedLinesForAxis(rowAxis, seed);

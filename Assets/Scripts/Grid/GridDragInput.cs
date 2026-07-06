@@ -23,6 +23,8 @@ namespace SlidingSiege
         [Header("Wiring")]
         [Tooltip("Rect whose area maps 1:1 onto the grid cells (the Enemy Layer / Grid Panel rect).")]
         [SerializeField] private RectTransform gridArea;
+        [Tooltip("Optional shift preview (highlight + arrows + nudge).")]
+        [SerializeField] private ShiftPreviewOverlay previewOverlay;
 
         [Header("Events")]
         public EnemyTappedEvent OnEnemyTapped = new EnemyTappedEvent();
@@ -35,6 +37,8 @@ namespace SlidingSiege
         private bool _dragActive;
         private bool _dragIsHorizontal;
         private Vector2Int _dragStartCell;
+        private bool _inCancelZone;
+        private int _currentDir;
 
         public void Initialize(GridState state, GridLayoutMetrics metrics,
             Func<bool> isInputLocked, Action<bool, int, int> requestShift)
@@ -59,32 +63,55 @@ namespace SlidingSiege
             if (initial == Vector2.zero) return;
             _dragIsHorizontal = Mathf.Abs(initial.x) >= Mathf.Abs(initial.y);
             _dragActive = true;
+            _inCancelZone = true;
+            _currentDir = 0;
+            UpdatePreview(eventData);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            // Axis stays locked; nothing to do until release.
+            if (!_dragActive) return;
+            UpdatePreview(eventData);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
             if (!_dragActive) return;
             _dragActive = false;
+            UpdatePreview(eventData);
+            previewOverlay?.Hide();
+
             if (_isInputLocked?.Invoke() ?? false) return;
+            // Cancel: pointer never left (or returned to) the start cell.
+            if (_inCancelZone || _currentDir == 0) return;
+
+            _requestShift?.Invoke(_dragIsHorizontal,
+                _dragIsHorizontal ? _dragStartCell.x : _dragStartCell.y,
+                _currentDir);
+        }
+
+        /// Recomputes cancel-zone state and current direction from the live
+        /// pointer position, and shows/hides/updates the preview overlay.
+        /// Direction can flip mid-drag; the axis never does.
+        private void UpdatePreview(PointerEventData eventData)
+        {
+            // Cancel zone: pointer still within the start cell's bounds.
+            _inCancelZone =
+                TryGetCell(eventData.position, eventData.pressEventCamera, out var cell)
+                && cell == _dragStartCell;
 
             Vector2 total = eventData.position - eventData.pressPosition;
-            if (_dragIsHorizontal)
-            {
-                if (Mathf.Approximately(total.x, 0f)) return;
-                int dir = total.x > 0f ? +1 : -1;              // drag right = row shifts right
-                _requestShift?.Invoke(true, _dragStartCell.x, dir);
-            }
+            float along = _dragIsHorizontal ? total.x : -total.y; // +1 = right/down
+            if (!Mathf.Approximately(along, 0f))
+                _currentDir = along > 0f ? +1 : -1;
+
+            if (previewOverlay == null) return;
+            if (_inCancelZone || _currentDir == 0)
+                previewOverlay.Hide();
             else
-            {
-                if (Mathf.Approximately(total.y, 0f)) return;
-                int dir = total.y < 0f ? +1 : -1;              // drag down (screen y-) = column shifts down
-                _requestShift?.Invoke(false, _dragStartCell.y, dir);
-            }
+                previewOverlay.Show(_dragIsHorizontal,
+                    _dragIsHorizontal ? _dragStartCell.x : _dragStartCell.y,
+                    _currentDir);
         }
 
         // ---------------- Tap = select ----------------

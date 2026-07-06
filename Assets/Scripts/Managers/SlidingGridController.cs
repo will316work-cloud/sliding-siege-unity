@@ -17,6 +17,7 @@ namespace SlidingSiege
         [SerializeField] private GridUIBuilder uiBuilder;
         [SerializeField] private EnemyViewManager enemyViewManager;
         [SerializeField] private GridDragInput dragInput;
+        [SerializeField] private ShiftPreviewOverlay shiftPreviewOverlay;
 
         [Header("Animation")]
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
@@ -49,6 +50,7 @@ namespace SlidingSiege
             dragInput.Initialize(State, uiBuilder.Metrics,
                 isInputLocked: () => enemyViewManager.IsAnimating,
                 requestShift: HandleShiftPressed);
+            shiftPreviewOverlay.Initialize(State, uiBuilder.Metrics, enemyViewManager);
 
             // Optional inspector-driven test spawns.
             for (int i = 0; i < testSpawns.Length && i < testSpawnCells.Length; i++)

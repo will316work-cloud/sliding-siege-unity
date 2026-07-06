@@ -173,6 +173,24 @@ namespace SlidingSiege
             });
         }
 
+        // ---------------- Drag preview nudge ----------------
+
+        /// Tweens the given enemies' pieces to a small offset from their
+        /// resting positions (drag shift preview). Others are left alone.
+        public void NudgeEnemies(ISet<int> enemyIds, Vector2 offset, float duration)
+        {
+            foreach (var kv in _views)
+                if (enemyIds.Contains(kv.Key))
+                    kv.Value.NudgeTo(offset, duration);
+        }
+
+        /// Tweens every enemy's pieces back to their resting positions.
+        public void ClearNudges(float duration)
+        {
+            foreach (var view in _views.Values)
+                view.NudgeTo(Vector2.zero, duration);
+        }
+
         // ---------------- Spawn / despawn / rebuild ----------------
 
         private void HandleSpawned(Enemy en)
