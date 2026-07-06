@@ -18,13 +18,12 @@ MonoBehaviour:
   ImageType: 0
   PreserveAspect: 0
   PixelsPerUnitMultiplier: 1
-  FillCenter: 1
-  FillMethod: 4
+  FillCenter: 0
+  FillMethod: 0
   FillAmount: 1
   ColorOverlay: {r: 1, g: 0, b: 0, a: 1}
   Material: {fileID: 0}
-  RaycastTarget: 0
-  SizeMode: 0
-  FootprintScale: {x: 1, y: 1}
+  SizeMode: 1
+  FootprintScale: {x: 0.8, y: 0.8}
   FixedPixelSize: {x: 72, y: 72}
   VisualOffset: {x: 0, y: 0}
