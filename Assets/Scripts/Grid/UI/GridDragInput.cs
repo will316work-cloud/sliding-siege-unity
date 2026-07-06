@@ -15,8 +15,8 @@ namespace SlidingSiege
     ///    the drag STARTED on (horizontal -> row, vertical -> column).
     ///    Direction follows the drag: right/down = +1, left/up = -1.
     ///  - A press-and-release that never exceeds the EventSystem's drag
-    ///    threshold is a TAP: it raises OnEnemyTapped for the topmost enemy
-    ///    on the tapped cell (nothing if the cell is empty).
+    ///    threshold is a TAP: it raises OnCellTapped with the tapped cell
+    ///    (TargetingController decides what a tap means).
     public class GridDragInput : MonoBehaviour,
         IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
@@ -27,7 +27,8 @@ namespace SlidingSiege
         [SerializeField] private ShiftPreviewOverlay previewOverlay;
 
         [Header("Events")]
-        public EnemyTappedEvent OnEnemyTapped = new EnemyTappedEvent();
+        [Tooltip("Raised for every non-drag tap on a grid cell. Wire TargetingController.HandleCellTapped here (or in code).")]
+        public CellTappedEvent OnCellTapped = new CellTappedEvent();
 
         private GridState _state;
         private GridLayoutMetrics _metrics;
@@ -121,12 +122,7 @@ namespace SlidingSiege
             if (eventData.dragging) return; // committed drags never select
             if (_state == null) return;
             if (!TryGetCell(eventData.position, eventData.pressEventCamera, out var cell)) return;
-
-            foreach (var enemy in _state.EnemiesAt(cell.x, cell.y))
-            {
-                OnEnemyTapped?.Invoke(enemy);
-                return; // topmost/first only
-            }
+            OnCellTapped?.Invoke(cell);
         }
 
         // ---------------- Screen point -> cell ----------------

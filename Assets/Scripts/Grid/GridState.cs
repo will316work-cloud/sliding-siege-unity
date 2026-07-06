@@ -24,6 +24,7 @@ namespace SlidingSiege
         public event Action<ShiftResult> OnShifted;
         public event Action<Enemy> OnEnemySpawned;
         public event Action<Enemy> OnEnemyRemoved;
+        public event Action<Enemy, Vector2Int> OnEnemyMoved; // (enemy, oldAnchor)
         public event Action OnRebuilt;
 
         public void Initialize(int rows, int cols)
@@ -62,13 +63,44 @@ namespace SlidingSiege
 
         public Enemy SpawnEnemy(EnemyDefinition def, int r, int c)
         {
-            var enemy = new Enemy { Id = _nextEnemyId++, Definition = def, Anchor = new Vector2Int(r, c) };
+            var enemy = new Enemy { Id = _nextEnemyId++, Definition = def, Anchor = new Vector2Int(r, c), HP = def.MaxHP };
             for (int dr = 0; dr < def.SizeRows; dr++)
                 for (int dc = 0; dc < def.SizeCols; dc++)
                     _cells[Wrap(r + dr, Rows), Wrap(c + dc, Cols)].Add(new OccupantRef(OccupantKind.Enemy, enemy.Id));
             Enemies[enemy.Id] = enemy;
             OnEnemySpawned?.Invoke(enemy);
             return enemy;
+        }
+
+        /// True if a footprint of the given size fits at (r, c) (wrapped),
+        /// treating cells occupied only by `ignoreEnemyId` as free.
+        public bool CanPlaceAtIgnoring(int r, int c, int sizeRows, int sizeCols, int ignoreEnemyId)
+        {
+            for (int dr = 0; dr < sizeRows; dr++)
+                for (int dc = 0; dc < sizeCols; dc++)
+                {
+                    var refs = _cells[Wrap(r + dr, Rows), Wrap(c + dc, Cols)];
+                    foreach (var rf in refs)
+                        if (!(rf.Kind == OccupantKind.Enemy && rf.Id == ignoreEnemyId))
+                            return false;
+                }
+            return true;
+        }
+
+        /// Moves an enemy's anchor (footprint refs are re-laid; wrapped).
+        /// Caller must have validated with CanPlaceAtIgnoring.
+        public void MoveEnemy(int id, Vector2Int newAnchor)
+        {
+            if (!Enemies.TryGetValue(id, out var enemy)) return;
+            Vector2Int old = enemy.Anchor;
+            for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Cols; c++)
+                    _cells[r, c].RemoveAll(rf => rf.Kind == OccupantKind.Enemy && rf.Id == id);
+            enemy.Anchor = new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols));
+            for (int dr = 0; dr < enemy.SizeRows; dr++)
+                for (int dc = 0; dc < enemy.SizeCols; dc++)
+                    _cells[Wrap(enemy.Anchor.x + dr, Rows), Wrap(enemy.Anchor.y + dc, Cols)].Add(new OccupantRef(OccupantKind.Enemy, id));
+            OnEnemyMoved?.Invoke(enemy, old);
         }
 
         public void RemoveEnemy(int id)

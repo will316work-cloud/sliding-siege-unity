@@ -7,6 +7,9 @@ namespace SlidingSiege
     [CreateAssetMenu(menuName = "SlidingSiege/Enemy Definition")]
     public class EnemyDefinition : ScriptableObject
     {
+        [Header("Stats")]
+        [Min(1)] public int MaxHP = 30;
+
         [Header("Footprint (grid cells)")]
         [Min(1)] public int SizeRows = 1;
         [Min(1)] public int SizeCols = 1;
@@ -29,6 +32,7 @@ namespace SlidingSiege
         [Tooltip("Color overlay / tint multiplied over the sprite.")]
         public Color ColorOverlay = Color.white;
         public Material Material;
+        public bool RaycastTarget = false;
 
         [Header("Visual rect (relative to grid footprint)")]
         [Tooltip("How the Image rect is sized: stretched to the footprint, scaled relative to it, or fixed pixels.")]
@@ -53,6 +57,7 @@ namespace SlidingSiege
             img.fillAmount = FillAmount;
             img.color = ColorOverlay;
             img.material = Material;
+            img.raycastTarget = RaycastTarget;
         }
 
         /// Final visual rect size for a given footprint pixel size.

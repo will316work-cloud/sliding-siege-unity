@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
+using DG.Tweening;
 
 namespace SlidingSiege
 {
@@ -14,6 +15,8 @@ namespace SlidingSiege
         [Header("Wiring")]
         [SerializeField] private RectTransform enemyLayer;   // masked Image layer
         [SerializeField] private Image enemyPiecePrefab;     // simple Image prefab (raycastTarget off recommended)
+        [Tooltip("Fade-out duration when an enemy is removed/killed. Swap HandleRemoved for richer death animations later.")]
+        [SerializeField, Min(0f)] private float removalFadeDuration = 0.25f;
 
         private GridState _state;
         private GridLayoutMetrics _metrics;
@@ -39,6 +42,7 @@ namespace SlidingSiege
 
             _state.OnEnemySpawned += HandleSpawned;
             _state.OnEnemyRemoved += HandleRemoved;
+            _state.OnEnemyMoved += HandleMoved;
             _state.OnRebuilt += HandleRebuilt;
 
             HandleRebuilt();
@@ -49,6 +53,7 @@ namespace SlidingSiege
             if (_state == null) return;
             _state.OnEnemySpawned -= HandleSpawned;
             _state.OnEnemyRemoved -= HandleRemoved;
+            _state.OnEnemyMoved -= HandleMoved;
             _state.OnRebuilt -= HandleRebuilt;
         }
 
@@ -201,14 +206,32 @@ namespace SlidingSiege
             RebuildEnemyPieces(en);
         }
 
+        /// Death/removal is animated (simple DOTween fade for now) before
+        /// the pieces are released — the extension point for custom death
+        /// animations. The view leaves the dictionary immediately so game
+        /// logic never sees a half-removed enemy.
         private void HandleRemoved(Enemy en)
         {
-            if (_views.TryGetValue(en.Id, out var view))
+            if (!_views.TryGetValue(en.Id, out var view)) return;
+            _views.Remove(en.Id);
+
+            if (removalFadeDuration <= 0f) { view.ReleaseAll(); return; }
+
+            int pending = 0;
+            foreach (var img in view.Pieces)
             {
-                view.ReleaseAll();
-                _views.Remove(en.Id);
+                pending++;
+                img.rectTransform.DOKill();
+                img.DOFade(0f, removalFadeDuration).OnComplete(() =>
+                {
+                    if (--pending == 0) view.ReleaseAll();
+                });
             }
+            if (pending == 0) view.ReleaseAll();
         }
+
+        /// Snap for now; item/enemy movement animations can hook here later.
+        private void HandleMoved(Enemy en, Vector2Int oldAnchor) => RebuildEnemyPieces(en);
 
         private void HandleRebuilt()
         {

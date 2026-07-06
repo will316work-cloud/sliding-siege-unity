@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -28,10 +27,6 @@ namespace SlidingSiege
         [Header("Hierarchy")]
         [SerializeField] private RectTransform gridRoot;      // the "Grid" object (center-anchored, non-stretch)
         [SerializeField] private GridLayoutGroup gridPanel;
-        [SerializeField] private GridLayoutGroup leftTrack;
-        [SerializeField] private GridLayoutGroup topTrack;
-        [SerializeField] private GridLayoutGroup rightTrack;
-        [SerializeField] private GridLayoutGroup bottomTrack;
         [SerializeField] private RectTransform enemyLayer;
 
         [Header("Prefabs")]
@@ -124,61 +119,8 @@ namespace SlidingSiege
             //      within the same parent).
             Rect layerRect = enemyLayer.rect;
             metrics.ContentOffset = new Vector2(
-                padding.left + (layerRect.width  - padding.left - padding.right  - contentSize.x) * 0.5f,
-                padding.top  + (layerRect.height - padding.top  - padding.bottom - contentSize.y) * 0.5f);
-
-            // ---- Tracks: only the cross axis gets a thickness; the
-            //      stretched axis is left entirely alone. Content is
-            //      centered so buttons align with the centered cells.
-
-            RectOffset horizontalPadding = new RectOffset(padding.left, padding.right, 0, 0);
-
-            BuildTrack(leftTrack, rows, 1, 
-                        new Vector2(buttonThickness, metrics.CellSize), horizontalPadding,
-                        i => ("◀", (Action)(() => OnShiftButtonPressed?.Invoke(true, i, -1))));
-            BuildTrack(rightTrack, rows, 1, 
-                        new Vector2(buttonThickness, metrics.CellSize), horizontalPadding,
-                        i => ("▶", (Action)(() => OnShiftButtonPressed?.Invoke(true, i, +1))));
-
-            RectOffset verticalPadding = new RectOffset(0, 0, padding.top, padding.bottom);
-
-            BuildTrack(topTrack, 1, cols, 
-                        new Vector2(metrics.CellSize, buttonThickness), verticalPadding,
-                        i => ("▲", (Action)(() => OnShiftButtonPressed?.Invoke(false, i, -1))));
-            BuildTrack(bottomTrack, 1, cols, 
-                        new Vector2(metrics.CellSize, buttonThickness), verticalPadding,
-                        i => ("▼", (Action)(() => OnShiftButtonPressed?.Invoke(false, i, +1))));
-
-            SetTrackCrossAxisThickness((RectTransform)leftTrack.transform,   RectTransform.Axis.Horizontal);
-            SetTrackCrossAxisThickness((RectTransform)rightTrack.transform,  RectTransform.Axis.Horizontal);
-            SetTrackCrossAxisThickness((RectTransform)topTrack.transform,    RectTransform.Axis.Vertical);
-            SetTrackCrossAxisThickness((RectTransform)bottomTrack.transform, RectTransform.Axis.Vertical);
-        }
-
-        /// Sets the size of ONLY the non-stretched axis. For a stretch-
-        /// anchored axis Unity stores size as an offset, so we must never
-        /// write sizeDelta wholesale — SetSizeWithCurrentAnchors on the
-        /// single cross axis leaves the stretched axis untouched.
-        private void SetTrackCrossAxisThickness(RectTransform rt, RectTransform.Axis crossAxis)
-        {
-            rt.SetSizeWithCurrentAnchors(crossAxis, buttonThickness);
-        }
-
-        private void BuildTrack(GridLayoutGroup track, int rows, int cols, Vector2 buttonSize, RectOffset padding,
-            Func<int, (string label, Action onClick)> configure)
-        {
-            ConfigureGridGroup(track, buttonSize.x, buttonSize.y, cols, TextAnchor.MiddleCenter, padding);
-            int count = rows * cols;
-            for (int i = 0; i < count; i++)
-            {
-                var btn = _buttonPool.Get();
-                btn.transform.SetParent(track.transform, false);
-                var (label, onClick) = configure(i);
-                var tmp = btn.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (tmp != null) tmp.text = label;
-                btn.onClick.AddListener(() => onClick());
-                _activeButtons.Add(btn);
-            }
+                padding.left + (layerRect.width - padding.left - padding.right - contentSize.x) * 0.5f,
+                padding.top + (layerRect.height - padding.top - padding.bottom - contentSize.y) * 0.5f);
         }
 
         private void ConfigureGridGroup(GridLayoutGroup group, float cellW, float cellH,
@@ -215,6 +157,14 @@ namespace SlidingSiege
             if (!_pendingValidate) return;
             _pendingValidate = false;
             OnLayoutChangeRequested?.Invoke();
+        }
+
+        /// Row-major cell background Graphic access for highlighting.
+        public Graphic CellGraphic(int r, int c)
+        {
+            int index = r * _builtCols + c;
+            if (index < 0 || index >= _activeCells.Count) return null;
+            return _activeCells[index].GetComponent<UnityEngine.UI.Graphic>();
         }
 
         public void Clear()
