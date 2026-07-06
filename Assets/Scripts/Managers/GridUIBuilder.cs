@@ -49,6 +49,15 @@ namespace SlidingSiege
         /// (isRowShift, lineIndex, direction)
         public event Action<bool, int, int> OnShiftButtonPressed;
 
+        /// Raised (play mode only) when Layout values change in the Inspector
+        /// after the board has been built. The controller decides when to
+        /// actually rebuild (e.g. waiting for a running tween).
+        public event Action OnLayoutChangeRequested;
+
+        public bool HasBuilt { get; private set; }
+        private int _builtRows, _builtCols;
+        private bool _pendingValidate;
+
         private ObjectPool<RectTransform> _cellPool;
         private ObjectPool<Button> _buttonPool;
         private readonly List<RectTransform> _activeCells = new List<RectTransform>();
@@ -75,6 +84,10 @@ namespace SlidingSiege
         {
             EnsurePools();
             Clear();
+
+            _builtRows = rows;
+            _builtCols = cols;
+            HasBuilt = true;
 
             // ---- Size the Grid root from grid size, cell size, spacing, and
             //      padding. Grid is center-anchored/non-stretch; its stretch-
@@ -179,6 +192,29 @@ namespace SlidingSiege
             group.startAxis = GridLayoutGroup.Axis.Horizontal;
             group.childAlignment = alignment;
             group.padding = padding;
+        }
+
+        /// Rebuilds the board at its current size with the latest Layout values.
+        public void Rebuild()
+        {
+            if (HasBuilt) Build(_builtRows, _builtCols);
+        }
+
+        /// Inspector edits to Layout values request a rebuild — play mode
+        /// only, and only once the board exists. The actual rebuild is
+        /// deferred to Update because OnValidate must not mutate the
+        /// hierarchy (Instantiate/Destroy/SetParent are unsafe here).
+        private void OnValidate()
+        {
+            if (!Application.isPlaying || !HasBuilt) return;
+            _pendingValidate = true;
+        }
+
+        private void Update()
+        {
+            if (!_pendingValidate) return;
+            _pendingValidate = false;
+            OnLayoutChangeRequested?.Invoke();
         }
 
         public void Clear()

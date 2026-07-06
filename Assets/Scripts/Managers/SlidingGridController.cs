@@ -16,6 +16,7 @@ namespace SlidingSiege
         [Header("Wiring")]
         [SerializeField] private GridUIBuilder uiBuilder;
         [SerializeField] private EnemyViewManager enemyViewManager;
+        [SerializeField] private GridDragInput dragInput;
 
         [Header("Animation")]
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
@@ -28,18 +29,26 @@ namespace SlidingSiege
         public GridState State { get; private set; }
 
         private IMoveAnimator _animator;
+        private bool _rebuildQueued;
 
         private void Start()
         {
             State = new GridState();
             _animator = new DOTweenSlideAnimator(shiftDuration, shiftEase);
 
-            uiBuilder.OnShiftButtonPressed += HandleShiftPressed;
+            // Shift-track buttons are no longer hooked up (drag input is the
+            // active method); the track code/UI remains for later use.
+            uiBuilder.OnLayoutChangeRequested += HandleLayoutChangeRequested;
 
             // Builds the board
             State.Initialize(rows, cols);
             uiBuilder.Build(rows, cols);
             enemyViewManager.Initialize(State, uiBuilder.Metrics, _animator);
+
+            // Drag/swipe + tap input over the grid.
+            dragInput.Initialize(State, uiBuilder.Metrics,
+                isInputLocked: () => enemyViewManager.IsAnimating,
+                requestShift: HandleShiftPressed);
 
             // Optional inspector-driven test spawns.
             for (int i = 0; i < testSpawns.Length && i < testSpawnCells.Length; i++)
@@ -61,12 +70,33 @@ namespace SlidingSiege
 
             // 2) ...then visuals catch up from the anchor diff.
             uiBuilder.SetButtonsInteractable(false);
-            enemyViewManager.AnimateShift(result, () => uiBuilder.SetButtonsInteractable(true));
+            enemyViewManager.AnimateShift(result, () =>
+            {
+                uiBuilder.SetButtonsInteractable(true);
+                // Layout values changed mid-tween: rebuild now that it's done.
+                if (_rebuildQueued) RebuildLayout();
+            });
+        }
+
+        private void HandleLayoutChangeRequested()
+        {
+            if (enemyViewManager.IsAnimating) { _rebuildQueued = true; return; }
+            RebuildLayout();
+        }
+
+        /// Re-lays-out the board UI and enemy visuals with the latest Layout
+        /// values. GridState (enemy positions, ids) is untouched.
+        private void RebuildLayout()
+        {
+            _rebuildQueued = false;
+            uiBuilder.Rebuild();                 // resizes root, cells, buttons, updates metrics
+            enemyViewManager.RebuildAll();       // re-snaps every enemy's pieces to new metrics
         }
 
         private void OnDestroy()
         {
-            if (uiBuilder != null) uiBuilder.OnShiftButtonPressed -= HandleShiftPressed;
+            if (uiBuilder != null)
+                uiBuilder.OnLayoutChangeRequested -= HandleLayoutChangeRequested;
             _animator?.Kill();
         }
     }
