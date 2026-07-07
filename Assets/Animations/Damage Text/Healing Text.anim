@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Damage Text
+  m_Name: Healing Text
   serializedVersion: 8
   m_Legacy: 0
   m_Compressed: 0
