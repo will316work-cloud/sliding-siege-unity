@@ -12,9 +12,75 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e134b11ccb59bf4097382b20b0dfda1, type: 3}
   m_Name: Ring
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AttackDefinition
-  Kind: 3
   DisplayName: Ring Spell
   Icon: {fileID: 0}
   BaseDamage: 12
   StartingCharges: 2
-  Description: 
+  Description:
+  Hitboxes:
+  - Label: Radius 1
+    Parts:
+    - Type: 4
+      Offset: {x: 0, y: 0}
+      GridCells:
+      - {x: -1, y: -1}
+      - {x: -1, y: 0}
+      - {x: -1, y: 1}
+      - {x: 0, y: -1}
+      - {x: 0, y: 1}
+      - {x: 1, y: -1}
+      - {x: 1, y: 0}
+      - {x: 1, y: 1}
+      DamagePercent: 100
+  - Label: Radius 2
+    Parts:
+    - Type: 4
+      Offset: {x: 0, y: 0}
+      GridCells:
+      - {x: -2, y: -2}
+      - {x: -2, y: -1}
+      - {x: -2, y: 0}
+      - {x: -2, y: 1}
+      - {x: -2, y: 2}
+      - {x: -1, y: -2}
+      - {x: -1, y: 2}
+      - {x: 0, y: -2}
+      - {x: 0, y: 2}
+      - {x: 1, y: -2}
+      - {x: 1, y: 2}
+      - {x: 2, y: -2}
+      - {x: 2, y: -1}
+      - {x: 2, y: 0}
+      - {x: 2, y: 1}
+      - {x: 2, y: 2}
+      DamagePercent: 100
+  - Label: Radius 3
+    Parts:
+    - Type: 4
+      Offset: {x: 0, y: 0}
+      GridCells:
+      - {x: -3, y: -3}
+      - {x: -3, y: -2}
+      - {x: -3, y: -1}
+      - {x: -3, y: 0}
+      - {x: -3, y: 1}
+      - {x: -3, y: 2}
+      - {x: -3, y: 3}
+      - {x: -2, y: -3}
+      - {x: -2, y: 3}
+      - {x: -1, y: -3}
+      - {x: -1, y: 3}
+      - {x: 0, y: -3}
+      - {x: 0, y: 3}
+      - {x: 1, y: -3}
+      - {x: 1, y: 3}
+      - {x: 2, y: -3}
+      - {x: 2, y: 3}
+      - {x: 3, y: -3}
+      - {x: 3, y: -2}
+      - {x: 3, y: -1}
+      - {x: 3, y: 0}
+      - {x: 3, y: 1}
+      - {x: 3, y: 2}
+      - {x: 3, y: 3}
+      DamagePercent: 100

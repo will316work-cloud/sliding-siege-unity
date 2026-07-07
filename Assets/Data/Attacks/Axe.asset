@@ -12,9 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e134b11ccb59bf4097382b20b0dfda1, type: 3}
   m_Name: Axe
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AttackDefinition
-  Kind: 0
   DisplayName: Axe Chop
   Icon: {fileID: 0}
   BaseDamage: 15
   StartingCharges: 2
-  Description: 
+  Description:
+  Hitboxes:
+  - Label: Row
+    Parts:
+    - Type: 0
+      Offset: {x: 0, y: 0}
+      GridCells: []
+      DamagePercent: 100
+  - Label: Column
+    Parts:
+    - Type: 1
+      Offset: {x: 0, y: 0}
+      GridCells: []
+      DamagePercent: 100

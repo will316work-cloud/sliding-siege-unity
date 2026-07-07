@@ -103,8 +103,7 @@ namespace SlidingSiege
             {
                 if (_anchor == cell)
                 {
-                    var resolver = AttackShapeResolverFactory.Get(_selectedAttack.Kind);
-                    _variantIndex = (_variantIndex + 1) % resolver.VariantCount;
+                    _variantIndex = (_variantIndex + 1) % _selectedAttack.VariantCount;
                 }
                 else
                 {
@@ -212,9 +211,8 @@ namespace SlidingSiege
 
             if (_selectedAttack != null && _anchor != null)
             {
-                var resolver = AttackShapeResolverFactory.Get(_selectedAttack.Kind);
-                foreach (var cell in resolver.GetCells(_state, _anchor.Value, _variantIndex))
-                    highlights.Add((cell, attackCellColor, attackCellSprite));
+                foreach (var hit in _selectedAttack.ResolveCells(_state, _anchor.Value, _variantIndex))
+                    highlights.Add((hit.Cell, attackCellColor, attackCellSprite));
                 highlights.Add((_anchor.Value, anchorCellColor, anchorCellSprite)); // anchor drawn last, on top
             }
             else if (_selectedItem != null)
@@ -253,8 +251,7 @@ namespace SlidingSiege
             if (_selectedAttack != null)
             {
                 ready = _anchor != null && _combat.CanAttack(_selectedAttack);
-                var resolver = AttackShapeResolverFactory.Get(_selectedAttack.Kind);
-                label = _selectedAttack.DisplayName + " (" + resolver.VariantLabel(_variantIndex) + ")";
+                label = _selectedAttack.DisplayName + " (" + _selectedAttack.VariantLabel(_variantIndex) + ")";
             }
             else if (_selectedItem != null)
             {

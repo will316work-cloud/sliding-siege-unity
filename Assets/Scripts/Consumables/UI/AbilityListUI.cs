@@ -36,7 +36,7 @@ namespace SlidingSiege
             Clear();
             foreach (var def in defs)
             {
-                int charges = combat.GetCharges(def.Kind);
+                int charges = combat.GetCharges(def);
                 if (!combat.InfiniteAttacks && charges <= 0) continue;
                 string countLabel = combat.InfiniteAttacks ? "x∞" : "x" + charges;
                 int totalDmg = Mathf.RoundToInt(def.BaseDamage * combat.DamageMultiplier());

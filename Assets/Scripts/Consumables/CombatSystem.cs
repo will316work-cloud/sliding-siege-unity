@@ -11,7 +11,7 @@ namespace SlidingSiege
     public class CombatSystem
     {
         private readonly GridState _state;
-        private readonly Dictionary<AttackKind, int> _charges = new Dictionary<AttackKind, int>();
+        private readonly Dictionary<AttackDefinition, int> _charges = new Dictionary<AttackDefinition, int>();
         private readonly Dictionary<ItemKind, int> _itemCounts = new Dictionary<ItemKind, int>();
 
         public int AttacksRemaining = 1;
@@ -31,10 +31,10 @@ namespace SlidingSiege
 
         // ---------------- Inventory ----------------
 
-        public void SetupAttack(AttackDefinition def) => _charges[def.Kind] = def.StartingCharges;
+        public void SetupAttack(AttackDefinition def) => _charges[def] = def.StartingCharges;
         public void SetupItem(ItemDefinition def) => _itemCounts[def.Kind] = def.StartingCount;
 
-        public int GetCharges(AttackKind kind) => _charges.TryGetValue(kind, out var v) ? v : 0;
+        public int GetCharges(AttackDefinition def) => _charges.TryGetValue(def, out var v) ? v : 0;
         public int GetItemCount(ItemKind kind) => _itemCounts.TryGetValue(kind, out var v) ? v : 0;
 
         public bool ConsumeItem(ItemKind kind)
@@ -52,39 +52,42 @@ namespace SlidingSiege
         // ---------------- Attacks ----------------
 
         public bool CanAttack(AttackDefinition def) =>
-            InfiniteAttacks || (AttacksRemaining > 0 && GetCharges(def.Kind) > 0);
+            InfiniteAttacks || (AttacksRemaining > 0 && GetCharges(def) > 0);
 
         public AttackResult ResolveAttack(AttackDefinition def, Vector2Int anchor, int variantIndex)
         {
             if (!CanAttack(def)) return null;
 
-            var resolver = AttackShapeResolverFactory.Get(def.Kind);
-            var result = new AttackResult { Cells = resolver.GetCells(_state, anchor, variantIndex) };
+            var hits = def.ResolveCells(_state, anchor, variantIndex);
+            var result = new AttackResult { Cells = hits.Select(h => h.Cell).ToList() };
 
-            var cellSet = new HashSet<Vector2Int>(result.Cells);
-            var hitIds = new HashSet<int>();
-            foreach (var cell in result.Cells)
-                foreach (var en in _state.EnemiesAt(cell.x, cell.y))
-                    hitIds.Add(en.Id);
+            // First (highest-priority) hit cell touching each enemy decides
+            // its damage percent — hits are already in part-priority order.
+            var hitPercents = new Dictionary<int, float>();
+            foreach (var hit in hits)
+                foreach (var en in _state.EnemiesAt(hit.Cell.x, hit.Cell.y))
+                    if (!hitPercents.ContainsKey(en.Id)) hitPercents[en.Id] = hit.DamageFactor;
 
             // Soul cloud halo: an un-hit enemy counts as hit if any halo cell
-            // is in the attack's cell set.
+            // is in the attack's cell set (earliest such cell sets the percent).
             foreach (var en in _state.Enemies.Values)
             {
-                if (hitIds.Contains(en.Id)) continue;
+                if (hitPercents.ContainsKey(en.Id)) continue;
                 if (!en.Statuses.OfType<SoulCloudStatus>().Any()) continue;
-                if (HaloCells(_state, en).Any(cellSet.Contains)) hitIds.Add(en.Id);
+                var halo = new HashSet<Vector2Int>(HaloCells(_state, en));
+                foreach (var hit in hits)
+                    if (halo.Contains(hit.Cell)) { hitPercents[en.Id] = hit.DamageFactor; break; }
             }
 
-            int baseDamage = Mathf.RoundToInt(def.BaseDamage * DamageMultiplier());
-            foreach (var id in hitIds)
+            float baseDamage = def.BaseDamage * DamageMultiplier();
+            foreach (var kv in hitPercents)
             {
-                if (!_state.Enemies.TryGetValue(id, out var en)) continue;
-                int dmg = Mathf.RoundToInt(baseDamage * en.DamageTakenMultiplier());
+                if (!_state.Enemies.TryGetValue(kv.Key, out var en)) continue;
+                int dmg = Mathf.RoundToInt(baseDamage * kv.Value * en.DamageTakenMultiplier());
                 en.HP -= dmg;
-                result.HitEnemyIds.Add(id);
-                result.DamageDealt[id] = dmg;
-                if (en.HP <= 0) result.KilledEnemyIds.Add(id);
+                result.HitEnemyIds.Add(kv.Key);
+                result.DamageDealt[kv.Key] = dmg;
+                if (en.HP <= 0) result.KilledEnemyIds.Add(kv.Key);
             }
 
             foreach (var id in result.KilledEnemyIds)
@@ -93,7 +96,7 @@ namespace SlidingSiege
             if (!InfiniteAttacks)
             {
                 AttacksRemaining--;
-                _charges[def.Kind] = GetCharges(def.Kind) - 1;
+                _charges[def] = GetCharges(def) - 1;
             }
             OnInventoryChanged?.Invoke();
             OnAttackResolved?.Invoke(result);
