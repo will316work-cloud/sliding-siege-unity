@@ -25,7 +25,12 @@ namespace SlidingSiege
         /// Plays an AnimationCaller preset on the owner's main piece and
         /// waits for it to complete. Yields nothing (no wait) if the label
         /// is empty or the piece has no AnimationCaller.
-        public IEnumerator PlayOwnerPresetAndWait(string presetLabel)
+        public IEnumerator PlayOwnerPresetAndWait(string presetLabel) =>
+            PlayOwnerPresetAndWait(presetLabel, 1f);
+
+        /// As above, with the preset's speed multiplied by speedScale
+        /// (e.g. clipLength / desiredDuration to fit a real-time window).
+        public IEnumerator PlayOwnerPresetAndWait(string presetLabel, float speedScale)
         {
             if (string.IsNullOrEmpty(presetLabel)) yield break;
             if (!Views.TryGetMainPiece(Owner.Id, out var piece)) yield break;
@@ -33,7 +38,7 @@ namespace SlidingSiege
             if (caller == null) yield break;
 
             bool done = false;
-            caller.PlayPreset(presetLabel, () => done = true);
+            caller.PlayPreset(presetLabel, speedScale, () => done = true);
             while (!done) yield return null;
         }
     }

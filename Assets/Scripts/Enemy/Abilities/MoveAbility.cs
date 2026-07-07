@@ -2,16 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using DG.Tweening;
 
 namespace SlidingSiege
 {
     /// Ported from the HTML game's generic movement:
     ///  - maxSteps == 1: shuffled 8-direction one-step move with wrap-aware
-    ///    footprint checks (moveEnemiesOneStepSequenced's fallback branch).
+    ///    footprint checks.
     ///  - maxSteps >= 2: straight-line move up to maxSteps in the direction
-    ///    whose landing spot has the most open cardinal room, in-bounds only
-    ///    (moveSpriteUpToDistance).
-    /// The move happens only when the chance roll passes.
+    ///    whose landing spot has the most open cardinal room, in-bounds only.
+    /// On a successful roll, the wrap-split DOTween slide and the Move
+    /// animation preset run IN PARALLEL over the same moveDuration: the
+    /// preset's speed is scaled by referenceClipLength / moveDuration so
+    /// both finish together. The ability waits for both before its
+    /// post-delay applies.
     [CreateAssetMenu(menuName = "SlidingSiege/Abilities/Move")]
     public class MoveAbility : EnemyAbility
     {
@@ -21,9 +25,16 @@ namespace SlidingSiege
         [Tooltip("Maximum cells moved in one direction. 1 = classic random step; 2+ = straight-line strider.")]
         [SerializeField, Min(1)] private int maxSteps = 1;
 
+        [Header("Timing")]
+        [Tooltip("Seconds the DOTween slide AND the Move animation both take, per move.")]
+        [SerializeField, Min(0.01f)] private float moveDuration = 0.25f;
+        [SerializeField] private Ease shiftEase = Ease.OutCubic;
+
         [Header("Animation")]
-        [Tooltip("Optional AnimationCaller preset on the enemy piece, played (and awaited) after moving.")]
-        [SerializeField] private string moveAnimationPreset = "";
+        [Tooltip("Optional AnimationCaller preset on the enemy piece, played alongside the slide. The state must bind its layer's speed parameter for the time-fitting to work.")]
+        [SerializeField] private string moveAnimationPreset = "Move";
+        [Tooltip("Authored length (seconds) of the Move clip at speed 1; the preset is played at referenceClipLength / moveDuration so it fits the slide.")]
+        [SerializeField, Min(0.01f)] private float referenceClipLength = 1f;
 
         private static readonly Vector2Int[] Directions =
         {
@@ -36,15 +47,34 @@ namespace SlidingSiege
         {
             if (Random.value >= moveChance) yield break;
 
-            bool moved = maxSteps <= 1 ? TryStepOnce(ctx) : TryStride(ctx);
-            if (!moved) yield break;
+            Vector2Int destination;
+            bool found = maxSteps <= 1
+                ? TryPickStep(ctx, out destination)
+                : TryPickStride(ctx, out destination);
+            if (!found) yield break;
 
             result.Success = true;
-            yield return ctx.PlayOwnerPresetAndWait(moveAnimationPreset);
+
+            // Slide and animation in parallel, both moveDuration long.
+            bool slideDone = false;
+            ctx.Views.MoveEnemySlide(ctx.Owner, destination, moveDuration, shiftEase, () => slideDone = true);
+
+            bool animDone = string.IsNullOrEmpty(moveAnimationPreset);
+            if (!animDone)
+                ctx.Host.StartCoroutine(PlayAnim(ctx, () => animDone = true));
+
+            while (!slideDone || !animDone) yield return null;
+        }
+
+        private IEnumerator PlayAnim(EnemyAbilityContext ctx, System.Action onDone)
+        {
+            float speedScale = referenceClipLength / moveDuration;
+            yield return ctx.PlayOwnerPresetAndWait(moveAnimationPreset, speedScale);
+            onDone();
         }
 
         // ---- One random wrap-aware step (any of 8 directions) ----
-        private bool TryStepOnce(EnemyAbilityContext ctx)
+        private bool TryPickStep(EnemyAbilityContext ctx, out Vector2Int destination)
         {
             var s = ctx.State;
             var en = ctx.Owner;
@@ -53,14 +83,15 @@ namespace SlidingSiege
                 int nr = s.Wrap(en.Anchor.x + dir.x, s.Rows);
                 int nc = s.Wrap(en.Anchor.y + dir.y, s.Cols);
                 if (!s.CanPlaceAtIgnoring(nr, nc, en.SizeRows, en.SizeCols, en.Id)) continue;
-                s.MoveEnemy(en.Id, new Vector2Int(nr, nc));
+                destination = new Vector2Int(nr, nc);
                 return true;
             }
+            destination = default;
             return false;
         }
 
         // ---- Straight line up to maxSteps, in-bounds, most-open landing ----
-        private bool TryStride(EnemyAbilityContext ctx)
+        private bool TryPickStride(EnemyAbilityContext ctx, out Vector2Int destination)
         {
             var s = ctx.State;
             var en = ctx.Owner;
@@ -82,12 +113,11 @@ namespace SlidingSiege
                 }
                 if (found) candidates.Add((best, CountOpenCardinals(s, best, en)));
             }
-            if (candidates.Count == 0) return false;
+            if (candidates.Count == 0) { destination = default; return false; }
 
             int maxRoom = candidates.Max(c => c.room);
             var top = candidates.Where(c => c.room == maxRoom).ToList();
-            var choice = top[Random.Range(0, top.Count)];
-            s.MoveEnemy(en.Id, choice.dest);
+            destination = top[Random.Range(0, top.Count)].dest;
             return true;
         }
 

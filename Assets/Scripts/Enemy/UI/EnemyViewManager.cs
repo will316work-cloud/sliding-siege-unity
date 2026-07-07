@@ -19,6 +19,10 @@ namespace SlidingSiege
         [Tooltip("Fallback fade-out duration for pieces WITHOUT an AnimationCaller when the enemy is removed.")]
         [SerializeField, Min(0f)] private float removalFadeDuration = 0.25f;
 
+        [Header("Enemy move slide (MoveStyle.Slide default; MoveAbility can override per-asset)")]
+        [SerializeField, Min(0.01f)] private float defaultMoveDuration = 0.25f;
+        [SerializeField] private Ease defaultMoveEase = Ease.OutCubic;
+
         [Header("Animation preset labels (played on each piece's AnimationCaller)")]
         [SerializeField] private string spawnPresetLabel = "Spawn";
         [SerializeField] private string hurtPresetLabel = "Hurt";
@@ -33,9 +37,11 @@ namespace SlidingSiege
 
         private bool _shiftAnimating;
         private int _pendingRemovals;
+        private int _pendingMoves;
 
-        /// True while a shift tween OR any death sequence is playing.
-        public bool IsAnimating => _shiftAnimating || _pendingRemovals > 0;
+        /// True while a shift tween, an enemy move slide, or any death
+        /// sequence is playing.
+        public bool IsAnimating => _shiftAnimating || _pendingRemovals > 0 || _pendingMoves > 0;
 
         public void Initialize(GridState state, GridLayoutMetrics metrics, IMoveAnimator animator)
         {
@@ -324,8 +330,90 @@ namespace SlidingSiege
                     piece.AnimationCaller.PlayPreset(label);
         }
 
-        /// Snap for now; item/enemy movement animations can hook here later.
-        private void HandleMoved(Enemy en, Vector2Int oldAnchor) => RebuildEnemyPieces(en);
+        private void HandleMoved(Enemy en, Vector2Int oldAnchor, MoveStyle style)
+        {
+            if (style == MoveStyle.Slide)
+                AnimateEnemyMove(en, oldAnchor, defaultMoveDuration, defaultMoveEase, null);
+            else
+                RebuildEnemyPieces(en);
+        }
+
+        /// Moves an enemy on the backend AND slides its pieces with the
+        /// full wrap-split treatment, using a caller-supplied duration/ease
+        /// (MoveAbility). The internal flag suppresses the event-driven
+        /// default slide so the move isn't animated twice.
+        public void MoveEnemySlide(Enemy en, Vector2Int destination, float duration, Ease ease, Action onComplete)
+        {
+            Vector2Int oldAnchor = en.Anchor;
+            _suppressNextMoveVisual = true;
+            _state.MoveEnemy(en.Id, destination, MoveStyle.Slide);
+            _suppressNextMoveVisual = false;
+            AnimateEnemyMove(en, oldAnchor, duration, ease, onComplete);
+        }
+
+        private bool _suppressNextMoveVisual;
+
+        /// Wrap-split slide of a single enemy from oldAnchor to its current
+        /// anchor: pieces are laid out for the union of (start layout) and
+        /// (end layout stepped back by the wrapped delta), all tween by the
+        /// delta, then snap to the canonical resting layout.
+        public void AnimateEnemyMove(Enemy en, Vector2Int oldAnchor, float duration, Ease ease, Action onComplete)
+        {
+            if (_suppressNextMoveVisual) return;
+            if (!_views.TryGetValue(en.Id, out var view))
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            // Shortest wrapped delta per axis.
+            int dr = ShortestDelta(en.Anchor.x - oldAnchor.x, _state.Rows);
+            int dc = ShortestDelta(en.Anchor.y - oldAnchor.y, _state.Cols);
+            if (dr == 0 && dc == 0)
+            {
+                RebuildEnemyPieces(en);
+                onComplete?.Invoke();
+                return;
+            }
+
+            Vector2 pixelDelta = new Vector2(dc * _metrics.Stride, -dr * _metrics.Stride);
+            Vector2Int stepBack = new Vector2Int(-dr, -dc);
+
+            var originSet = new HashSet<Vector2Int>();
+            foreach (var o in PieceOrigins(en, oldAnchor))
+                if (OverlapsGrid(en, o)) originSet.Add(o);
+            foreach (var o in PieceOrigins(en, en.Anchor))
+                if (OverlapsGrid(en, o)) originSet.Add(o + stepBack);
+
+            var origins = new List<Vector2Int>(originSet);
+            view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en));
+            var positions = new List<Vector2>(origins.Count);
+            foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
+            view.SnapPieces(positions);
+
+            _pendingMoves++;
+            int pending = 0;
+            foreach (var rt in view.PieceRects())
+            {
+                pending++;
+                rt.DOKill();
+                rt.DOAnchorPos(rt.anchoredPosition + pixelDelta, duration).SetEase(ease).OnComplete(() =>
+                {
+                    if (--pending > 0) return;
+                    if (_views.ContainsKey(en.Id)) RebuildEnemyPieces(en);
+                    _pendingMoves--;
+                    onComplete?.Invoke();
+                });
+            }
+            if (pending == 0) { _pendingMoves--; onComplete?.Invoke(); }
+        }
+
+        private static int ShortestDelta(int raw, int size)
+        {
+            int d = ((raw % size) + size) % size;
+            if (d > size / 2) d -= size;
+            return d;
+        }
 
         private void HandleRebuilt()
         {

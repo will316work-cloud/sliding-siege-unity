@@ -80,7 +80,7 @@ namespace SlidingSiege
                 if (wrapped == en.Anchor) continue;
                 if (s.CanPlaceAtIgnoring(wrapped.x, wrapped.y, en.SizeRows, en.SizeCols, en.Id))
                 {
-                    s.MoveEnemy(en.Id, wrapped);
+                    s.MoveEnemy(en.Id, wrapped, MoveStyle.Slide);
                     return true;
                 }
             }

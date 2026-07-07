@@ -21,7 +21,17 @@ namespace SlidingSiege
 
         public Image SpriteImage => spriteImage;
         public EnemyHealthBarDisplay HealthBar => healthBar;
-        public AnimationCaller AnimationCaller => animationCaller;
+
+        /// Falls back to searching this piece if not assigned in the prefab.
+        public AnimationCaller AnimationCaller
+        {
+            get
+            {
+                if (animationCaller == null)
+                    animationCaller = GetComponentInChildren<AnimationCaller>(true);
+                return animationCaller;
+            }
+        }
         public RectTransform RectTransform => (RectTransform)transform;
         public CanvasGroup CanvasGroup
         {

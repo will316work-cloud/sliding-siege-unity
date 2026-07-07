@@ -843,6 +843,8 @@ MonoBehaviour:
   enemyLayer: {fileID: 382415537}
   enemyPiecePrefab: {fileID: 2038733476946526840, guid: 8ccf8a2ce7ddc8e44b69ae9e38c05a90, type: 3}
   removalFadeDuration: 0.25
+  defaultMoveDuration: 0.25
+  defaultMoveEase: 10
   spawnPresetLabel: Spawn
   hurtPresetLabel: Hurt
   deathPresetLabel: Death

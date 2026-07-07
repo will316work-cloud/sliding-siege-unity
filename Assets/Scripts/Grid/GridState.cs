@@ -24,7 +24,7 @@ namespace SlidingSiege
         public event Action<ShiftResult> OnShifted;
         public event Action<Enemy> OnEnemySpawned;
         public event Action<Enemy> OnEnemyRemoved;
-        public event Action<Enemy, Vector2Int> OnEnemyMoved; // (enemy, oldAnchor)
+        public event Action<Enemy, Vector2Int, MoveStyle> OnEnemyMoved; // (enemy, oldAnchor, style)
         public event Action OnRebuilt;
 
         public void Initialize(int rows, int cols)
@@ -89,7 +89,7 @@ namespace SlidingSiege
 
         /// Moves an enemy's anchor (footprint refs are re-laid; wrapped).
         /// Caller must have validated with CanPlaceAtIgnoring.
-        public void MoveEnemy(int id, Vector2Int newAnchor)
+        public void MoveEnemy(int id, Vector2Int newAnchor, MoveStyle style = MoveStyle.Instant)
         {
             if (!Enemies.TryGetValue(id, out var enemy)) return;
             Vector2Int old = enemy.Anchor;
@@ -100,7 +100,7 @@ namespace SlidingSiege
             for (int dr = 0; dr < enemy.SizeRows; dr++)
                 for (int dc = 0; dc < enemy.SizeCols; dc++)
                     _cells[Wrap(enemy.Anchor.x + dr, Rows), Wrap(enemy.Anchor.y + dc, Cols)].Add(new OccupantRef(OccupantKind.Enemy, id));
-            OnEnemyMoved?.Invoke(enemy, old);
+            OnEnemyMoved?.Invoke(enemy, old, style);
         }
 
         public void RemoveEnemy(int id)

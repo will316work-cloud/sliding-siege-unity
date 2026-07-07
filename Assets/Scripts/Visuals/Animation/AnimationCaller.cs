@@ -39,6 +39,8 @@ public class AnimationCaller : MonoBehaviour
     #region Private Fields
     private Animator _animator;
     private readonly Dictionary<string, int> _layerIndexByName = new();
+    private readonly HashSet<int> _existingParameterHashes = new();
+    private readonly HashSet<int> _warnedMissingParameters = new();
     private int _defaultSpeedParameterHash;
     #endregion
 
@@ -84,6 +86,7 @@ public class AnimationCaller : MonoBehaviour
         _animator = GetComponent<Animator>();
         BakeAllHashes();
         CacheLayerNames();
+        CacheParameterHashes();
     }
     #endregion
 
@@ -110,7 +113,14 @@ public class AnimationCaller : MonoBehaviour
     /// Play a preset with an additional one-shot completion callback
     /// (invoked alongside the preset's own OnComplete UnityEvent).
     /// </summary>
-    public void PlayPreset(string label, Action onComplete)
+    public void PlayPreset(string label, Action onComplete) => PlayPreset(label, 1f, onComplete);
+
+    /// <summary>
+    /// Play a preset with its speed multiplied by <paramref name="speedScale"/>
+    /// (e.g. to fit the clip into a specific real-time duration) and an
+    /// optional completion callback.
+    /// </summary>
+    public void PlayPreset(string label, float speedScale, Action onComplete = null)
     {
         AnimationPreset preset = FindPreset(label);
         if (preset == null)
@@ -119,7 +129,7 @@ public class AnimationCaller : MonoBehaviour
             onComplete?.Invoke();
             return;
         }
-        DispatchPreset(preset, onComplete);
+        DispatchPreset(preset, onComplete, speedScale);
     }
 
     /// <summary>Play a preset by its index in the Inspector list.</summary>
@@ -189,6 +199,15 @@ public class AnimationCaller : MonoBehaviour
             hash = ResolveSpeedParameterHash(request.LayerIndex);
 
         if (hash == 0) return; // no mapping and no default: speed unsupported here
+
+        if (!_existingParameterHashes.Contains(hash))
+        {
+            if (_warnedMissingParameters.Add(hash))
+                Debug.LogWarning("[AnimationCaller] Speed parameter not found on this Animator — " +
+                                 "add the float parameter and bind it as the state's Speed Multiplier, " +
+                                 "or speed requests will have no effect.", this);
+            return;
+        }
         _animator.SetFloat(hash, request.Speed);
     }
 
@@ -209,7 +228,7 @@ public class AnimationCaller : MonoBehaviour
         return null;
     }
 
-    private void DispatchPreset(AnimationPreset preset, Action onComplete = null)
+    private void DispatchPreset(AnimationPreset preset, Action onComplete = null, float speedScale = 1f)
     {
         int layer = preset.LayerIndex < 0 ? _defaultLayerIndex : preset.LayerIndex;
 
@@ -217,7 +236,7 @@ public class AnimationCaller : MonoBehaviour
             .WithState(preset.StateHash)
             .OnLayer(layer)
             .WithFade(preset.FadeTime)
-            .WithSpeed(preset.Speed)
+            .WithSpeed(preset.Speed * speedScale)
             .WithSpeedParameter(preset.SpeedParameterOverride)
             .OnPlay(preset.OnPlay)
             .OnComplete(preset.OnComplete);
@@ -283,6 +302,14 @@ public class AnimationCaller : MonoBehaviour
     private void BakeDefaultSpeedHash() =>
         _defaultSpeedParameterHash = string.IsNullOrEmpty(_defaultSpeedParameterName)
             ? 0 : Animator.StringToHash(_defaultSpeedParameterName);
+
+    private void CacheParameterHashes()
+    {
+        _existingParameterHashes.Clear();
+        foreach (var p in _animator.parameters)
+            if (p.type == AnimatorControllerParameterType.Float)
+                _existingParameterHashes.Add(p.nameHash);
+    }
 
     private void CacheLayerNames()
     {
