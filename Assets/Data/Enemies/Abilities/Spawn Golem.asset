@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f196201237adb54a8f66c183637392d, type: 3}
   m_Name: Spawn Golem
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SpawnAbility
-  orderIndex: 1
+  orderIndex: 0
   postDelay: 1
   spawnDefinition: {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
   count: 1
-  chance: 0.5
-  placement: 0
+  chance: 0.05
+  placement: 1
   spawnAnimationPreset: Spawn

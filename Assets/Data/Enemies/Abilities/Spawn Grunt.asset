@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f196201237adb54a8f66c183637392d, type: 3}
   m_Name: Spawn Grunt
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SpawnAbility
-  orderIndex: 1
+  orderIndex: 0
   postDelay: 1
   spawnDefinition: {fileID: 11400000, guid: c7f6c816ae9598448a780655ac9cc52a, type: 2}
   count: 1
-  chance: 0.5
-  placement: 0
+  chance: 0.2
+  placement: 1
   spawnAnimationPreset: 
