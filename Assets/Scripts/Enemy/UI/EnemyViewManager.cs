@@ -184,6 +184,19 @@ namespace SlidingSiege
             });
         }
 
+        /// Current piece RectTransforms of an enemy (main + wrap ghosts),
+        /// e.g. for anchoring indicators. False if the enemy has no view.
+        public bool TryGetPieceRects(int enemyId, out List<RectTransform> rects)
+        {
+            if (_views.TryGetValue(enemyId, out var view))
+            {
+                rects = view.PieceRects();
+                return rects.Count > 0;
+            }
+            rects = null;
+            return false;
+        }
+
         // ---------------- Drag preview nudge ----------------
 
         /// Tweens the given enemies' pieces to a small offset from their

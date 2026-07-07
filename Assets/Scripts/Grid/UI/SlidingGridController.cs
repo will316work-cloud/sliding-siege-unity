@@ -20,6 +20,7 @@ namespace SlidingSiege
         [SerializeField] private ShiftPreviewOverlay shiftPreviewOverlay;
         [SerializeField] private TargetingController targetingController;
         [SerializeField] private AbilityHighlightOverlay abilityHighlightOverlay;
+        [SerializeField] private DamageTextSpawner damageTextSpawner;
 
         [Header("Animation")]
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
@@ -59,6 +60,7 @@ namespace SlidingSiege
             // Combat: attacks, items, targeting, hitbox highlight overlay.
             abilityHighlightOverlay.Initialize(uiBuilder.Metrics);
             targetingController.Initialize(State);
+            damageTextSpawner.Initialize(State, enemyViewManager);
 
             // Optional inspector-driven test spawns.
             for (int i = 0; i < testSpawns.Length && i < testSpawnCells.Length; i++)

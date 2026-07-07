@@ -24,8 +24,11 @@ namespace SlidingSiege
             set
             {
                 if (_hp == value) return;
+                int delta = value - _hp;
                 _hp = value;
                 OnHealthChanged?.Invoke(_hp, MaxHP);
+                if (delta < 0) OnHealthLost?.Invoke(-delta);
+                else OnHealthGained?.Invoke(delta);
             }
         }
 
@@ -33,6 +36,12 @@ namespace SlidingSiege
 
         /// (currentHP, maxHP) — raised whenever HP changes.
         public event Action<int, int> OnHealthChanged;
+
+        /// Raised with the (positive) amount whenever HP decreases.
+        public event Action<int> OnHealthLost;
+
+        /// Raised with the (positive) amount whenever HP increases.
+        public event Action<int> OnHealthGained;
 
         public bool IsDead => HP <= 0;
         public readonly List<StatusEffect> Statuses = new List<StatusEffect>();
