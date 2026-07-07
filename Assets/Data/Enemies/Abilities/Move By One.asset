@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Move By One
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.MoveAbility
   orderIndex: 1
-  postDelay: 1
+  postDelay: 0.1
   moveChance: 1
   maxSteps: 1
   moveDuration: 0.2
