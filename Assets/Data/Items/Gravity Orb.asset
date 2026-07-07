@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gravity Orb
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ItemDefinition
   Kind: 1
-  DisplayName: 
+  DisplayName: Gravity Orb
   Icon: {fileID: 0}
   StartingCount: 2
   Description: 

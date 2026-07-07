@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Damage Multiplier
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ItemDefinition
   Kind: 4
-  DisplayName: 
+  DisplayName: Damage Multiplier
   Icon: {fileID: 0}
   StartingCount: 2
   Description: 

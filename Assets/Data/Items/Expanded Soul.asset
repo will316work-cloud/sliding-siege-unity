@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Expanded Soul
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ItemDefinition
   Kind: 2
-  DisplayName: 
+  DisplayName: Expanded Soul
   Icon: {fileID: 0}
   StartingCount: 2
   Description: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Teleport
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ItemDefinition
   Kind: 3
-  DisplayName: 
+  DisplayName: Teleport
   Icon: {fileID: 0}
   StartingCount: 2
   Description: 
