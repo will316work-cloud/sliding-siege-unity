@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -14,7 +15,25 @@ namespace SlidingSiege
         public int SizeRows => Definition.SizeRows;
         public int SizeCols => Definition.SizeCols;
 
-        public int HP;
+        private int _hp;
+
+        /// Current health. Setting it raises OnHealthChanged(current, max).
+        public int HP
+        {
+            get => _hp;
+            set
+            {
+                if (_hp == value) return;
+                _hp = value;
+                OnHealthChanged?.Invoke(_hp, MaxHP);
+            }
+        }
+
+        public int MaxHP => Definition != null ? Definition.MaxHP : 0;
+
+        /// (currentHP, maxHP) — raised whenever HP changes.
+        public event Action<int, int> OnHealthChanged;
+
         public bool IsDead => HP <= 0;
         public readonly List<StatusEffect> Statuses = new List<StatusEffect>();
 

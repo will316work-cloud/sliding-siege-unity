@@ -16,6 +16,11 @@ namespace SlidingSiege
 
         public int AttacksRemaining = 1;
 
+        /// Debug toggles: when true, using an attack/item consumes nothing
+        /// and the ability lists never disable (counts show as infinite).
+        public bool InfiniteAttacks;
+        public bool InfiniteItems;
+
         /// Global outgoing damage multiplier hook (damage bonus % later).
         public Func<float> DamageMultiplier = () => 1f;
 
@@ -34,16 +39,20 @@ namespace SlidingSiege
 
         public bool ConsumeItem(ItemKind kind)
         {
+            if (InfiniteItems) return true;
             if (GetItemCount(kind) <= 0) return false;
             _itemCounts[kind]--;
             OnInventoryChanged?.Invoke();
             return true;
         }
 
+        public bool CanUseItem(ItemDefinition def) =>
+            InfiniteItems || GetItemCount(def.Kind) > 0;
+
         // ---------------- Attacks ----------------
 
         public bool CanAttack(AttackDefinition def) =>
-            AttacksRemaining > 0 && GetCharges(def.Kind) > 0;
+            InfiniteAttacks || (AttacksRemaining > 0 && GetCharges(def.Kind) > 0);
 
         public AttackResult ResolveAttack(AttackDefinition def, Vector2Int anchor, int variantIndex)
         {
@@ -81,8 +90,11 @@ namespace SlidingSiege
             foreach (var id in result.KilledEnemyIds)
                 _state.RemoveEnemy(id);
 
-            AttacksRemaining--;
-            _charges[def.Kind] = GetCharges(def.Kind) - 1;
+            if (!InfiniteAttacks)
+            {
+                AttacksRemaining--;
+                _charges[def.Kind] = GetCharges(def.Kind) - 1;
+            }
             OnInventoryChanged?.Invoke();
             OnAttackResolved?.Invoke(result);
             return result;

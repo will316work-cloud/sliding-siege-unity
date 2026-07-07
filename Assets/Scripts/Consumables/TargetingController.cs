@@ -23,14 +23,24 @@ namespace SlidingSiege
         [Header("UI wiring")]
         [SerializeField] private AbilityListUI attackList;
         [SerializeField] private AbilityListUI itemList;
-        [SerializeField] private CellHighlighter cellHighlighter;
+        [SerializeField] private AbilityHighlightOverlay highlightOverlay;
         [SerializeField] private Button confirmButton;              // Confirm button prefab instance
         [SerializeField] private TextMeshProUGUI confirmLabel;      // optional
 
-        [Header("Highlight colors")]
-        [SerializeField] private Color attackCellColor = new Color(1f, 0.4f, 0.3f, 1f);
-        [SerializeField] private Color anchorCellColor = new Color(1f, 0.9f, 0.2f, 1f);
-        [SerializeField] private Color itemCellColor = new Color(0.4f, 0.7f, 1f, 1f);
+        [Header("Highlight appearance")]
+        [SerializeField] private Color attackCellColor = new Color(1f, 0.4f, 0.3f, 0.55f);
+        [SerializeField] private Color anchorCellColor = new Color(1f, 0.9f, 0.2f, 0.6f);
+        [SerializeField] private Color itemCellColor = new Color(0.4f, 0.7f, 1f, 0.55f);
+        [Tooltip("Optional sprites per highlight kind; null falls back to the overlay's default.")]
+        [SerializeField] private Sprite attackCellSprite;
+        [SerializeField] private Sprite anchorCellSprite;
+        [SerializeField] private Sprite itemCellSprite;
+
+        [Header("Debug toggles (runtime-updatable)")]
+        [Tooltip("Using an attack consumes no charges/uses; attack cards never disable.")]
+        [SerializeField] private bool infiniteAttacks;
+        [Tooltip("Using an item consumes no count; item cards never disable.")]
+        [SerializeField] private bool infiniteItems;
 
         [Header("Events")]
         public EnemyTappedEvent OnEnemyTapped = new EnemyTappedEvent();
@@ -52,7 +62,11 @@ namespace SlidingSiege
         public void Initialize(GridState state)
         {
             _state = state;
-            _combat = new CombatSystem(state);
+            _combat = new CombatSystem(state)
+            {
+                InfiniteAttacks = infiniteAttacks,
+                InfiniteItems = infiniteItems,
+            };
             foreach (var def in attackDefinitions) _combat.SetupAttack(def);
             foreach (var def in itemDefinitions) _combat.SetupItem(def);
             _combat.OnInventoryChanged += RefreshLists;
@@ -194,21 +208,42 @@ namespace SlidingSiege
 
         private void RefreshHighlights()
         {
-            var highlights = new List<(Vector2Int, Color)>();
+            var highlights = new List<(Vector2Int, Color, Sprite)>();
+
             if (_selectedAttack != null && _anchor != null)
             {
                 var resolver = AttackShapeResolverFactory.Get(_selectedAttack.Kind);
                 foreach (var cell in resolver.GetCells(_state, _anchor.Value, _variantIndex))
-                    highlights.Add((cell, attackCellColor));
-                highlights.Add((_anchor.Value, anchorCellColor)); // anchor tint wins
+                    highlights.Add((cell, attackCellColor, attackCellSprite));
+                highlights.Add((_anchor.Value, anchorCellColor, anchorCellSprite)); // anchor drawn last, on top
             }
             else if (_selectedItem != null)
             {
                 var effect = ItemEffectFactory.Get(_selectedItem.Kind);
                 foreach (var cell in effect.PreviewCells(_state, _itemFirst, _itemSecond))
-                    highlights.Add((cell, itemCellColor));
+                    highlights.Add((cell, itemCellColor, itemCellSprite));
             }
-            cellHighlighter.SetHighlights(highlights);
+
+            highlightOverlay.SetHighlights(highlights);
+        }
+
+        /// Inspector toggle changes apply at runtime (deferred to Update —
+        /// list rebuilds touch the hierarchy, which OnValidate must not).
+        private void OnValidate()
+        {
+            if (!Application.isPlaying || _combat == null) return;
+            _pendingValidate = true;
+        }
+
+        private bool _pendingValidate;
+
+        private void Update()
+        {
+            if (!_pendingValidate) return;
+            _pendingValidate = false;
+            _combat.InfiniteAttacks = infiniteAttacks;
+            _combat.InfiniteItems = infiniteItems;
+            RefreshAll();
         }
 
         private void RefreshConfirm()

@@ -20,7 +20,10 @@ namespace SlidingSiege
         {
             _pool ??= new ObjectPool<AbilityCardUI>(
                 createFunc: () => Instantiate(cardPrefab, container),
-                actionOnGet: c => { c.gameObject.SetActive(true); c.transform.SetParent(container, false); },
+                // SetAsLastSibling keeps visual order equal to rebuild order —
+                // pooled cards otherwise keep stale sibling indices and the
+                // selected card appears to jump to the end of the list.
+                actionOnGet: c => { c.gameObject.SetActive(true); c.transform.SetParent(container, false); c.transform.SetAsLastSibling(); },
                 actionOnRelease: c => c.gameObject.SetActive(false),
                 actionOnDestroy: c => Destroy(c.gameObject),
                 defaultCapacity: 8);
@@ -34,11 +37,12 @@ namespace SlidingSiege
             foreach (var def in defs)
             {
                 int charges = combat.GetCharges(def.Kind);
-                if (charges <= 0) continue;
+                if (!combat.InfiniteAttacks && charges <= 0) continue;
+                string countLabel = combat.InfiniteAttacks ? "x∞" : "x" + charges;
                 int totalDmg = Mathf.RoundToInt(def.BaseDamage * combat.DamageMultiplier());
                 var card = _pool.Get();
                 var captured = def;
-                card.Setup(def.Icon, def.DisplayName, charges, totalDmg + " dmg",
+                card.Setup(def.Icon, def.DisplayName, countLabel, totalDmg + " dmg",
                     selected == def, combat.CanAttack(def), () => onClick(captured));
                 _active.Add(card);
             }
@@ -52,11 +56,12 @@ namespace SlidingSiege
             foreach (var def in defs)
             {
                 int count = combat.GetItemCount(def.Kind);
-                if (count <= 0) continue;
+                if (!combat.InfiniteItems && count <= 0) continue;
+                string countLabel = combat.InfiniteItems ? "x∞" : "x" + count;
                 var card = _pool.Get();
                 var captured = def;
-                card.Setup(def.Icon, def.DisplayName, count, null,
-                    selected == def, true, () => onClick(captured));
+                card.Setup(def.Icon, def.DisplayName, countLabel, null,
+                    selected == def, combat.CanUseItem(captured), () => onClick(captured));
                 _active.Add(card);
             }
         }

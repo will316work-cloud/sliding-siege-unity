@@ -21,13 +21,13 @@ namespace SlidingSiege
 
         private void Awake() => button.onClick.AddListener(() => _onClick?.Invoke());
 
-        public void Setup(Sprite iconSprite, string displayName, int count, string damageLabel,
+        public void Setup(Sprite iconSprite, string displayName, string countLabel, string damageLabel,
             bool selected, bool interactable, Action onClick)
         {
             icon.sprite = iconSprite;
             icon.enabled = iconSprite != null;
             nameText.text = displayName;
-            countText.text = "x" + count;
+            countText.text = countLabel;
             if (damageText != null)
             {
                 damageText.text = damageLabel;
