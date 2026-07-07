@@ -163,6 +163,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationCaller
   _presets:
+  - _label: Spawn
+    _stateName: Enemy Spawn
+    _layerIndex: 0
+    _fadeTime: 0
+    _normalisedTime: 0
+    _speed: 1
+    _speedParameterOverride: 
+    _onPlay:
+      m_PersistentCalls:
+        m_Calls: []
+    _onComplete:
+      m_PersistentCalls:
+        m_Calls: []
   - _label: Move
     _stateName: Enemy Move
     _layerIndex: 0
@@ -171,6 +184,9 @@ MonoBehaviour:
     _speed: 1
     _speedParameterOverride: 
     _onPlay:
+      m_PersistentCalls:
+        m_Calls: []
+    _onComplete:
       m_PersistentCalls:
         m_Calls: []
   _defaultLayerIndex: 0
