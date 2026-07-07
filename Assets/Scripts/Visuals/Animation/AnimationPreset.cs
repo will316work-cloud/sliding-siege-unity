@@ -36,6 +36,7 @@ public class AnimationPreset
 
     [Header("Events")]
     [SerializeField] private UnityEvent _onPlay = new();
+    [SerializeField] private UnityEvent _onComplete = new();
 
     private int _stateHash;
 
@@ -47,6 +48,7 @@ public class AnimationPreset
     public float  Speed                  => _speed;
     public string SpeedParameterOverride => _speedParameterOverride;
     public UnityEvent OnPlay             => _onPlay;
+    public UnityEvent OnComplete         => _onComplete;
     public int    StateHash              => _stateHash;
 
     public void BakeHash() => _stateHash = Animator.StringToHash(_stateName);

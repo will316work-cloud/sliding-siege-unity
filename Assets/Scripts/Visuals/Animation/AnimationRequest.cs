@@ -12,6 +12,7 @@ public sealed class AnimationRequest
     private readonly float  _normalisedTime;
     private readonly float  _speed;
     private readonly string _speedParameterOverride;
+    private readonly Action _onPlay;
     private readonly Action _onComplete;
 
     internal int    StateHash              => _stateHash;
@@ -22,13 +23,16 @@ public sealed class AnimationRequest
     internal float  Speed                  => _speed;
     /// <summary>Explicit speed parameter name; null = resolve from the layer mapping.</summary>
     internal string SpeedParameterOverride => _speedParameterOverride;
+    /// <summary>Invoked immediately after the transition is dispatched.</summary>
+    internal Action OnPlay                 => _onPlay;
+    /// <summary>Invoked once the destination state finishes playing.</summary>
     internal Action OnComplete             => _onComplete;
 
     internal AnimationRequest(
         int stateHash, int layerIndex,
         float fadeTime, float normalisedTime,
         float speed, string speedParameterOverride,
-        Action onComplete)
+        Action onPlay, Action onComplete)
     {
         _stateHash              = stateHash;
         _layerIndex             = layerIndex;
@@ -36,6 +40,7 @@ public sealed class AnimationRequest
         _normalisedTime         = normalisedTime;
         _speed                  = speed;
         _speedParameterOverride = speedParameterOverride;
+        _onPlay                 = onPlay;
         _onComplete             = onComplete;
     }
 }

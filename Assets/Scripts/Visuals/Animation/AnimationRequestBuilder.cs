@@ -17,6 +17,7 @@ public sealed class AnimationRequestBuilder
     private float  _normalisedTime;
     private float  _speed;
     private string _speedParameterOverride;
+    private Action _onPlay;
     private Action _onComplete;
 
     private bool _stateSet;
@@ -32,6 +33,7 @@ public sealed class AnimationRequestBuilder
         _normalisedTime         = 0f;
         _speed                  = 1f;   // unspecified speed resets to 1 on dispatch
         _speedParameterOverride = null;
+        _onPlay                 = null;
         _onComplete             = null;
     }
     #endregion
@@ -137,12 +139,30 @@ public sealed class AnimationRequestBuilder
     /// </summary>
     public AnimationRequestBuilder OnPlay(Action callback)
     {
-        _onComplete += callback;
+        _onPlay += callback;
         return this;
     }
 
     /// <summary>UnityEvent-friendly overload — wraps a no-argument UnityAction.</summary>
     public AnimationRequestBuilder OnPlay(UnityEvent callback)
+    {
+        _onPlay += callback.Invoke;
+        return this;
+    }
+
+    /// <summary>
+    /// Register a one-shot <see cref="Action"/> invoked when the destination
+    /// state FINISHES playing (normalised time reaches the end — or the
+    /// start, for negative speeds — or the state is interrupted/replaced).
+    /// </summary>
+    public AnimationRequestBuilder OnComplete(Action callback)
+    {
+        _onComplete += callback;
+        return this;
+    }
+
+    /// <summary>UnityEvent-friendly overload — wraps a no-argument UnityAction.</summary>
+    public AnimationRequestBuilder OnComplete(UnityEvent callback)
     {
         _onComplete += callback.Invoke;
         return this;
@@ -178,7 +198,7 @@ public sealed class AnimationRequestBuilder
             _stateHash, _layerIndex,
             _fadeTime,  time,
             _speed, _speedParameterOverride,
-            _onComplete);
+            _onPlay, _onComplete);
     }
     #endregion
 }

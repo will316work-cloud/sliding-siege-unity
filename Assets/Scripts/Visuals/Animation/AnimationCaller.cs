@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -103,15 +104,22 @@ public class AnimationCaller : MonoBehaviour
     // ── Preset API ────────────────────────────────────────────────────────────
 
     /// <summary>Play the preset whose Label matches <paramref name="label"/> (case-insensitive).</summary>
-    public void PlayPreset(string label)
+    public void PlayPreset(string label) => PlayPreset(label, null);
+
+    /// <summary>
+    /// Play a preset with an additional one-shot completion callback
+    /// (invoked alongside the preset's own OnComplete UnityEvent).
+    /// </summary>
+    public void PlayPreset(string label, Action onComplete)
     {
         AnimationPreset preset = FindPreset(label);
         if (preset == null)
         {
             Debug.LogWarning($"[AnimationCaller] No preset with label '{label}'.", this);
+            onComplete?.Invoke();
             return;
         }
-        DispatchPreset(preset);
+        DispatchPreset(preset, onComplete);
     }
 
     /// <summary>Play a preset by its index in the Inspector list.</summary>
@@ -122,7 +130,7 @@ public class AnimationCaller : MonoBehaviour
             Debug.LogWarning($"[AnimationCaller] Preset index {index} out of range.", this);
             return;
         }
-        DispatchPreset(_presets[index]);
+        DispatchPreset(_presets[index], null);
     }
 
     // ── Direct dispatch ───────────────────────────────────────────────────────
@@ -141,7 +149,10 @@ public class AnimationCaller : MonoBehaviour
                 request.StateHash, request.FadeTime,
                 request.LayerIndex, 0f, request.NormalisedTime);
 
-        request.OnComplete?.Invoke();
+        request.OnPlay?.Invoke();
+
+        if (request.OnComplete != null)
+            StartCoroutine(WaitForStateComplete(request));
     }
 
     // ── Layer utility ─────────────────────────────────────────────────────────
@@ -198,7 +209,7 @@ public class AnimationCaller : MonoBehaviour
         return null;
     }
 
-    private void DispatchPreset(AnimationPreset preset)
+    private void DispatchPreset(AnimationPreset preset, Action onComplete = null)
     {
         int layer = preset.LayerIndex < 0 ? _defaultLayerIndex : preset.LayerIndex;
 
@@ -208,7 +219,9 @@ public class AnimationCaller : MonoBehaviour
             .WithFade(preset.FadeTime)
             .WithSpeed(preset.Speed)
             .WithSpeedParameter(preset.SpeedParameterOverride)
-            .OnPlay(preset.OnPlay);
+            .OnPlay(preset.OnPlay)
+            .OnComplete(preset.OnComplete);
+        if (onComplete != null) builder.OnComplete(onComplete);
 
         // Preset time of 0 with negative speed defers to the builder's
         // auto-start-at-end; any other value is explicit.
@@ -216,6 +229,46 @@ public class AnimationCaller : MonoBehaviour
             builder.AtTime(preset.NormalisedTime);
 
         builder.Play();
+    }
+
+    /// <summary>
+    /// Waits until the dispatched state has finished playing on its layer:
+    /// its normalised time passes the end (or the start, for negative
+    /// speeds), or the Animator has moved on to a different state
+    /// (interruption also counts as completion so callbacks always fire).
+    /// </summary>
+    private IEnumerator WaitForStateComplete(AnimationRequest request)
+    {
+        // Let the Play/CrossFade register with the Animator first.
+        yield return null;
+
+        bool reverse = request.Speed < 0f;
+        while (enabled && _animator != null && _animator.isActiveAndEnabled)
+        {
+            bool inTransition = _animator.IsInTransition(request.LayerIndex);
+            var info = inTransition
+                ? _animator.GetNextAnimatorStateInfo(request.LayerIndex)
+                : _animator.GetCurrentAnimatorStateInfo(request.LayerIndex);
+
+            bool isOurState = info.shortNameHash == request.StateHash ||
+                              info.fullPathHash == request.StateHash;
+
+            if (!isOurState)
+            {
+                // Interrupted or replaced — treat as complete.
+                break;
+            }
+
+            if (!inTransition)
+            {
+                if (!reverse && info.normalizedTime >= 1f) break;
+                if (reverse && info.normalizedTime <= 0f) break;
+            }
+
+            yield return null;
+        }
+
+        request.OnComplete?.Invoke();
     }
 
     private void BakeAllHashes()

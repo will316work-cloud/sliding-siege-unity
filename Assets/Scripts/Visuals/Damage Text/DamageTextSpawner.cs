@@ -1,0 +1,113 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Pool;
+
+namespace SlidingSiege
+{
+    /// Spawns pooled damage/heal text indicators. Listens to every enemy's
+    /// OnHealthLost / OnHealthGained events (hooked on spawn, unhooked on
+    /// removal) and pops one indicator at the CENTER of EVERY piece of that
+    /// enemy (main + wrap ghosts), on the Indicator Layer. Indicators return
+    /// to the pool when their AnimationCaller preset completes (with a
+    /// safety timeout in case a preset is misconfigured).
+    public class DamageTextSpawner : MonoBehaviour
+    {
+        [Header("Wiring")]
+        [SerializeField] private DamageTextIndicator indicatorPrefab;
+        [Tooltip("Unmasked layer above the Enemy Layer so text isn't clipped at grid edges.")]
+        [SerializeField] private RectTransform indicatorLayer;
+
+        [Header("Behavior")]
+        [Tooltip("Random horizontal jitter in pixels applied to each indicator (± this value).")]
+        [SerializeField, Min(0f)] private float horizontalJitter = 15f;
+        [Tooltip("Safety release if the animation never reports completion.")]
+        [SerializeField, Min(0.1f)] private float maxLifetime = 3f;
+
+        private GridState _state;
+        private EnemyViewManager _viewManager;
+        private ObjectPool<DamageTextIndicator> _pool;
+        private readonly Dictionary<int, (System.Action<int> lost, System.Action<int> gained)> _hooks
+            = new Dictionary<int, (System.Action<int>, System.Action<int>)>();
+
+        public void Initialize(GridState state, EnemyViewManager viewManager)
+        {
+            _state = state;
+            _viewManager = viewManager;
+
+            _pool ??= new ObjectPool<DamageTextIndicator>(
+                createFunc: () => Instantiate(indicatorPrefab, indicatorLayer),
+                actionOnGet: ind => { ind.gameObject.SetActive(true); ind.transform.SetParent(indicatorLayer, false); },
+                actionOnRelease: ind => ind.gameObject.SetActive(false),
+                actionOnDestroy: ind => Destroy(ind.gameObject),
+                defaultCapacity: 12);
+
+            _state.OnEnemySpawned += HookEnemy;
+            _state.OnEnemyRemoved += UnhookEnemy;
+            foreach (var en in _state.Enemies.Values) HookEnemy(en);
+        }
+
+        private void OnDestroy()
+        {
+            if (_state == null) return;
+            _state.OnEnemySpawned -= HookEnemy;
+            _state.OnEnemyRemoved -= UnhookEnemy;
+            foreach (var en in _state.Enemies.Values) UnhookEnemy(en);
+        }
+
+        private void HookEnemy(Enemy en)
+        {
+            if (_hooks.ContainsKey(en.Id)) return;
+            System.Action<int> lost = amount => SpawnForEnemy(en, amount, false);
+            System.Action<int> gained = amount => SpawnForEnemy(en, amount, true);
+            en.OnHealthLost += lost;
+            en.OnHealthGained += gained;
+            _hooks[en.Id] = (lost, gained);
+        }
+
+        private void UnhookEnemy(Enemy en)
+        {
+            if (!_hooks.TryGetValue(en.Id, out var hooks)) return;
+            en.OnHealthLost -= hooks.lost;
+            en.OnHealthGained -= hooks.gained;
+            _hooks.Remove(en.Id);
+        }
+
+        private void SpawnForEnemy(Enemy en, int amount, bool isHeal)
+        {
+            if (!_viewManager.TryGetPieceRects(en.Id, out var pieceRects)) return;
+            foreach (var pieceRect in pieceRects)
+                SpawnAt(pieceRect, amount, isHeal);
+        }
+
+        private void SpawnAt(RectTransform pieceRect, int amount, bool isHeal)
+        {
+            var indicator = _pool.Get();
+
+            // World-space center of the piece, converted onto the layer,
+            // plus horizontal jitter (matching the HTML game's wobble).
+            Vector3 worldCenter = pieceRect.TransformPoint(pieceRect.rect.center);
+            indicator.transform.position = worldCenter;
+            indicator.transform.localPosition += new Vector3(
+                Random.Range(-horizontalJitter, horizontalJitter), 0f, 0f);
+            indicator.transform.SetAsLastSibling();
+
+            bool released = false;
+            void Release()
+            {
+                if (released) return;
+                released = true;
+                _pool.Release(indicator);
+            }
+
+            indicator.Show(amount, isHeal, Release);
+            StartCoroutine(SafetyRelease(Release));
+        }
+
+        private IEnumerator SafetyRelease(System.Action release)
+        {
+            yield return new WaitForSeconds(maxLifetime);
+            release();
+        }
+    }
+}
