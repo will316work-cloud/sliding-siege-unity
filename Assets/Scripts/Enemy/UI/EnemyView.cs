@@ -1,63 +1,64 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using DG.Tweening;
 
 namespace SlidingSiege
 {
-    /// One EnemyView per enemy. Owns:
-    ///  - a "main" Image piece (always present), plus
-    ///  - 0..3 pooled ghost Image pieces (persist while the enemy rests
-    ///    wrapped across an edge; also used transiently during shift tweens).
-    /// Every piece is a FULL-footprint-size Image showing the full sprite,
-    /// merely offset by ±gridWidth/±gridHeight; the Enemy Layer's Mask crops
-    /// the parts that hang outside the grid. Pieces are parented directly to
-    /// the Enemy Layer so the mask applies.
+    /// One EnemyView per enemy. Owns a "main" piece (always present) plus
+    /// 0..3 pooled ghost pieces (persist while the enemy rests wrapped
+    /// across an edge; also used transiently during shift tweens). Every
+    /// piece is a FULL-footprint-size EnemyPieceView (sprite + own health
+    /// bar) merely offset by ±gridWidth/±gridHeight; the Enemy Layer's Mask
+    /// crops the parts that hang outside the grid.
     public class EnemyView
     {
         public int EnemyId { get; private set; }
 
-        private readonly List<Image> _pieces = new List<Image>(4); // [0] = main
-        private System.Func<Image> _acquirePiece;
-        private System.Action<Image> _releasePiece;
+        private readonly List<EnemyPieceView> _pieces = new List<EnemyPieceView>(4); // [0] = main
+        private System.Func<EnemyPieceView> _acquirePiece;
+        private System.Action<EnemyPieceView> _releasePiece;
 
-        public void Bind(int enemyId, System.Func<Image> acquirePiece, System.Action<Image> releasePiece)
+        public void Bind(int enemyId, System.Func<EnemyPieceView> acquirePiece, System.Action<EnemyPieceView> releasePiece)
         {
             EnemyId = enemyId;
             _acquirePiece = acquirePiece;
             _releasePiece = releasePiece;
         }
 
-        public IReadOnlyList<Image> Pieces => _pieces;
+        public IReadOnlyList<EnemyPieceView> Pieces => _pieces;
 
         public List<RectTransform> PieceRects()
         {
             var list = new List<RectTransform>(_pieces.Count);
-            foreach (var p in _pieces) list.Add(p.rectTransform);
+            foreach (var p in _pieces) list.Add(p.RectTransform);
             return list;
         }
 
-        /// Ensures exactly `count` pieces exist, all configured from the
-        /// enemy definition (sprite, image type, tint, material, sizing).
-        public void EnsurePieceCount(int count, EnemyDefinition def, Vector2 footprintSizePx)
+        /// Ensures exactly `count` pieces exist, configured from the enemy's
+        /// definition (sprite, image type, tint, material, sizing) with each
+        /// piece's health bar bound to the enemy (shared health display).
+        public void EnsurePieceCount(int count, Enemy enemy, Vector2 footprintSizePx)
         {
+            var def = enemy.Definition;
             while (_pieces.Count < count)
             {
-                var img = _acquirePiece();
-                _pieces.Add(img);
+                var piece = _acquirePiece();
+                piece.HealthBar.Bind(enemy);
+                _pieces.Add(piece);
             }
             while (_pieces.Count > count)
             {
                 var last = _pieces[_pieces.Count - 1];
                 _pieces.RemoveAt(_pieces.Count - 1);
+                last.HealthBar.Unbind();
                 _releasePiece(last);
             }
             _visualOffset = def.VisualAnchorOffset(footprintSizePx);
             Vector2 visualSize = def.VisualSize(footprintSizePx);
-            foreach (var img in _pieces)
+            foreach (var piece in _pieces)
             {
-                def.ApplyTo(img);
-                var rt = img.rectTransform;
+                def.ApplyTo(piece.SpriteImage);
+                var rt = piece.RectTransform;
                 rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f); // top-left of Enemy Layer
                 rt.pivot = new Vector2(0f, 1f);
                 rt.sizeDelta = visualSize;
@@ -74,7 +75,7 @@ namespace SlidingSiege
             _snappedPositions.Clear();
             for (int i = 0; i < _pieces.Count && i < positions.Count; i++)
             {
-                var rt = _pieces[i].rectTransform;
+                var rt = _pieces[i].RectTransform;
                 rt.DOKill();
                 rt.anchoredPosition = positions[i] + _visualOffset;
                 _snappedPositions.Add(positions[i]);
@@ -87,7 +88,7 @@ namespace SlidingSiege
         {
             for (int i = 0; i < _pieces.Count && i < _snappedPositions.Count; i++)
             {
-                var rt = _pieces[i].rectTransform;
+                var rt = _pieces[i].RectTransform;
                 rt.DOKill();
                 rt.DOAnchorPos(_snappedPositions[i] + _visualOffset + offset, duration).SetEase(ease);
             }
@@ -95,7 +96,11 @@ namespace SlidingSiege
 
         public void ReleaseAll()
         {
-            foreach (var p in _pieces) _releasePiece(p);
+            foreach (var p in _pieces)
+            {
+                p.HealthBar.Unbind();
+                _releasePiece(p);
+            }
             _pieces.Clear();
         }
     }

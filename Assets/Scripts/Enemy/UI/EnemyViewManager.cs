@@ -14,7 +14,7 @@ namespace SlidingSiege
     {
         [Header("Wiring")]
         [SerializeField] private RectTransform enemyLayer;   // masked Image layer
-        [SerializeField] private Image enemyPiecePrefab;     // simple Image prefab (raycastTarget off recommended)
+        [SerializeField] private EnemyPieceView enemyPiecePrefab; // structured piece prefab (sprite + health bar)
         [Tooltip("Fade-out duration when an enemy is removed/killed. Swap HandleRemoved for richer death animations later.")]
         [SerializeField, Min(0f)] private float removalFadeDuration = 0.25f;
 
@@ -23,7 +23,7 @@ namespace SlidingSiege
         private IMoveAnimator _animator;
 
         private readonly Dictionary<int, EnemyView> _views = new Dictionary<int, EnemyView>();
-        private ObjectPool<Image> _piecePool;
+        private ObjectPool<EnemyPieceView> _piecePool;
 
         public bool IsAnimating { get; private set; }
 
@@ -33,11 +33,17 @@ namespace SlidingSiege
             _metrics = metrics;
             _animator = animator;
 
-            _piecePool ??= new ObjectPool<Image>(
+            _piecePool ??= new ObjectPool<EnemyPieceView>(
                 createFunc: () => Instantiate(enemyPiecePrefab, enemyLayer),
-                actionOnGet: img => { img.gameObject.SetActive(true); img.transform.SetParent(enemyLayer, false); },
-                actionOnRelease: img => img.gameObject.SetActive(false),
-                actionOnDestroy: img => Destroy(img.gameObject),
+                actionOnGet: piece =>
+                {
+                    piece.gameObject.SetActive(true);
+                    piece.transform.SetParent(enemyLayer, false);
+                    piece.CanvasGroup.DOKill();
+                    piece.CanvasGroup.alpha = 1f; // undo any removal fade
+                },
+                actionOnRelease: piece => piece.gameObject.SetActive(false),
+                actionOnDestroy: piece => Destroy(piece.gameObject),
                 defaultCapacity: 16);
 
             _state.OnEnemySpawned += HandleSpawned;
@@ -101,7 +107,7 @@ namespace SlidingSiege
             if (!_views.TryGetValue(en.Id, out var view)) return;
             var origins = PieceOrigins(en, en.Anchor);
             origins.RemoveAll(o => !OverlapsGrid(en, o));
-            view.EnsurePieceCount(origins.Count, en.Definition, FootprintSizePx(en));
+            view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en));
             var positions = new List<Vector2>(origins.Count);
             foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
             view.SnapPieces(positions);
@@ -158,7 +164,7 @@ namespace SlidingSiege
                 }
 
                 var origins = new List<Vector2Int>(originSet);
-                view.EnsurePieceCount(origins.Count, en.Definition, FootprintSizePx(en));
+                view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en));
                 var positions = new List<Vector2>(origins.Count);
                 foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
                 view.SnapPieces(positions);
@@ -218,11 +224,12 @@ namespace SlidingSiege
             if (removalFadeDuration <= 0f) { view.ReleaseAll(); return; }
 
             int pending = 0;
-            foreach (var img in view.Pieces)
+            foreach (var piece in view.Pieces)
             {
                 pending++;
-                img.rectTransform.DOKill();
-                img.DOFade(0f, removalFadeDuration).OnComplete(() =>
+                piece.RectTransform.DOKill();
+                piece.CanvasGroup.DOKill();
+                piece.CanvasGroup.DOFade(0f, removalFadeDuration).OnComplete(() =>
                 {
                     if (--pending == 0) view.ReleaseAll();
                 });

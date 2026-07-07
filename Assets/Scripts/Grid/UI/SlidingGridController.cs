@@ -19,7 +19,7 @@ namespace SlidingSiege
         [SerializeField] private GridDragInput dragInput;
         [SerializeField] private ShiftPreviewOverlay shiftPreviewOverlay;
         [SerializeField] private TargetingController targetingController;
-        [SerializeField] private CellHighlighter cellHighlighter;
+        [SerializeField] private AbilityHighlightOverlay abilityHighlightOverlay;
 
         [Header("Animation")]
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
@@ -56,8 +56,8 @@ namespace SlidingSiege
             dragInput.OnCellTapped.AddListener(targetingController.HandleCellTapped);
             shiftPreviewOverlay.Initialize(State, uiBuilder.Metrics, enemyViewManager);
 
-            // Combat: attacks, items, targeting, cell highlights.
-            cellHighlighter.Initialize(uiBuilder);
+            // Combat: attacks, items, targeting, hitbox highlight overlay.
+            abilityHighlightOverlay.Initialize(uiBuilder.Metrics);
             targetingController.Initialize(State);
 
             // Optional inspector-driven test spawns.
