@@ -45,7 +45,7 @@ namespace SlidingSiege
                 .SelectMany(en => (en.Definition.Abilities ?? new List<EnemyAbility>())
                     .Where(a => a != null)
                     .Select(a => (ability: a, enemy: en)))
-                .OrderBy(p => p.ability.OrderIndex)
+                .OrderByDescending(p => p.ability.OrderIndex)
                 .ThenBy(p => p.enemy.Id)
                 .ToList();
 
