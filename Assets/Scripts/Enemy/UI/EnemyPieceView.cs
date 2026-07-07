@@ -14,11 +14,14 @@ namespace SlidingSiege
     {
         [SerializeField] private Image spriteImage;
         [SerializeField] private EnemyHealthBarDisplay healthBar;
+        [Tooltip("Optional: lets enemy abilities play Animator presets on this piece.")]
+        [SerializeField] private AnimationCaller animationCaller;
 
         private CanvasGroup _canvasGroup;
 
         public Image SpriteImage => spriteImage;
         public EnemyHealthBarDisplay HealthBar => healthBar;
+        public AnimationCaller AnimationCaller => animationCaller;
         public RectTransform RectTransform => (RectTransform)transform;
         public CanvasGroup CanvasGroup
         {

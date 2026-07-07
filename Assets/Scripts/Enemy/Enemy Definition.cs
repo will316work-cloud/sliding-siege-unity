@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,10 @@ namespace SlidingSiege
     [CreateAssetMenu(menuName = "SlidingSiege/Enemy Definition")]
     public class EnemyDefinition : ScriptableObject
     {
+        [Header("Abilities")]
+        [Tooltip("Ability assets this enemy runs during the enemy phase, ordered by each ability's Order Index (see EnemyAbility).")]
+        public List<EnemyAbility> Abilities = new List<EnemyAbility>();
+
         [Header("Stats")]
         [Min(1)] public int MaxHP = 30;
 

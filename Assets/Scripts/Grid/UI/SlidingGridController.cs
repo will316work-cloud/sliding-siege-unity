@@ -21,6 +21,7 @@ namespace SlidingSiege
         [SerializeField] private TargetingController targetingController;
         [SerializeField] private AbilityHighlightOverlay abilityHighlightOverlay;
         [SerializeField] private DamageTextSpawner damageTextSpawner;
+        [SerializeField] private EnemyPhaseRunner enemyPhaseRunner;
 
         [Header("Animation")]
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
@@ -52,7 +53,7 @@ namespace SlidingSiege
             // Drag/swipe + tap input over the grid. Dragging is locked while
             // a tween runs OR while an attack/item is selected.
             dragInput.Initialize(State, uiBuilder.Metrics,
-                isInputLocked: () => enemyViewManager.IsAnimating || targetingController.IsTargeting,
+                isInputLocked: () => enemyViewManager.IsAnimating || targetingController.IsTargeting || enemyPhaseRunner.IsRunning,
                 requestShift: HandleShiftPressed);
             dragInput.OnCellTapped.AddListener(targetingController.HandleCellTapped);
             shiftPreviewOverlay.Initialize(State, uiBuilder.Metrics, enemyViewManager);
@@ -61,6 +62,7 @@ namespace SlidingSiege
             abilityHighlightOverlay.Initialize(uiBuilder.Metrics);
             targetingController.Initialize(State);
             damageTextSpawner.Initialize(State, enemyViewManager);
+            enemyPhaseRunner.Initialize(State, enemyViewManager);
 
             // Optional inspector-driven test spawns.
             for (int i = 0; i < testSpawns.Length && i < testSpawnCells.Length; i++)

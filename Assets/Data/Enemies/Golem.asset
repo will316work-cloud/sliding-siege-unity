@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa303edfcc3402445946bcb5f66ad837, type: 3}
   m_Name: Golem
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
+  Abilities:
+  - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
+  - {fileID: 11400000, guid: d99fdfdd0a2014b419103e55c51e1546, type: 2}
   MaxHP: 100
   SizeRows: 2
   SizeCols: 2

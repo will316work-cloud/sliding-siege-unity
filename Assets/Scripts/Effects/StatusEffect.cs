@@ -6,5 +6,8 @@ namespace SlidingSiege
     {
         /// Multiplier applied to damage this enemy takes (1 = no change).
         public virtual float DamageTakenMultiplier => 1f;
+
+        /// True if this status prevents the enemy from acting (stun etc.).
+        public virtual bool PreventsAction => false;
     }
 }

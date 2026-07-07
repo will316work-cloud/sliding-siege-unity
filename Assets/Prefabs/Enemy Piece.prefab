@@ -222,6 +222,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyPieceView
   spriteImage: {fileID: 6864316420467363574}
   healthBar: {fileID: 7827142299121592699}
+  animationCaller: {fileID: 7127514619466627712}
 --- !u!1 &3684798485836859354
 GameObject:
   m_ObjectHideFlags: 0

@@ -55,5 +55,8 @@ namespace SlidingSiege
         }
 
         public bool HasStatus<T>() where T : StatusEffect => Statuses.OfType<T>().Any();
+
+        /// False while dead or any status (e.g. a future stun) vetoes acting.
+        public bool CanAct => !IsDead && Statuses.All(s => !s.PreventsAction);
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -15,8 +16,13 @@ namespace SlidingSiege
         [Header("Wiring")]
         [SerializeField] private RectTransform enemyLayer;   // masked Image layer
         [SerializeField] private EnemyPieceView enemyPiecePrefab; // structured piece prefab (sprite + health bar)
-        [Tooltip("Fade-out duration when an enemy is removed/killed. Swap HandleRemoved for richer death animations later.")]
+        [Tooltip("Fallback fade-out duration for pieces WITHOUT an AnimationCaller when the enemy is removed.")]
         [SerializeField, Min(0f)] private float removalFadeDuration = 0.25f;
+
+        [Header("Animation preset labels (played on each piece's AnimationCaller)")]
+        [SerializeField] private string spawnPresetLabel = "Spawn";
+        [SerializeField] private string hurtPresetLabel = "Hurt";
+        [SerializeField] private string deathPresetLabel = "Death";
 
         private GridState _state;
         private GridLayoutMetrics _metrics;
@@ -25,7 +31,11 @@ namespace SlidingSiege
         private readonly Dictionary<int, EnemyView> _views = new Dictionary<int, EnemyView>();
         private ObjectPool<EnemyPieceView> _piecePool;
 
-        public bool IsAnimating { get; private set; }
+        private bool _shiftAnimating;
+        private int _pendingRemovals;
+
+        /// True while a shift tween OR any death sequence is playing.
+        public bool IsAnimating => _shiftAnimating || _pendingRemovals > 0;
 
         public void Initialize(GridState state, GridLayoutMetrics metrics, IMoveAnimator animator)
         {
@@ -130,7 +140,7 @@ namespace SlidingSiege
         /// one stride and snaps to the final resting layout.
         public void AnimateShift(ShiftResult result, Action onComplete)
         {
-            IsAnimating = true;
+            _shiftAnimating = true;
 
             Vector2 delta = result.IsRowShift
                 ? new Vector2(result.Direction * _metrics.Stride, 0f)
@@ -179,9 +189,22 @@ namespace SlidingSiege
                 foreach (var id in result.MovedEnemyIds)
                     if (_state.Enemies.TryGetValue(id, out var en))
                         RebuildEnemyPieces(en);
-                IsAnimating = false;
+                _shiftAnimating = false;
                 onComplete?.Invoke();
             });
+        }
+
+        /// The enemy's main piece (index 0), e.g. for playing ability
+        /// animations. False if the enemy has no view or no pieces.
+        public bool TryGetMainPiece(int enemyId, out EnemyPieceView piece)
+        {
+            if (_views.TryGetValue(enemyId, out var view) && view.Pieces.Count > 0)
+            {
+                piece = view.Pieces[0];
+                return true;
+            }
+            piece = null;
+            return false;
         }
 
         /// Current piece RectTransforms of an enemy (main + wrap ghosts),
@@ -217,37 +240,88 @@ namespace SlidingSiege
 
         // ---------------- Spawn / despawn / rebuild ----------------
 
+        private readonly Dictionary<int, Action<int>> _hurtHooks = new Dictionary<int, Action<int>>();
+
         private void HandleSpawned(Enemy en)
         {
             var view = new EnemyView();
             view.Bind(en.Id, () => _piecePool.Get(), img => _piecePool.Release(img));
             _views[en.Id] = view;
             RebuildEnemyPieces(en);
+
+            // Hurt animation on every non-lethal hit (death handles the rest).
+            Action<int> onLost = _ => { if (!en.IsDead) PlayPresetFireAndForget(view, hurtPresetLabel); };
+            en.OnHealthLost += onLost;
+            _hurtHooks[en.Id] = onLost;
+
+            PlayPresetFireAndForget(view, spawnPresetLabel);
         }
 
-        /// Death/removal is animated (simple DOTween fade for now) before
-        /// the pieces are released — the extension point for custom death
-        /// animations. The view leaves the dictionary immediately so game
-        /// logic never sees a half-removed enemy.
+        private void UnhookHurt(Enemy en)
+        {
+            if (_hurtHooks.TryGetValue(en.Id, out var hook))
+            {
+                en.OnHealthLost -= hook;
+                _hurtHooks.Remove(en.Id);
+            }
+        }
+
+        /// Removal plays Hurt then Death on every piece's AnimationCaller
+        /// (pieces without a caller fall back to the DOTween fade during the
+        /// death step), and only releases the pieces once ALL are done. The
+        /// view leaves the dictionary immediately so game logic never sees
+        /// a half-removed enemy; IsAnimating stays true (and gameplay waits)
+        /// until every pending death sequence finishes.
         private void HandleRemoved(Enemy en)
         {
+            UnhookHurt(en);
             if (!_views.TryGetValue(en.Id, out var view)) return;
             _views.Remove(en.Id);
 
-            if (removalFadeDuration <= 0f) { view.ReleaseAll(); return; }
+            _pendingRemovals++;
+            StartCoroutine(RemovalSequence(view));
+        }
 
+        private IEnumerator RemovalSequence(EnemyView view)
+        {
+            yield return PlayPresetOnAllPieces(view, hurtPresetLabel, fadeFallback: false);
+            yield return PlayPresetOnAllPieces(view, deathPresetLabel, fadeFallback: true);
+            view.ReleaseAll();
+            _pendingRemovals--;
+        }
+
+        /// Plays a preset on every piece that has an AnimationCaller and
+        /// waits for all of them to complete. Pieces without a caller do
+        /// nothing — unless fadeFallback is set, in which case they fade
+        /// out over removalFadeDuration instead.
+        private IEnumerator PlayPresetOnAllPieces(EnemyView view, string label, bool fadeFallback)
+        {
             int pending = 0;
             foreach (var piece in view.Pieces)
             {
-                pending++;
-                piece.RectTransform.DOKill();
-                piece.CanvasGroup.DOKill();
-                piece.CanvasGroup.DOFade(0f, removalFadeDuration).OnComplete(() =>
+                var caller = piece.AnimationCaller;
+                if (caller != null && !string.IsNullOrEmpty(label))
                 {
-                    if (--pending == 0) view.ReleaseAll();
-                });
+                    pending++;
+                    caller.PlayPreset(label, () => pending--);
+                }
+                else if (fadeFallback && removalFadeDuration > 0f)
+                {
+                    pending++;
+                    piece.RectTransform.DOKill();
+                    piece.CanvasGroup.DOKill();
+                    piece.CanvasGroup.DOFade(0f, removalFadeDuration).OnComplete(() => pending--);
+                }
             }
-            if (pending == 0) view.ReleaseAll();
+            while (pending > 0) yield return null;
+        }
+
+        private void PlayPresetFireAndForget(EnemyView view, string label)
+        {
+            if (string.IsNullOrEmpty(label)) return;
+            foreach (var piece in view.Pieces)
+                if (piece.AnimationCaller != null)
+                    piece.AnimationCaller.PlayPreset(label);
         }
 
         /// Snap for now; item/enemy movement animations can hook here later.
@@ -255,6 +329,8 @@ namespace SlidingSiege
 
         private void HandleRebuilt()
         {
+            foreach (var en in _state.Enemies.Values) UnhookHurt(en);
+            _hurtHooks.Clear();
             foreach (var view in _views.Values) view.ReleaseAll();
             _views.Clear();
             foreach (var en in _state.Enemies.Values) HandleSpawned(en);
