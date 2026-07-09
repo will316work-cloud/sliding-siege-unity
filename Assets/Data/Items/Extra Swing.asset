@@ -16,4 +16,7 @@ MonoBehaviour:
   DisplayName: Extra Swing
   Icon: {fileID: 0}
   StartingCount: 2
-  Description: 
+  Description:
+  Hitbox:
+    Label:
+    Parts: []

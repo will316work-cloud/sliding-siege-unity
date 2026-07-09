@@ -4,36 +4,29 @@ using UnityEngine;
 
 namespace SlidingSiege
 {
-    /// Pulls every enemy within a 5x5 area toward the chosen center tile,
-    /// nearest enemies settling first (greedy stepping; simplified from the
-    /// JS settle logic — swap in richer movement/animation later).
+    /// Pulls every enemy within the item's hitbox toward the chosen center
+    /// tile, nearest enemies settling first (greedy stepping; simplified
+    /// from the JS settle logic — swap in richer movement/animation later).
     public class GravityOrbEffect : IItemEffect
     {
         public ItemTargeting Targeting => ItemTargeting.Cell;
 
-        public List<Vector2Int> PreviewCells(GridState s, Vector2Int? first, Vector2Int? b)
+        public List<HitCell> PreviewCells(GridState s, ItemDefinition def, Vector2Int? first, Vector2Int? b)
         {
-            var cells = new List<Vector2Int>();
-            if (first == null) return cells;
-            for (int dr = -2; dr <= 2; dr++)
-                for (int dc = -2; dc <= 2; dc++)
-                {
-                    int r = first.Value.x + dr, c = first.Value.y + dc;
-                    if (r >= 0 && r < s.Rows && c >= 0 && c < s.Cols) cells.Add(new Vector2Int(r, c));
-                }
-            return cells;
+            if (first == null || def.Hitbox == null) return new List<HitCell>();
+            return def.Hitbox.Resolve(s, first.Value);
         }
 
-        public bool CanApply(GridState s, CombatSystem combat, Vector2Int? first, Vector2Int? b) => first != null;
+        public bool CanApply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? first, Vector2Int? b) => first != null;
 
-        public bool Apply(GridState s, CombatSystem combat, Vector2Int? first, Vector2Int? b, out string message)
+        public bool Apply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? first, Vector2Int? b, out string message)
         {
             if (first == null) { message = "Pick a tile to pull enemies toward."; return false; }
             Vector2Int center = first.Value;
 
             var affected = new List<Enemy>();
-            foreach (var cell in PreviewCells(s, first, null))
-                foreach (var en in s.EnemiesAt(cell.x, cell.y))
+            foreach (var hit in PreviewCells(s, def, first, null))
+                foreach (var en in s.EnemiesAt(hit.Cell.x, hit.Cell.y))
                     if (!affected.Contains(en)) affected.Add(en);
 
             affected = affected

@@ -6,22 +6,25 @@ namespace SlidingSiege
 {
     /// Moves a chosen enemy to a chosen destination anchor (footprint must
     /// fit; wraps allowed, matching the JS preview's wrapped footprint).
+    /// The preview is procedural (source + destination footprints); the item
+    /// hitbox's first part supplies the highlight appearance.
     public class TeleportEffect : IItemEffect
     {
         public ItemTargeting Targeting => ItemTargeting.EnemyThenCell;
 
-        public List<Vector2Int> PreviewCells(GridState s, Vector2Int? first, Vector2Int? second)
+        public List<HitCell> PreviewCells(GridState s, ItemDefinition def, Vector2Int? first, Vector2Int? second)
         {
-            var cells = new List<Vector2Int>();
+            var cells = new List<HitCell>();
             if (first == null) return cells;
             var en = s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault();
             if (en == null) return cells;
+            var part = def.Hitbox?.FirstPart;
 
             void AddFootprint(Vector2Int anchor)
             {
                 for (int i = 0; i < en.SizeRows; i++)
                     for (int j = 0; j < en.SizeCols; j++)
-                        cells.Add(new Vector2Int(s.Wrap(anchor.x + i, s.Rows), s.Wrap(anchor.y + j, s.Cols)));
+                        cells.Add(new HitCell(new Vector2Int(s.Wrap(anchor.x + i, s.Rows), s.Wrap(anchor.y + j, s.Cols)), part));
             }
 
             AddFootprint(en.Anchor);
@@ -29,14 +32,14 @@ namespace SlidingSiege
             return cells;
         }
 
-        public bool CanApply(GridState s, CombatSystem combat, Vector2Int? first, Vector2Int? second)
+        public bool CanApply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? first, Vector2Int? second)
         {
             if (first == null || second == null) return false;
             var en = s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault();
             return en != null && s.CanPlaceAtIgnoring(second.Value.x, second.Value.y, en.SizeRows, en.SizeCols, en.Id);
         }
 
-        public bool Apply(GridState s, CombatSystem combat, Vector2Int? first, Vector2Int? second, out string message)
+        public bool Apply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? first, Vector2Int? second, out string message)
         {
             var en = first != null ? s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault() : null;
             if (en == null) { message = "No enemy on that tile."; return false; }

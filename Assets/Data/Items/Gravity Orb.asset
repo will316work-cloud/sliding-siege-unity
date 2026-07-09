@@ -16,4 +16,15 @@ MonoBehaviour:
   DisplayName: Gravity Orb
   Icon: {fileID: 0}
   StartingCount: 2
-  Description: 
+  Description:
+  Hitbox:
+    Label: Pull Area
+    Parts:
+    - Type: 5
+      Offset: {x: -2, y: -2}
+      GridCells: []
+      RectSize: {x: 5, y: 5}
+      PerimeterOnly: 0
+      DamageFactor: 1
+      HighlightColor: {r: 0.4, g: 0.7, b: 1, a: 0.55}
+      HighlightSprite: {fileID: 0}

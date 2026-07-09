@@ -13,5 +13,8 @@ namespace SlidingSiege
         public Sprite Icon;
         [Min(0)] public int StartingCount = 2;
         [TextArea] public string Description;
+
+        [Tooltip("Shape-based effects (e.g. Gravity Orb) resolve this at the target cell; procedural previews use the FIRST part's highlight appearance.")]
+        public Hitbox Hitbox = new Hitbox();
     }
 }

@@ -8,11 +8,11 @@ namespace SlidingSiege
     {
         public ItemTargeting Targeting => ItemTargeting.None;
 
-        public List<Vector2Int> PreviewCells(GridState s, Vector2Int? a, Vector2Int? b) => new List<Vector2Int>();
+        public List<HitCell> PreviewCells(GridState s, ItemDefinition def, Vector2Int? a, Vector2Int? b) => new List<HitCell>();
 
-        public bool CanApply(GridState s, CombatSystem combat, Vector2Int? a, Vector2Int? b) => true;
+        public bool CanApply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? a, Vector2Int? b) => true;
 
-        public bool Apply(GridState s, CombatSystem combat, Vector2Int? a, Vector2Int? b, out string message)
+        public bool Apply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? a, Vector2Int? b, out string message)
         {
             combat.AttacksRemaining++;
             message = "Extra Swing: +1 attack use this turn!";

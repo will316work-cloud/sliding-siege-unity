@@ -16,4 +16,16 @@ MonoBehaviour:
   DisplayName: Expanded Soul
   Icon: {fileID: 0}
   StartingCount: 2
-  Description: 
+  Description:
+  Hitbox:
+    Label: Soul Halo
+    Parts:
+    - Type: 4
+      Offset: {x: 0, y: 0}
+      GridCells:
+      - {x: 0, y: 0}
+      RectSize: {x: 1, y: 1}
+      PerimeterOnly: 0
+      DamageFactor: 1
+      HighlightColor: {r: 0.4, g: 0.7, b: 1, a: 0.55}
+      HighlightSprite: {fileID: 0}

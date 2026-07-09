@@ -5,23 +5,29 @@ using UnityEngine;
 namespace SlidingSiege
 {
     /// Surrounds a chosen enemy with a soul cloud for one turn: attacks that
-    /// hit any of its 8-neighbor halo cells also count as hitting it.
+    /// hit any of its 8-neighbor halo cells also count as hitting it. The
+    /// preview is procedural (footprint + halo); the item hitbox's first
+    /// part supplies the highlight appearance.
     public class ExpandedSoulEffect : IItemEffect
     {
         public ItemTargeting Targeting => ItemTargeting.Enemy;
 
-        public List<Vector2Int> PreviewCells(GridState s, Vector2Int? first, Vector2Int? b)
+        public List<HitCell> PreviewCells(GridState s, ItemDefinition def, Vector2Int? first, Vector2Int? b)
         {
-            if (first == null) return new List<Vector2Int>();
+            var cells = new List<HitCell>();
+            if (first == null) return cells;
+            var part = def.Hitbox?.FirstPart;
             var en = s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault();
-            if (en == null) return new List<Vector2Int> { first.Value };
-            return CombatSystem.FootprintAndHaloCells(s, en);
+            if (en == null) { cells.Add(new HitCell(first.Value, part)); return cells; }
+            foreach (var cell in CombatSystem.FootprintAndHaloCells(s, en))
+                cells.Add(new HitCell(cell, part));
+            return cells;
         }
 
-        public bool CanApply(GridState s, CombatSystem combat, Vector2Int? first, Vector2Int? b) =>
+        public bool CanApply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? first, Vector2Int? b) =>
             first != null && s.EnemiesAt(first.Value.x, first.Value.y).Any();
 
-        public bool Apply(GridState s, CombatSystem combat, Vector2Int? first, Vector2Int? b, out string message)
+        public bool Apply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? first, Vector2Int? b, out string message)
         {
             var en = first != null ? s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault() : null;
             if (en == null) { message = "No enemy on that tile."; return false; }
