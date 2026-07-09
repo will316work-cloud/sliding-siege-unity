@@ -8,5 +8,6 @@ namespace SlidingSiege
         DiagonalUp,   // full ↗ diagonal through the origin
         DiagonalDown, // full ↘ diagonal through the origin
         Grid,         // explicit GridCells offsets from the origin
+        Rectangle,    // RectSize area with its top-left at the origin (full or perimeter)
     }
 }
