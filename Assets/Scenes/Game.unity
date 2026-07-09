@@ -151,6 +151,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 545840624}
+  - {fileID: 2055142448}
   - {fileID: 382415537}
   - {fileID: 1913380241}
   - {fileID: 355979373}
@@ -244,12 +245,9 @@ MonoBehaviour:
   highlightOverlay: {fileID: 355979372}
   confirmButton: {fileID: 205028814}
   confirmLabel: {fileID: 1484092981}
-  attackCellColor: {r: 1, g: 0.4, b: 0.3, a: 0.6}
   anchorCellColor: {r: 1, g: 0.9, b: 0.2, a: 0.6}
-  itemCellColor: {r: 0.4, g: 0.7, b: 1, a: 0.6}
-  attackCellSprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
   anchorCellSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  itemCellSprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  fallbackCellColor: {r: 1, g: 1, b: 1, a: 0.4}
   infiniteAttacks: 1
   infiniteItems: 1
   OnEnemyTapped:
@@ -668,6 +666,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AbilityHighlightOverlay
   overlayRoot: {fileID: 355979373}
+  telegraphRoot: {fileID: 2055142448}
   defaultSprite: {fileID: 0}
 --- !u!224 &355979373
 RectTransform:
@@ -1339,16 +1338,6 @@ MonoBehaviour:
   enemyPhaseRunner: {fileID: 832634357}
   shiftDuration: 0.2
   shiftEase: 10
-  testSpawns:
-  - {fileID: 11400000, guid: c7f6c816ae9598448a780655ac9cc52a, type: 2}
-  - {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
-  - {fileID: 11400000, guid: c7f6c816ae9598448a780655ac9cc52a, type: 2}
-  - {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
-  testSpawnCells:
-  - {x: 0, y: 1}
-  - {x: 2, y: 1}
-  - {x: 1, y: 0}
-  - {x: 3, y: 3}
 --- !u!114 &832634357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1361,6 +1350,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed73fd97515ac064caf3252655f3efc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyPhaseRunner
+  spawnAbilities:
+  - {fileID: 11400000, guid: a577d3fda65b9794d895829ed9f2c6ff, type: 2}
+  - {fileID: 11400000, guid: d99fdfdd0a2014b419103e55c51e1546, type: 2}
+  - {fileID: 11400000, guid: a922f0265f9d0ea4bb8f4c3228bf8447, type: 2}
+  - {fileID: 11400000, guid: 4c24e60901ab58748825b8e92d879ca8, type: 2}
+  - {fileID: 11400000, guid: de8ba74ae6c6bad498248a69b51a83a9, type: 2}
 --- !u!1 &888067550
 GameObject:
   m_ObjectHideFlags: 0
@@ -2081,6 +2076,111 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2034194237}
+  m_CullTransparentMesh: 1
+--- !u!1 &2055142447
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2055142448}
+  - component: {fileID: 2055142452}
+  - component: {fileID: 2055142451}
+  - component: {fileID: 2055142450}
+  - component: {fileID: 2055142449}
+  m_Layer: 5
+  m_Name: Enemy Hitbox Overlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2055142448
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055142447}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 22263075}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2055142449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055142447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4553cb287b4bdf140a1a22d8a45ca3f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AbilityHighlightOverlay
+  overlayRoot: {fileID: 2055142448}
+  telegraphRoot: {fileID: 0}
+  defaultSprite: {fileID: 0}
+--- !u!114 &2055142450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055142447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Mask
+  m_ShowMaskGraphic: 0
+--- !u!114 &2055142451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055142447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &2055142452
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055142447}
   m_CullTransparentMesh: 1
 --- !u!1001 &5701754961693457677
 PrefabInstance:

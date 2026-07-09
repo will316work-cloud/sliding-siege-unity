@@ -15,6 +15,8 @@ namespace SlidingSiege
         [Header("Wiring")]
         [Tooltip("Layer above the Enemy Layer (sibling after it; order vs the Shift Preview Overlay doesn't matter). Same rect as the Enemy Layer.")]
         [SerializeField] private RectTransform overlayRoot;
+        [Tooltip("Layer for enemy telegraph highlights: a stretched RectTransform, sibling ordered just BEFORE the Enemy Layer, same rect. Null falls back to the overlay root.")]
+        [SerializeField] private RectTransform telegraphRoot;
 
         [Header("Defaults")]
         [Tooltip("Default sprite for highlight cells; null = plain square.")]
@@ -42,14 +44,28 @@ namespace SlidingSiege
                 defaultCapacity: 32);
         }
 
-        /// Replaces all highlights. Sprite null = use the default sprite
-        /// (or a plain square if that's also null).
-        public void SetHighlights(IEnumerable<(Vector2Int cell, Color color, Sprite sprite)> highlights)
+        /// Replaces all highlights. Player-facing highlights render on the
+        /// overlay root (above enemies); enemy telegraphs render on the
+        /// telegraph root (behind the Enemy Layer). Sprite null = use the
+        /// default sprite (or a plain square if that's also null).
+        public void SetHighlights(IEnumerable<(Vector2Int cell, Color color, Sprite sprite)> highlights,
+                                  IEnumerable<(Vector2Int cell, Color color, Sprite sprite)> telegraphHighlights = null)
         {
             Clear();
+            if (telegraphHighlights != null)
+                Place(telegraphHighlights, telegraphRoot != null ? telegraphRoot : overlayRoot);
+            Place(highlights, overlayRoot);
+        }
+
+        private void Place(IEnumerable<(Vector2Int cell, Color color, Sprite sprite)> highlights, RectTransform root)
+        {
             foreach (var (cell, color, sprite) in highlights)
             {
                 var img = _pool.Get();
+                img.transform.SetParent(root, false);
+                // Pooled images keep stale sibling indices; enforce draw
+                // order = list order so later highlights render on top.
+                img.transform.SetAsLastSibling();
                 img.sprite = sprite != null ? sprite : defaultSprite;
                 img.color = color;
                 var rt = img.rectTransform;

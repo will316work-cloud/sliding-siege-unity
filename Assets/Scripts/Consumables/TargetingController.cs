@@ -28,13 +28,11 @@ namespace SlidingSiege
         [SerializeField] private TextMeshProUGUI confirmLabel;      // optional
 
         [Header("Highlight appearance")]
-        [SerializeField] private Color attackCellColor = new Color(1f, 0.4f, 0.3f, 0.55f);
+        [Tooltip("Cell colors/sprites live on each HitboxPart; only the anchor marker and the part-less fallback stay here.")]
         [SerializeField] private Color anchorCellColor = new Color(1f, 0.9f, 0.2f, 0.6f);
-        [SerializeField] private Color itemCellColor = new Color(0.4f, 0.7f, 1f, 0.55f);
-        [Tooltip("Optional sprites per highlight kind; null falls back to the overlay's default.")]
-        [SerializeField] private Sprite attackCellSprite;
         [SerializeField] private Sprite anchorCellSprite;
-        [SerializeField] private Sprite itemCellSprite;
+        [Tooltip("Used for preview cells whose hitbox part is missing.")]
+        [SerializeField] private Color fallbackCellColor = new Color(1f, 1f, 1f, 0.4f);
 
         [Header("Debug toggles (runtime-updatable)")]
         [Tooltip("Using an attack consumes no charges/uses; attack cards never disable.")]
@@ -46,6 +44,7 @@ namespace SlidingSiege
         public EnemyTappedEvent OnEnemyTapped = new EnemyTappedEvent();
 
         private GridState _state;
+        private EnemyPhaseRunner _phaseRunner;
         private CombatSystem _combat;
 
         private AttackDefinition _selectedAttack;
@@ -59,9 +58,10 @@ namespace SlidingSiege
         public bool IsTargeting => _selectedAttack != null || _selectedItem != null;
         public CombatSystem Combat => _combat;
 
-        public void Initialize(GridState state)
+        public void Initialize(GridState state, EnemyPhaseRunner phaseRunner)
         {
             _state = state;
+            _phaseRunner = phaseRunner;
             _combat = new CombatSystem(state)
             {
                 InfiniteAttacks = infiniteAttacks,
@@ -70,6 +70,15 @@ namespace SlidingSiege
             foreach (var def in attackDefinitions) _combat.SetupAttack(def);
             foreach (var def in itemDefinitions) _combat.SetupItem(def);
             _combat.OnInventoryChanged += RefreshLists;
+
+            // Enemy telegraphs (stored hitboxes) re-render on any board change.
+            _state.OnEnemySpawned += HandleEnemyEvent;
+            _state.OnEnemyRemoved += HandleEnemyEvent;
+            _state.OnEnemyMoved += HandleEnemyMoved;
+            _state.OnEnemyResized += HandleEnemyEvent;
+            _state.OnShifted += HandleShifted;
+            _state.OnRebuilt += RefreshHighlights;
+            if (_phaseRunner != null) _phaseRunner.OnPhaseFinished += RefreshHighlights;
 
             confirmButton.onClick.AddListener(Confirm);
             ClearSelection();
@@ -167,8 +176,8 @@ namespace SlidingSiege
             if (_selectedItem != null)
             {
                 var effect = ItemEffectFactory.Get(_selectedItem.Kind);
-                if (!effect.CanApply(_state, _combat, _itemFirst, _itemSecond)) return;
-                if (!effect.Apply(_state, _combat, _itemFirst, _itemSecond, out var message))
+                if (!effect.CanApply(_state, _selectedItem, _combat, _itemFirst, _itemSecond)) return;
+                if (!effect.Apply(_state, _selectedItem, _combat, _itemFirst, _itemSecond, out var message))
                 {
                     Debug.Log("[SlidingSiege] " + message);
                     return;
@@ -209,20 +218,59 @@ namespace SlidingSiege
         {
             var highlights = new List<(Vector2Int, Color, Sprite)>();
 
+            // Enemy telegraphs go on their own root BEHIND the Enemy Layer.
+            // Same-definition enemies share one claim set so intersecting
+            // cells render once; different definitions overlay one another.
+            var telegraphs = new List<(Vector2Int, Color, Sprite)>();
+            var claimedByDef = new Dictionary<EnemyDefinition, HashSet<Vector2Int>>();
+            foreach (var en in _state.Enemies.Values.OrderBy(e => e.Id))
+            {
+                if (en.QueuedHitbox == null) continue;
+                if (!claimedByDef.TryGetValue(en.Definition, out var claimed))
+                    claimedByDef[en.Definition] = claimed = new HashSet<Vector2Int>();
+                foreach (var hit in en.QueuedHitbox.Resolve(_state, en.Anchor))
+                    if (claimed.Add(hit.Cell))
+                        telegraphs.Add((hit.Cell, PartColor(hit.Part), hit.Part?.HighlightSprite));
+            }
+
             if (_selectedAttack != null && _anchor != null)
             {
                 foreach (var hit in _selectedAttack.ResolveCells(_state, _anchor.Value, _variantIndex))
-                    highlights.Add((hit.Cell, attackCellColor, attackCellSprite));
+                    highlights.Add((hit.Cell, PartColor(hit.Part), hit.Part?.HighlightSprite));
                 highlights.Add((_anchor.Value, anchorCellColor, anchorCellSprite)); // anchor drawn last, on top
             }
             else if (_selectedItem != null)
             {
                 var effect = ItemEffectFactory.Get(_selectedItem.Kind);
-                foreach (var cell in effect.PreviewCells(_state, _itemFirst, _itemSecond))
-                    highlights.Add((cell, itemCellColor, itemCellSprite));
+                foreach (var hit in effect.PreviewCells(_state, _selectedItem, _itemFirst, _itemSecond))
+                    highlights.Add((hit.Cell, PartColor(hit.Part), hit.Part?.HighlightSprite));
+                // Every selected cell gets the anchor marker, drawn last so
+                // it sits on top — even when the effect previews nothing.
+                if (_itemFirst != null) highlights.Add((_itemFirst.Value, anchorCellColor, anchorCellSprite));
+                if (_itemSecond != null) highlights.Add((_itemSecond.Value, anchorCellColor, anchorCellSprite));
             }
 
-            highlightOverlay.SetHighlights(highlights);
+            highlightOverlay.SetHighlights(highlights, telegraphs);
+        }
+
+        private Color PartColor(HitboxPart part) => part != null ? part.HighlightColor : fallbackCellColor;
+
+        private void HandleEnemyEvent(Enemy _) => RefreshHighlights();
+        private void HandleEnemyMoved(Enemy _, Vector2Int __, MoveStyle ___) => RefreshHighlights();
+        private void HandleShifted(ShiftResult _) => RefreshHighlights();
+
+        private void OnDestroy()
+        {
+            if (_state != null)
+            {
+                _state.OnEnemySpawned -= HandleEnemyEvent;
+                _state.OnEnemyRemoved -= HandleEnemyEvent;
+                _state.OnEnemyMoved -= HandleEnemyMoved;
+                _state.OnEnemyResized -= HandleEnemyEvent;
+                _state.OnShifted -= HandleShifted;
+                _state.OnRebuilt -= RefreshHighlights;
+            }
+            if (_phaseRunner != null) _phaseRunner.OnPhaseFinished -= RefreshHighlights;
         }
 
         /// Inspector toggle changes apply at runtime (deferred to Update —
@@ -256,7 +304,7 @@ namespace SlidingSiege
             else if (_selectedItem != null)
             {
                 var effect = ItemEffectFactory.Get(_selectedItem.Kind);
-                ready = effect.CanApply(_state, _combat, _itemFirst, _itemSecond);
+                ready = effect.CanApply(_state, _selectedItem, _combat, _itemFirst, _itemSecond);
                 label = _selectedItem.DisplayName;
             }
             confirmButton.gameObject.SetActive(IsTargeting);

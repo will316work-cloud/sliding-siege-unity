@@ -27,10 +27,6 @@ namespace SlidingSiege
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
         [SerializeField] private Ease shiftEase = Ease.OutCubic;
 
-        [Header("Test spawns (optional)")]
-        [SerializeField] private EnemyDefinition[] testSpawns;
-        [SerializeField] private Vector2Int[] testSpawnCells;
-
         public GridState State { get; private set; }
 
         private IMoveAnimator _animator;
@@ -60,17 +56,14 @@ namespace SlidingSiege
 
             // Combat: attacks, items, targeting, hitbox highlight overlay.
             abilityHighlightOverlay.Initialize(uiBuilder.Metrics);
-            targetingController.Initialize(State);
+            targetingController.Initialize(State, enemyPhaseRunner);
             damageTextSpawner.Initialize(State, enemyViewManager);
             enemyPhaseRunner.Initialize(State, enemyViewManager);
 
-            // Optional inspector-driven test spawns.
-            for (int i = 0; i < testSpawns.Length && i < testSpawnCells.Length; i++)
-            {
-                var cell = testSpawnCells[i];
-                if (State.CanPlaceAt(cell.y, cell.x, testSpawns[i]))
-                    State.SpawnEnemy(testSpawns[i], cell.y, cell.x);
-            }
+            // Opening enemy phase: the runner's spawn abilities populate the
+            // board (and newcomers run their not-yet-passed abilities, e.g.
+            // outlines) before the player's first turn.
+            enemyPhaseRunner.RunEnemyPhase();
         }
 
         private void HandleShiftPressed(bool isRowShift, int index, int direction)
