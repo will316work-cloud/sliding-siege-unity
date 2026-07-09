@@ -15,9 +15,18 @@ MonoBehaviour:
   Abilities:
   - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
   MaxHP: 15
-  SizeRows: 1
-  SizeCols: 1
-  Sprite: {fileID: 0}
+  Shape:
+    BodyCells:
+    - {x: 0, y: 0}
+    Sprite: {fileID: 0}
+    SizeMode: 0
+    FootprintScale: {x: 0.8, y: 0.8}
+    FixedPixelSize: {x: 72, y: 72}
+    PaddingLeft: 5
+    PaddingRight: 5
+    PaddingTop: 5
+    PaddingBottom: 5
+    VisualOffset: {x: 0, y: 0}
   ImageType: 0
   PreserveAspect: 0
   PixelsPerUnitMultiplier: 1
@@ -27,7 +36,3 @@ MonoBehaviour:
   ColorOverlay: {r: 1, g: 0, b: 0, a: 1}
   Material: {fileID: 0}
   RaycastTarget: 0
-  SizeMode: 1
-  FootprintScale: {x: 0.8, y: 0.8}
-  FixedPixelSize: {x: 72, y: 72}
-  VisualOffset: {x: 0, y: 0}

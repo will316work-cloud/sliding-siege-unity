@@ -15,12 +15,20 @@ MonoBehaviour:
   Abilities:
   - {fileID: 11400000, guid: da4188b333084d1aa44d51597939688c, type: 2}
   - {fileID: 11400000, guid: 6105fb01e8184624a2b64fe5f5c3e0b7, type: 2}
-  - {fileID: 11400000, guid: 7f125376fafc434a93d541566cd053e7, type: 2}
   - {fileID: 11400000, guid: ea978fb5badd4591be00c027914c07f0, type: 2}
   MaxHP: 15
-  SizeRows: 1
-  SizeCols: 1
-  Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  Shape:
+    BodyCells:
+    - {x: 0, y: 0}
+    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    SizeMode: 0
+    FootprintScale: {x: 0.8, y: 0.8}
+    FixedPixelSize: {x: 72, y: 72}
+    PaddingLeft: 5
+    PaddingRight: 5
+    PaddingTop: 5
+    PaddingBottom: 5
+    VisualOffset: {x: 0, y: 0}
   ImageType: 0
   PreserveAspect: 0
   PixelsPerUnitMultiplier: 1
@@ -30,7 +38,3 @@ MonoBehaviour:
   ColorOverlay: {r: 1, g: 0.5, b: 0.8, a: 1}
   Material: {fileID: 0}
   RaycastTarget: 0
-  SizeMode: 1
-  FootprintScale: {x: 0.8, y: 0.8}
-  FixedPixelSize: {x: 72, y: 72}
-  VisualOffset: {x: 0, y: 0}

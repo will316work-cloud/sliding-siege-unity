@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Spawn Golem
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SpawnAbility
   orderIndex: 1
-  postDelay: 0.75
+  postDelay: 0.5
   spawnDefinition: {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
   count: 1
   chance: 1
