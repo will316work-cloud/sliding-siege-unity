@@ -22,9 +22,8 @@ namespace SlidingSiege
 
             void AddFootprint(Vector2Int anchor)
             {
-                for (int i = 0; i < en.SizeRows; i++)
-                    for (int j = 0; j < en.SizeCols; j++)
-                        cells.Add(new HitCell(new Vector2Int(s.Wrap(anchor.x + i, s.Rows), s.Wrap(anchor.y + j, s.Cols)), part));
+                foreach (var off in en.BodyCells)
+                    cells.Add(new HitCell(new Vector2Int(s.Wrap(anchor.x + off.x, s.Rows), s.Wrap(anchor.y + off.y, s.Cols)), part));
             }
 
             AddFootprint(en.Anchor);
@@ -36,7 +35,7 @@ namespace SlidingSiege
         {
             if (first == null || second == null) return false;
             var en = s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault();
-            return en != null && s.CanPlaceAtIgnoring(second.Value.x, second.Value.y, en.SizeRows, en.SizeCols, en.Id);
+            return en != null && s.CanPlaceBodyAtIgnoring(second.Value.x, second.Value.y, en.BodyCells, en.Id);
         }
 
         public bool Apply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? first, Vector2Int? second, out string message)
@@ -44,7 +43,7 @@ namespace SlidingSiege
             var en = first != null ? s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault() : null;
             if (en == null) { message = "No enemy on that tile."; return false; }
             if (second == null) { message = "Pick a destination."; return false; }
-            if (!s.CanPlaceAtIgnoring(second.Value.x, second.Value.y, en.SizeRows, en.SizeCols, en.Id))
+            if (!s.CanPlaceBodyAtIgnoring(second.Value.x, second.Value.y, en.BodyCells, en.Id))
             { message = "It doesn't fit there."; return false; }
             s.MoveEnemy(en.Id, second.Value);
             message = "Teleported!";

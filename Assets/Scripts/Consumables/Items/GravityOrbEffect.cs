@@ -71,7 +71,7 @@ namespace SlidingSiege
             {
                 var wrapped = new Vector2Int(s.Wrap(dest.x, s.Rows), s.Wrap(dest.y, s.Cols));
                 if (wrapped == en.Anchor) continue;
-                if (s.CanPlaceAtIgnoring(wrapped.x, wrapped.y, en.SizeRows, en.SizeCols, en.Id))
+                if (s.CanPlaceBodyAtIgnoring(wrapped.x, wrapped.y, en.BodyCells, en.Id))
                 {
                     s.MoveEnemy(en.Id, wrapped, MoveStyle.Slide);
                     return true;

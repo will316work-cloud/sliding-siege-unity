@@ -82,7 +82,7 @@ namespace SlidingSiege
             {
                 int nr = s.Wrap(en.Anchor.x + dir.x, s.Rows);
                 int nc = s.Wrap(en.Anchor.y + dir.y, s.Cols);
-                if (!s.CanPlaceAtIgnoring(nr, nc, en.SizeRows, en.SizeCols, en.Id)) continue;
+                if (!s.CanPlaceBodyAtIgnoring(nr, nc, en.BodyCells, en.Id)) continue;
                 destination = new Vector2Int(nr, nc);
                 return true;
             }
@@ -105,9 +105,10 @@ namespace SlidingSiege
                 {
                     int r = en.Anchor.x + dir.x * dist;
                     int c = en.Anchor.y + dir.y * dist;
-                    bool inBounds = r >= 0 && r + en.SizeRows <= s.Rows &&
-                                    c >= 0 && c + en.SizeCols <= s.Cols;
-                    if (!inBounds || !s.CanPlaceAtIgnoring(r, c, en.SizeRows, en.SizeCols, en.Id)) break;
+                    var min = en.BodyMin;
+                    bool inBounds = r + min.x >= 0 && r + min.x + en.SizeRows <= s.Rows &&
+                                    c + min.y >= 0 && c + min.y + en.SizeCols <= s.Cols;
+                    if (!inBounds || !s.CanPlaceBodyAtIgnoring(r, c, en.BodyCells, en.Id)) break;
                     best = new Vector2Int(r, c);
                     found = true;
                 }

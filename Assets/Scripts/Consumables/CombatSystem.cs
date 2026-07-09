@@ -108,9 +108,8 @@ namespace SlidingSiege
         public static List<Vector2Int> FootprintCells(GridState s, Enemy en)
         {
             var cells = new List<Vector2Int>();
-            for (int i = 0; i < en.SizeRows; i++)
-                for (int j = 0; j < en.SizeCols; j++)
-                    cells.Add(new Vector2Int(s.Wrap(en.Anchor.x + i, s.Rows), s.Wrap(en.Anchor.y + j, s.Cols)));
+            foreach (var off in en.BodyCells)
+                cells.Add(new Vector2Int(s.Wrap(en.Anchor.x + off.x, s.Rows), s.Wrap(en.Anchor.y + off.y, s.Cols)));
             return cells;
         }
 
