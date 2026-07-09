@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f196201237adb54a8f66c183637392d, type: 3}
-  m_Name: Spawn Grunt
+  m_Name: Spawn Golem
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SpawnAbility
-  orderIndex: 0
+  orderIndex: 1
   postDelay: 0.75
-  spawnDefinition: {fileID: 11400000, guid: c7f6c816ae9598448a780655ac9cc52a, type: 2}
+  spawnDefinition: {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
   count: 1
-  chance: 0.2
+  chance: 1
   placement: 1
-  spawnAnimationPreset: Spawn
+  spawnAnimationPreset: 

@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
   Abilities:
   - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
-  - {fileID: 11400000, guid: d99fdfdd0a2014b419103e55c51e1546, type: 2}
   MaxHP: 100
   SizeRows: 2
   SizeCols: 2
