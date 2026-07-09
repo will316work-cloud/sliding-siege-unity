@@ -11,7 +11,7 @@ namespace SlidingSiege
     public abstract class EnemyAbility : ScriptableObject
     {
         [Header("Sequencing")]
-        [Tooltip("Abilities across ALL enemies run in ascending order index; ties run in enemy spawn-id order.")]
+        [Tooltip("Abilities across ALL enemies run in DESCENDING order index (higher runs first); ties run in enemy spawn-id order.")]
         [SerializeField] private int orderIndex = 0;
 
         [Tooltip("Delay (seconds) after this ability, applied ONLY when it succeeds.")]

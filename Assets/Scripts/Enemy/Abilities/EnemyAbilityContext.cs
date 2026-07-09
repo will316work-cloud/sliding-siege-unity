@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SlidingSiege
@@ -22,6 +23,21 @@ namespace SlidingSiege
             Host = host;
         }
 
+        /// Distinct enemies inside the owner's stored hitbox (set by
+        /// SetHitboxAbility), resolved at the owner's current anchor.
+        /// Empty when no hitbox is stored.
+        public List<Enemy> QueuedHitboxTargets()
+        {
+            var targets = new List<Enemy>();
+            var hitbox = Owner?.QueuedHitbox;
+            if (hitbox == null) return targets;
+            var seen = new HashSet<int>();
+            foreach (var hit in hitbox.Resolve(State, Owner.Anchor))
+                foreach (var en in State.EnemiesAt(hit.Cell.x, hit.Cell.y))
+                    if (seen.Add(en.Id)) targets.Add(en);
+            return targets;
+        }
+
         /// Plays an AnimationCaller preset on the owner's main piece and
         /// waits for it to complete. Yields nothing (no wait) if the label
         /// is empty or the piece has no AnimationCaller.
@@ -32,6 +48,7 @@ namespace SlidingSiege
         /// (e.g. clipLength / desiredDuration to fit a real-time window).
         public IEnumerator PlayOwnerPresetAndWait(string presetLabel, float speedScale)
         {
+            if (Owner == null) yield break; // runner-owned ability: no piece
             if (string.IsNullOrEmpty(presetLabel)) yield break;
             if (!Views.TryGetMainPiece(Owner.Id, out var piece)) yield break;
             var caller = piece.AnimationCaller;
