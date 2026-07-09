@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f15a782c804c445ba7f551e448cfa3b3, type: 3}
-  m_Name: Rolly Expand Horizontal
+  m_Name: Rolly Expand Vertical Up
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ChangeShapeAbility
   orderIndex: 3
   postDelay: 0.3
@@ -18,9 +18,8 @@ MonoBehaviour:
   anchorOffset: {x: 0, y: 0}
   shape:
     BodyCells:
-    - {x: 0, y: -1}
+    - {x: -1, y: 0}
     - {x: 0, y: 0}
-    - {x: 0, y: 1}
     Sprite: {fileID: 0}
     SizeMode: 0
     FootprintScale: {x: 0.85, y: 0.85}
@@ -31,5 +30,5 @@ MonoBehaviour:
     PaddingBottom: 5
     VisualOffset: {x: 0, y: 0}
   animationPreset: 
-  tweenDuration: 0.25
-  tweenEase: 9
+  tweenDuration: 0.15
+  tweenEase: 10
