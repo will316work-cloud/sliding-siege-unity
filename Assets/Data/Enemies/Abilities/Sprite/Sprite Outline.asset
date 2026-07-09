@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f890ca9e082b4f5bbcd78cb19575b15d, type: 3}
+  m_Name: Sprite Outline
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.DoRandomAbility
+  orderIndex: -2
+  postDelay: 0.2
+  options:
+  - Ability: {fileID: 11400000, guid: eb84ba35405b40c1a4b77c215edf341f, type: 2}
+    Weight: 1
+  - Ability: {fileID: 11400000, guid: 88433a877d554ef3bf4cef1e8ef8c309, type: 2}
+    Weight: 1
+  - Ability: {fileID: 11400000, guid: 65381a20e2c04ac1a0d09eab661cb00d, type: 2}
+    Weight: 1
