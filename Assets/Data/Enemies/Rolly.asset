@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa303edfcc3402445946bcb5f66ad837, type: 3}
+  m_Name: Rolly
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
+  Abilities:
+  - {fileID: 11400000, guid: c12f902e4bde43da92da7712fbdfd7b8, type: 2}
+  - {fileID: 11400000, guid: ea978fb5badd4591be00c027914c07f0, type: 2}
+  - {fileID: 11400000, guid: e4dce4eb720c6054e9196c2a819b1611, type: 2}
+  MaxHP: 20
+  Shape:
+    BodyCells:
+    - {x: 0, y: 0}
+    Sprite: {fileID: 0}
+    SizeMode: 0
+    FootprintScale: {x: 0.8, y: 0.8}
+    FixedPixelSize: {x: 72, y: 72}
+    PaddingLeft: 5
+    PaddingRight: 5
+    PaddingTop: 5
+    PaddingBottom: 5
+    VisualOffset: {x: 0, y: 0}
+  ImageType: 0
+  PreserveAspect: 0
+  PixelsPerUnitMultiplier: 1
+  FillCenter: 0
+  FillMethod: 0
+  FillAmount: 1
+  ColorOverlay: {r: 0.2, g: 0.7, b: 0.7, a: 1}
+  Material: {fileID: 0}
+  RaycastTarget: 0

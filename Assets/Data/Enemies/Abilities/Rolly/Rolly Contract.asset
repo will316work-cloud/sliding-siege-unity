@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f15a782c804c445ba7f551e448cfa3b3, type: 3}
+  m_Name: Rolly Contract
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ChangeShapeAbility
+  orderIndex: 3
+  postDelay: 0.3
+  revertToDefinition: 1
+  anchorOffset: {x: 0, y: 0}
+  shape:
+    BodyCells:
+    - {x: 0, y: 0}
+    Sprite: {fileID: 0}
+    SizeMode: 0
+    FootprintScale: {x: 1, y: 1}
+    FixedPixelSize: {x: 72, y: 72}
+    VisualOffset: {x: 0, y: 0}
+  animationPreset: 

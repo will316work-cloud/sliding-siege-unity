@@ -65,6 +65,7 @@ namespace SlidingSiege
             _state.OnEnemySpawned += HandleSpawned;
             _state.OnEnemyRemoved += HandleRemoved;
             _state.OnEnemyMoved += HandleMoved;
+            _state.OnEnemyResized += HandleResized;
             _state.OnRebuilt += HandleRebuilt;
 
             HandleRebuilt();
@@ -76,6 +77,7 @@ namespace SlidingSiege
             _state.OnEnemySpawned -= HandleSpawned;
             _state.OnEnemyRemoved -= HandleRemoved;
             _state.OnEnemyMoved -= HandleMoved;
+            _state.OnEnemyResized -= HandleResized;
             _state.OnRebuilt -= HandleRebuilt;
         }
 
@@ -92,19 +94,29 @@ namespace SlidingSiege
             en.SizeRows * _metrics.CellSize + (en.SizeRows - 1) * _metrics.Spacing);
 
         /// Unwrapped top-left origins for every piece needed to display the
-        /// enemy at a given anchor: candidates are anchor offset by 0/-Rows on
-        /// the row axis and 0/-Cols on the column axis, kept if the piece's
-        /// rect actually overlaps the grid viewport.
+        /// enemy at a given anchor. The visual bounding box starts at
+        /// anchor + BodyMin (body cells may be negative), and wrap ghosts
+        /// are added when the box hangs off either side of an axis.
         private List<Vector2Int> PieceOrigins(Enemy en, Vector2Int anchor)
         {
+            var min = en.BodyMin;
+            int baseR = anchor.x + min.x, baseC = anchor.y + min.y;
+
+            var rowOpts = new List<int>(2) { baseR };
+            if (baseR < 0) rowOpts.Add(baseR + _state.Rows);
+            if (baseR + en.SizeRows > _state.Rows) rowOpts.Add(baseR - _state.Rows);
+            var colOpts = new List<int>(2) { baseC };
+            if (baseC < 0) colOpts.Add(baseC + _state.Cols);
+            if (baseC + en.SizeCols > _state.Cols) colOpts.Add(baseC - _state.Cols);
+
+            var seen = new HashSet<Vector2Int>();
             var origins = new List<Vector2Int>(4);
-            int[] rowOpts = anchor.x + en.SizeRows > _state.Rows
-                ? new[] { anchor.x, anchor.x - _state.Rows } : new[] { anchor.x };
-            int[] colOpts = anchor.y + en.SizeCols > _state.Cols
-                ? new[] { anchor.y, anchor.y - _state.Cols } : new[] { anchor.y };
             foreach (var r in rowOpts)
                 foreach (var c in colOpts)
-                    origins.Add(new Vector2Int(r, c));
+                {
+                    var o = new Vector2Int(r, c);
+                    if (seen.Add(o)) origins.Add(o);
+                }
             return origins;
         }
 
@@ -328,6 +340,78 @@ namespace SlidingSiege
             foreach (var piece in view.Pieces)
                 if (piece.AnimationCaller != null)
                     piece.AnimationCaller.PlayPreset(label);
+        }
+
+        /// Footprint size changed: re-lay the pieces at the new metrics.
+        private void HandleResized(Enemy en)
+        {
+            if (_suppressNextResizeVisual) return;
+            RebuildEnemyPieces(en);
+        }
+
+        private bool _suppressNextResizeVisual;
+
+        /// Reshapes the enemy on the backend AND tweens each existing
+        /// piece's rect from its current size/position to the new resting
+        /// layout (fallback visual for shape changes without an animation
+        /// preset). Newly created wrap-ghost pieces snap into place.
+        public void ReshapeEnemyTweened(Enemy en, Vector2Int newAnchor, EnemyShape shapeOverride,
+            float duration, Ease ease, Action onComplete)
+        {
+            if (!_views.TryGetValue(en.Id, out var view))
+            {
+                _state.ReshapeEnemy(en.Id, newAnchor, shapeOverride);
+                onComplete?.Invoke();
+                return;
+            }
+
+            var oldStates = new List<(Vector2 size, Vector2 pos)>(view.Pieces.Count);
+            foreach (var piece in view.Pieces)
+                oldStates.Add((piece.RectTransform.sizeDelta, piece.RectTransform.anchoredPosition));
+
+            _suppressNextResizeVisual = true;
+            _state.ReshapeEnemy(en.Id, newAnchor, shapeOverride);
+            _suppressNextResizeVisual = false;
+
+            var origins = PieceOrigins(en, en.Anchor);
+            origins.RemoveAll(o => !OverlapsGrid(en, o));
+            Vector2 fp = FootprintSizePx(en);
+            view.EnsurePieceCount(origins.Count, en, fp);
+
+            Vector2 targetSize = en.VisualSize(fp);
+            Vector2 visualOffset = en.VisualAnchorOffset(fp);
+
+            _pendingMoves++;
+            int pending = 0;
+
+            void Finish()
+            {
+                if (_views.ContainsKey(en.Id)) RebuildEnemyPieces(en);
+                _pendingMoves--;
+                onComplete?.Invoke();
+            }
+            void Done() { if (--pending == 0) Finish(); }
+
+            for (int i = 0; i < view.Pieces.Count && i < origins.Count; i++)
+            {
+                var rt = view.Pieces[i].RectTransform;
+                Vector2 targetPos = PiecePos(origins[i].x, origins[i].y) + visualOffset;
+                rt.DOKill();
+                if (i < oldStates.Count)
+                {
+                    // Re-prime to the pre-reshape rect, then grow/slide in.
+                    rt.sizeDelta = oldStates[i].size;
+                    rt.anchoredPosition = oldStates[i].pos;
+                    pending += 2;
+                    rt.DOSizeDelta(targetSize, duration).SetEase(ease).OnComplete(Done);
+                    rt.DOAnchorPos(targetPos, duration).SetEase(ease).OnComplete(Done);
+                }
+                else
+                {
+                    rt.anchoredPosition = targetPos;
+                }
+            }
+            if (pending == 0) Finish();
         }
 
         private void HandleMoved(Enemy en, Vector2Int oldAnchor, MoveStyle style)
