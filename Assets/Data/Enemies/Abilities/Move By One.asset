@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.MoveAbility
   orderIndex: 0
   postDelay: 0.1
-  moveChance: 1
+  moveChance: 0.7
   maxSteps: 1
   moveDuration: 0.2
   shiftEase: 10

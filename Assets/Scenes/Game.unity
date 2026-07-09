@@ -182,8 +182,8 @@ MonoBehaviour:
   cellPrefab: {fileID: 3636118875240870077, guid: 7314f90e33736dd40978bfc7fdf1193f, type: 3}
   shiftButtonPrefab: {fileID: 146354710504832982, guid: 85d1a7536f960814b8bbe2a473564f83, type: 3}
   metrics:
-    CellSize: 70
-    Spacing: 5
+    CellSize: 100
+    Spacing: 10
   padding:
     m_Left: 20
     m_Right: 20
