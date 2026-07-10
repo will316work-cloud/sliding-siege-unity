@@ -14,7 +14,7 @@ namespace SlidingSiege
         [Tooltip("Color of the link lines drawn from this enemy to its link targets / disabled cards.")]
         public Color LinkColor = Color.white;
         [Tooltip("Base thickness (px) of this enemy's link lines.")]
-        [Min(1f)] public float LineThickness = 4f;
+        [Min(1f)] public float LineThickness = 7.5f;
         [Tooltip("Opacity of this enemy's link lines.")]
         [Range(0f, 1f)] public float LineAlpha = 0.75f;
 
