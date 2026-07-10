@@ -166,6 +166,12 @@ namespace SlidingSiege
         public void MarkPendingHit() => PendingHit = true;
         public void ClearPendingHit() => PendingHit = false;
 
+        /// Generic per-enemy charge-up counter (Siren's song). Advanced and
+        /// reset by charge abilities each enemy phase.
+        public int ChargeCounter { get; private set; }
+        public void AdvanceCharge() => ChargeCounter++;
+        public void ResetCharge() => ChargeCounter = 0;
+
         /// Hitbox stored by SetHitboxAbility; persists until overwritten.
         /// Cast abilities and conditions resolve it at the current anchor.
         public Hitbox QueuedHitbox { get; set; }

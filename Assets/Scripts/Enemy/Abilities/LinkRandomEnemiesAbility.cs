@@ -19,6 +19,9 @@ namespace SlidingSiege
         [Tooltip("Skip while the owner still has at least one LIVING link (Siren keeps links until broken); off = reroll every phase (Golem).")]
         [SerializeField] private bool onlyWhenUnlinked = false;
 
+        [Tooltip("Siren: while linked, the owner gains this damage reduction (0 = none). Applied as a permanent DamageResistanceStatus; StunSelfAbility removes it when the links break.")]
+        [SerializeField, Range(0f, 1f)] private float damageReductionWhileLinked = 0f;
+
         [Header("Animation")]
         [Tooltip("Optional AnimationCaller preset played (and awaited) on the owner while linking.")]
         [SerializeField] private string castAnimationPreset = "";
@@ -46,6 +49,12 @@ namespace SlidingSiege
                 pool.RemoveAt(idx);
             }
             if (owner.LinkedIds.Count == 0) yield break;
+
+            if (damageReductionWhileLinked > 0f)
+            {
+                owner.RemoveStatuses(st => st is DamageResistanceStatus);
+                owner.AddStatus(new DamageResistanceStatus(damageReductionWhileLinked, -1));
+            }
 
             Debug.Log($"[SlidingSiege] {owner.Definition.name} links itself to {owner.LinkedIds.Count} enem{(owner.LinkedIds.Count == 1 ? "y" : "ies")}.");
             result.Success = true;

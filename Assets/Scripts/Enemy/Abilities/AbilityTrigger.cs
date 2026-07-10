@@ -12,5 +12,7 @@ namespace SlidingSiege
         OnDamaged = 2,
         OnCritical = 3,
         OnDeath = 4,
+        /// Fires on an enemy when the LAST living enemy it links dies.
+        OnLinkBroken = 5,
     }
 }

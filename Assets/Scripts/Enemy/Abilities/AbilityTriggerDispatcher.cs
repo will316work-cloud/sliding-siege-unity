@@ -59,6 +59,12 @@ namespace SlidingSiege
                 _damageHooks.Remove(en.Id);
             }
             Enqueue(en, AbilityTrigger.OnDeath);
+
+            // Link-break watch: any linker whose LAST living link just died
+            // fires its OnLinkBroken abilities (Siren stun).
+            foreach (var linker in _state.Enemies.Values)
+                if (linker.IsLinkedTo(en.Id) && !System.Linq.Enumerable.Any(linker.LivingLinkTargets(_state)))
+                    Enqueue(linker, AbilityTrigger.OnLinkBroken);
         }
 
         private void HookDamage(Enemy en)

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b1c2d3e4f5a60718293a4b5c6d7e8f9, type: 3}
+  m_Name: Siren Link
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.LinkRandomEnemiesAbility
+  trigger: 0
+  orderIndex: -2
+  postDelay: 0.3
+  minLinks: 3
+  maxLinks: 3
+  onlyWhenUnlinked: 1
+  damageReductionWhileLinked: 0.9
+  castAnimationPreset:

@@ -37,10 +37,7 @@ namespace SlidingSiege
         {
             _state = state;
             // Death breaks any spells the dead enemy had on the player's cards.
-            _state.OnEnemyRemoved += en =>
-            {
-                if (ClearDisablesFrom(en.Id)) OnInventoryChanged?.Invoke();
-            };
+            _state.OnEnemyRemoved += en => ClearDisablesFrom(en.Id);
         }
 
         // ---------------- Consumable disabling ----------------
@@ -71,6 +68,7 @@ namespace SlidingSiege
         {
             bool removed = _attackDisables.Remove(sourceEnemyId);
             removed |= _itemDisables.Remove(sourceEnemyId);
+            if (removed) OnInventoryChanged?.Invoke();
             return removed;
         }
 
