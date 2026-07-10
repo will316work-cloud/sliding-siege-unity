@@ -15,6 +15,7 @@ namespace SlidingSiege
         public override IEnumerator Execute(EnemyAbilityContext ctx, AbilityResult result)
         {
             ctx.Owner.QueuedHitbox = hitbox;
+            ctx.State.NotifyEnemyHitboxChanged(ctx.Owner);
             result.Success = true;
             yield break;
         }

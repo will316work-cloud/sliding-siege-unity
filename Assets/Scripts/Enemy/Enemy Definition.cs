@@ -22,6 +22,18 @@ namespace SlidingSiege
         [Tooltip("Bomb-priority rule: a direct attack hit destroys this enemy outright and voids the rest of the attack — no other enemy takes damage from it.")]
         public bool VoidsAttackOnHit;
 
+        [Tooltip("Golem rule: damage aimed at any enemy this one links is absorbed by this enemy instead (recomputed against ITS stats and statuses).")]
+        public bool AbsorbsLinkedDamage;
+
+        [Tooltip("Golem rule: at 0 HP this enemy goes critical (Enemy.PendingDetonation) instead of dying — its own condition-gated abilities handle the detonation next enemy phase.")]
+        public bool DetonatesAtZeroHP;
+
+        [Tooltip("False = link abilities (Golem/Siren) can never pick this enemy as a link target (e.g. Bomb).")]
+        public bool CanBeLinkTarget = true;
+
+        [Tooltip("Color of the link lines LinkOverlay draws from this enemy to its link targets / disabled cards.")]
+        public Color LinkColor = Color.white;
+
         [Header("Base shape (body, sprite, visual rect)")]
         public EnemyShape Shape = new EnemyShape();
 

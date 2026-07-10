@@ -28,6 +28,16 @@ namespace SlidingSiege
         public event Action<Enemy> OnEnemyResized;
         public event Action OnRebuilt;
 
+        /// Raised when an enemy goes critical (Enemy.PendingDetonation set by
+        /// CombatSystem.HandleZeroHp). Drives OnCritical-triggered abilities.
+        public event Action<Enemy> OnEnemyWentCritical;
+        public void NotifyEnemyWentCritical(Enemy en) => OnEnemyWentCritical?.Invoke(en);
+
+        /// Raised when an enemy's stored hitbox changes outside the enemy
+        /// phase (SetHitboxAbility), so telegraph overlays can redraw.
+        public event Action<Enemy> OnEnemyHitboxChanged;
+        public void NotifyEnemyHitboxChanged(Enemy en) => OnEnemyHitboxChanged?.Invoke(en);
+
         public void Initialize(int rows, int cols)
         {
             Rows = rows; Cols = cols;

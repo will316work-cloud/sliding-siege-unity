@@ -22,6 +22,8 @@ namespace SlidingSiege
         [SerializeField] private AbilityHighlightOverlay abilityHighlightOverlay;
         [SerializeField] private DamageTextSpawner damageTextSpawner;
         [SerializeField] private EnemyPhaseRunner enemyPhaseRunner;
+        [Tooltip("Optional: link-line display (Golem/Siren/Mage threads).")]
+        [SerializeField] private LinkOverlay linkOverlay;
 
         [Header("Animation")]
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
@@ -30,6 +32,7 @@ namespace SlidingSiege
         public GridState State { get; private set; }
 
         private IMoveAnimator _animator;
+        private AbilityTriggerDispatcher _triggerDispatcher;
         private bool _rebuildQueued;
 
         private void Start()
@@ -59,6 +62,13 @@ namespace SlidingSiege
             targetingController.Initialize(State, enemyPhaseRunner);
             damageTextSpawner.Initialize(State, enemyViewManager);
             enemyPhaseRunner.Initialize(State, enemyViewManager);
+            if (linkOverlay != null) linkOverlay.Initialize(State, targetingController.Combat, enemyViewManager);
+
+            // Event-triggered abilities (OnSpawn/OnDamaged/OnCritical/OnDeath)
+            // run outside the phase runner; the dispatcher pumps on this host.
+            _triggerDispatcher = new AbilityTriggerDispatcher(
+                State, enemyViewManager, enemyPhaseRunner, targetingController.Combat, this);
+            enemyPhaseRunner.TriggerDispatcher = _triggerDispatcher;
 
             // Opening enemy phase: the runner's spawn abilities populate the
             // board (and newcomers run their not-yet-passed abilities, e.g.

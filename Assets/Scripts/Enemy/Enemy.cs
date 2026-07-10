@@ -88,6 +88,21 @@ namespace SlidingSiege
         public bool IsDead => HP <= 0;
         public readonly List<StatusEffect> Statuses = new List<StatusEffect>();
 
+        /// Ids of enemies this one is linked to (Golem/Siren style), written
+        /// by LinkRandomEnemiesAbility. Dead targets are simply stale ids.
+        public readonly List<int> LinkedIds = new List<int>();
+
+        /// Golem-style critical state: reached 0 HP but survives to detonate
+        /// next enemy phase (see EnemyDefinition.DetonatesAtZeroHP).
+        public bool PendingDetonation;
+
+        /// Living enemies this one is currently linked to.
+        public IEnumerable<Enemy> LivingLinkTargets(GridState s)
+        {
+            foreach (var id in LinkedIds)
+                if (s.Enemies.TryGetValue(id, out var en)) yield return en;
+        }
+
         /// Hitbox stored by SetHitboxAbility; persists until overwritten.
         /// Cast abilities and conditions resolve it at the current anchor.
         public Hitbox QueuedHitbox;
@@ -103,6 +118,8 @@ namespace SlidingSiege
         public bool HasStatus<T>() where T : StatusEffect => Statuses.OfType<T>().Any();
 
         /// False while dead or any status (e.g. a future stun) vetoes acting.
-        public bool CanAct => !IsDead && Statuses.All(s => !s.PreventsAction);
+        /// A pending-detonation enemy sits at 0 HP but still acts (it has to
+        /// run its detonation abilities next enemy phase).
+        public bool CanAct => (!IsDead || PendingDetonation) && Statuses.All(s => !s.PreventsAction);
     }
 }

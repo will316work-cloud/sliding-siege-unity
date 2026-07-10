@@ -21,6 +21,15 @@ namespace SlidingSiege
 
         public bool IsRunning { get; private set; }
 
+        /// Player combat/inventory, wired by TargetingController so
+        /// abilities can disable attacks/items through the context.
+        public CombatSystem Combat { get; set; }
+
+        /// Event-trigger dispatcher, wired by SlidingGridController. The
+        /// runner flushes it between ability steps so mid-phase triggers
+        /// (crits, deaths from blasts) run before the next enemy acts.
+        public AbilityTriggerDispatcher TriggerDispatcher { get; set; }
+
         public event Action OnPhaseStarted;
         public event Action OnPhaseFinished;
 
@@ -59,7 +68,8 @@ namespace SlidingSiege
             {
                 if (en.Definition.Abilities == null) continue;
                 foreach (var ability in en.Definition.Abilities)
-                    if (ability != null) _queue.Add((ability, en));
+                    if (ability != null && ability.Trigger == AbilityTrigger.EnemyPhase)
+                        _queue.Add((ability, en));
             }
             foreach (var ability in spawnAbilities)
                 if (ability != null) _queue.Add((ability, null));
@@ -79,7 +89,7 @@ namespace SlidingSiege
                     if (!enemy.CanAct) continue;                          // stunned etc.
                 }
 
-                var ctx = new EnemyAbilityContext(enemy, _state, _views, this);
+                var ctx = new EnemyAbilityContext(enemy, _state, _views, this, Combat);
                 var result = new AbilityResult();
                 yield return StartCoroutine(ability.Execute(ctx, result));
 
@@ -89,6 +99,9 @@ namespace SlidingSiege
 
                 if (result.Success && ability.PostDelay > 0f)
                     yield return new WaitForSeconds(ability.PostDelay);
+
+                if (TriggerDispatcher != null)
+                    yield return TriggerDispatcher.Flush();
             }
 
             // Expire turn-limited statuses (permanent ones are negative).
@@ -113,7 +126,8 @@ namespace SlidingSiege
             if (!IsRunning || en.Definition.Abilities == null) return;
             foreach (var ability in en.Definition.Abilities)
             {
-                if (ability == null || ability.OrderIndex > _currentOrderIndex) continue;
+                if (ability == null || ability.Trigger != AbilityTrigger.EnemyPhase) continue;
+                if (ability.OrderIndex > _currentOrderIndex) continue;
                 int i = 0;
                 while (i < _queue.Count && _queue[i].ability.OrderIndex >= ability.OrderIndex) i++;
                 _queue.Insert(i, (ability, en));
