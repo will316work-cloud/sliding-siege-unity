@@ -4,18 +4,17 @@ using UnityEngine.UI;
 
 namespace SlidingSiege
 {
-    /// Tints cursed (slide-disabled) rows and columns, colored by the
-    /// source enemy's LinkDisplay color. Rebuilt every LateUpdate from
-    /// pooled Images, so curses appearing/expiring/dying update instantly.
+    /// Tints cursed (slide-disabled) rows and columns, styled per source
+    /// enemy by its EnemyDefinition.DisabledLineDisplay settings (sprite,
+    /// color, Image options). Rebuilt every LateUpdate from pooled Images,
+    /// so curses appearing/expiring/dying update instantly.
     ///
     /// Scene setup: put this on a RectTransform with the SAME rect as the
     /// Enemy Layer (sibling above the cell backgrounds); SlidingGridController
     /// wires state + metrics at startup.
     public class DisabledLineOverlay : MonoBehaviour
     {
-        [Header("Appearance")]
-        [Tooltip("Opacity of the line tint (color comes from the source enemy's LinkDisplay).")]
-        [SerializeField, Range(0f, 1f)] private float tintAlpha = 0.22f;
+        private static readonly DisabledLineDisplaySettings FallbackSettings = new DisabledLineDisplaySettings();
 
         private GridState _state;
         private GridLayoutMetrics _metrics;
@@ -36,13 +35,14 @@ namespace SlidingSiege
                 var gridSize = _metrics.GridPixelSize(_state.Rows, _state.Cols);
                 foreach (var (isRow, index, sourceId) in _state.DisabledLines())
                 {
-                    var color = Color.white;
+                    var settings = FallbackSettings;
                     if (_state.Enemies.TryGetValue(sourceId, out var source))
-                        color = source.Definition.LinkDisplay.LinkColor;
-                    color.a = tintAlpha;
+                    {
+                        settings = source.Definition.DisabledLineDisplay;
+                    }
 
                     var img = NextTint();
-                    img.color = color;
+                    settings.ApplyTo(img);
                     var rt = img.rectTransform;
                     if (isRow)
                     {

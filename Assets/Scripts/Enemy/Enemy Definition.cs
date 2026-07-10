@@ -32,6 +32,10 @@ namespace SlidingSiege
         [FormerlySerializedAs("LinkDisplay")]
         [SerializeField] private LinkDisplaySettings linkDisplay = new LinkDisplaySettings();
 
+        [Header("Disabled line display")]
+        [Tooltip("How DisabledLineOverlay draws the rows/columns this enemy's curses disable.")]
+        [SerializeField] private DisabledLineDisplaySettings disabledLineDisplay = new DisabledLineDisplaySettings();
+
         [Header("Base shape (body, sprite, visual rect)")]
         [FormerlySerializedAs("Shape")]
         [SerializeField] private EnemyShape shape = new EnemyShape();
@@ -66,6 +70,7 @@ namespace SlidingSiege
         public int MaxHP => maxHP;
         public CombatRules Rules => combatRules != null ? combatRules : CombatRules.Default;
         public LinkDisplaySettings LinkDisplay => linkDisplay;
+        public DisabledLineDisplaySettings DisabledLineDisplay => disabledLineDisplay;
         public EnemyShape Shape => shape;
         public Color ColorOverlay => colorOverlay;
 
