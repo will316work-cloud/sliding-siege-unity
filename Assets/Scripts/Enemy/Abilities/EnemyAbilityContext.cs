@@ -14,13 +14,17 @@ namespace SlidingSiege
         public EnemyViewManager Views { get; }
         /// Host MonoBehaviour for nested coroutines (the phase runner).
         public MonoBehaviour Host { get; }
+        /// Player combat/inventory; null until TargetingController wires it
+        /// into the phase runner (abilities must null-check).
+        public CombatSystem Combat { get; }
 
-        public EnemyAbilityContext(Enemy owner, GridState state, EnemyViewManager views, MonoBehaviour host)
+        public EnemyAbilityContext(Enemy owner, GridState state, EnemyViewManager views, MonoBehaviour host, CombatSystem combat = null)
         {
             Owner = owner;
             State = state;
             Views = views;
             Host = host;
+            Combat = combat;
         }
 
         /// Distinct enemies inside the owner's stored hitbox (set by

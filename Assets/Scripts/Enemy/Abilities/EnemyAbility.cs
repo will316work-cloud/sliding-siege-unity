@@ -11,12 +11,16 @@ namespace SlidingSiege
     public abstract class EnemyAbility : ScriptableObject
     {
         [Header("Sequencing")]
-        [Tooltip("Abilities across ALL enemies run in DESCENDING order index (higher runs first); ties run in enemy spawn-id order.")]
+        [Tooltip("EnemyPhase runs through the phase runner at the order index below; every other trigger runs event-driven at its own time (see AbilityTriggerDispatcher) and ignores the order index.")]
+        [SerializeField] private AbilityTrigger trigger = AbilityTrigger.EnemyPhase;
+
+        [Tooltip("EnemyPhase only: abilities across ALL enemies run in DESCENDING order index (higher runs first); ties run in enemy spawn-id order.")]
         [SerializeField] private int orderIndex = 0;
 
         [Tooltip("Delay (seconds) after this ability, applied ONLY when it succeeds.")]
         [SerializeField, Min(0f)] private float postDelay = 1f;
 
+        public AbilityTrigger Trigger => trigger;
         public int OrderIndex => orderIndex;
         public float PostDelay => postDelay;
 
