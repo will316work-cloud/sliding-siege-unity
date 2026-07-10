@@ -69,6 +69,7 @@ namespace SlidingSiege
             };
             foreach (var def in attackDefinitions) _combat.SetupAttack(def);
             foreach (var def in itemDefinitions) _combat.SetupItem(def);
+            if (_phaseRunner != null) _phaseRunner.Combat = _combat;
             _combat.OnInventoryChanged += RefreshLists;
 
             // Enemy telegraphs (stored hitboxes) re-render on any board change.
@@ -78,6 +79,7 @@ namespace SlidingSiege
             _state.OnEnemyResized += HandleEnemyEvent;
             _state.OnShifted += HandleShifted;
             _state.OnRebuilt += RefreshHighlights;
+            _state.OnEnemyHitboxChanged += HandleEnemyEvent;
             if (_phaseRunner != null) _phaseRunner.OnPhaseFinished += RefreshHighlights;
 
             confirmButton.onClick.AddListener(Confirm);
@@ -99,7 +101,7 @@ namespace SlidingSiege
         {
             bool toggleOff = _selectedItem == def;
             ClearSelection();
-            if (!toggleOff && _combat.GetItemCount(def.Kind) > 0) _selectedItem = def;
+            if (!toggleOff && _combat.CanUseItem(def)) _selectedItem = def;
             RefreshAll();
         }
 
@@ -269,6 +271,7 @@ namespace SlidingSiege
                 _state.OnEnemyResized -= HandleEnemyEvent;
                 _state.OnShifted -= HandleShifted;
                 _state.OnRebuilt -= RefreshHighlights;
+                _state.OnEnemyHitboxChanged -= HandleEnemyEvent;
             }
             if (_phaseRunner != null) _phaseRunner.OnPhaseFinished -= RefreshHighlights;
         }

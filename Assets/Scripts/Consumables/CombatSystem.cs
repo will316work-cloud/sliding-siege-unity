@@ -27,7 +27,77 @@ namespace SlidingSiege
         public event Action<AttackResult> OnAttackResolved;
         public event Action OnInventoryChanged;
 
-        public CombatSystem(GridState state) { _state = state; }
+        public CombatSystem(GridState state)
+        {
+            _state = state;
+            // Death breaks any spells the dead enemy had on the player's cards.
+            _state.OnEnemyRemoved += en =>
+            {
+                if (ClearDisablesFrom(en.Id)) OnInventoryChanged?.Invoke();
+            };
+        }
+
+        // ---------------- Consumable disabling ----------------
+        // Enemies (Mage spells, Siren shrieks) can disable attacks/items.
+        // Registered per source enemy id so a kill lifts that enemy's
+        // disables immediately; sources reroll by clearing then re-adding.
+
+        private readonly Dictionary<int, HashSet<AttackDefinition>> _attackDisables = new Dictionary<int, HashSet<AttackDefinition>>();
+        private readonly Dictionary<int, HashSet<ItemKind>> _itemDisables = new Dictionary<int, HashSet<ItemKind>>();
+
+        public void DisableAttack(int sourceEnemyId, AttackDefinition def)
+        {
+            if (!_attackDisables.TryGetValue(sourceEnemyId, out var set))
+                _attackDisables[sourceEnemyId] = set = new HashSet<AttackDefinition>();
+            set.Add(def);
+            OnInventoryChanged?.Invoke();
+        }
+
+        public void DisableItem(int sourceEnemyId, ItemKind kind)
+        {
+            if (!_itemDisables.TryGetValue(sourceEnemyId, out var set))
+                _itemDisables[sourceEnemyId] = set = new HashSet<ItemKind>();
+            set.Add(kind);
+            OnInventoryChanged?.Invoke();
+        }
+
+        public bool ClearDisablesFrom(int sourceEnemyId)
+        {
+            bool removed = _attackDisables.Remove(sourceEnemyId);
+            removed |= _itemDisables.Remove(sourceEnemyId);
+            return removed;
+        }
+
+        public bool IsAttackDisabled(AttackDefinition def) =>
+            _attackDisables.Values.Any(set => set.Contains(def));
+
+        public bool IsItemDisabled(ItemKind kind) =>
+            _itemDisables.Values.Any(set => set.Contains(kind));
+
+        /// Attacks a disabling enemy may target: set up and with charges
+        /// left (all of them under InfiniteAttacks).
+        public IEnumerable<AttackDefinition> AvailableAttacks() =>
+            _charges.Where(kv => InfiniteAttacks || kv.Value > 0).Select(kv => kv.Key);
+
+        /// Items a disabling enemy may target: set up and in stock.
+        public IEnumerable<ItemKind> AvailableItems() =>
+            _itemCounts.Where(kv => InfiniteItems || kv.Value > 0).Select(kv => kv.Key);
+
+        /// All (source enemy, attack) disable pairs, for the link display.
+        public IEnumerable<(int SourceId, AttackDefinition Attack)> AttackDisableEntries()
+        {
+            foreach (var kv in _attackDisables)
+                foreach (var def in kv.Value)
+                    yield return (kv.Key, def);
+        }
+
+        /// All (source enemy, item) disable pairs, for the link display.
+        public IEnumerable<(int SourceId, ItemKind Item)> ItemDisableEntries()
+        {
+            foreach (var kv in _itemDisables)
+                foreach (var kind in kv.Value)
+                    yield return (kv.Key, kind);
+        }
 
         // ---------------- Inventory ----------------
 
@@ -47,12 +117,12 @@ namespace SlidingSiege
         }
 
         public bool CanUseItem(ItemDefinition def) =>
-            InfiniteItems || GetItemCount(def.Kind) > 0;
+            (InfiniteItems || GetItemCount(def.Kind) > 0) && !IsItemDisabled(def.Kind);
 
         // ---------------- Attacks ----------------
 
         public bool CanAttack(AttackDefinition def) =>
-            InfiniteAttacks || (AttacksRemaining > 0 && GetCharges(def) > 0);
+            (InfiniteAttacks || (AttacksRemaining > 0 && GetCharges(def) > 0)) && !IsAttackDisabled(def);
 
         public AttackResult ResolveAttack(AttackDefinition def, Vector2Int anchor, int variantIndex)
         {
@@ -102,12 +172,18 @@ namespace SlidingSiege
                 float baseDamage = def.BaseDamage * DamageMultiplier();
                 foreach (var kv in hitPercents)
                 {
-                    if (!_state.Enemies.TryGetValue(kv.Key, out var en)) continue;
-                    int dmg = Mathf.RoundToInt(baseDamage * kv.Value * en.DamageTakenMultiplier());
-                    en.HP -= dmg;
+                    if (!_state.Enemies.TryGetValue(kv.Key, out var target)) continue;
+                    // Golem rule: an absorber linking the target soaks the
+                    // damage, recomputed against ITS multipliers (JS parity).
+                    var recipient = RouteDamage(_state, target);
+                    int dmg = Mathf.RoundToInt(baseDamage * kv.Value * recipient.DamageTakenMultiplier());
+                    dmg = ClampToDetonator(recipient, dmg);
+                    recipient.HP -= dmg;
                     result.HitEnemyIds.Add(kv.Key);
-                    result.DamageDealt[kv.Key] = dmg;
-                    if (en.HP <= 0) result.KilledEnemyIds.Add(kv.Key);
+                    result.DamageDealt.TryGetValue(recipient.Id, out var prior);
+                    result.DamageDealt[recipient.Id] = prior + dmg;
+                    if (recipient.HP <= 0 && HandleZeroHp(_state, recipient) && !result.KilledEnemyIds.Contains(recipient.Id))
+                        result.KilledEnemyIds.Add(recipient.Id);
                 }
             }
 
@@ -122,6 +198,42 @@ namespace SlidingSiege
             OnInventoryChanged?.Invoke();
             OnAttackResolved?.Invoke(result);
             return result;
+        }
+
+        // ---------------- Damage routing (shared with abilities) ----------------
+
+        /// The enemy that actually receives damage aimed at `target`: the
+        /// first living, non-critical absorber (Golem) linking it, or the
+        /// target itself. Absorbers never redirect to one another.
+        public static Enemy RouteDamage(GridState s, Enemy target)
+        {
+            if (!target.Definition.AbsorbsLinkedDamage)
+                foreach (var en in s.Enemies.Values)
+                    if (en.Definition.AbsorbsLinkedDamage && !en.PendingDetonation && en.LinkedIds.Contains(target.Id))
+                        return en;
+            return target;
+        }
+
+        /// Detonators never drop below 0 HP (avoids a phantom heal indicator
+        /// when clamping back up); everyone else takes the full amount.
+        public static int ClampToDetonator(Enemy en, int dmg) =>
+            en.Definition.DetonatesAtZeroHP ? Mathf.Min(dmg, en.HP) : dmg;
+
+        /// Call when an enemy is at 0 HP or less. Detonators go critical
+        /// (pending detonation, links dropped, OnEnemyWentCritical raised)
+        /// and survive — returns false; returns true when the enemy really
+        /// dies.
+        public static bool HandleZeroHp(GridState s, Enemy en)
+        {
+            if (!en.Definition.DetonatesAtZeroHP) return true;
+            if (!en.PendingDetonation)
+            {
+                en.PendingDetonation = true;
+                en.LinkedIds.Clear();
+                Debug.Log($"[SlidingSiege] {en.Definition.name} is critically damaged and will explode next enemy phase!");
+                s.NotifyEnemyWentCritical(en);
+            }
+            return false;
         }
 
         // ---------------- Footprint helpers ----------------
