@@ -50,6 +50,8 @@ namespace SlidingSiege
 
         private readonly List<Pulse> _pulses = new List<Pulse>();
         private readonly List<Image> _overlayPool = new List<Image>();
+        private readonly Dictionary<int, List<(Enemy, Vector2)>> _clusters
+            = new Dictionary<int, List<(Enemy, Vector2)>>();
 
         public void Initialize(GridState state, CombatSystem combat, EnemyViewManager views)
         {
@@ -81,6 +83,40 @@ namespace SlidingSiege
                         if (TryEnemyPoint(id, out var to))
                             Draw(from, to, LineColor(settings),
                                 settings.LineThickness * PulseThicknessMultiplier(en.Id, id));
+                }
+
+                // Cluster chains (Slime): mutual groups sharing a ClusterId,
+                // drawn as a nearest-neighbor chain in the cluster's style.
+                _clusters.Clear();
+                foreach (var en in _state.Enemies.Values)
+                {
+                    if (en.ClusterId < 0) continue;
+                    if (!TryEnemyPoint(en.Id, out var p)) continue;
+                    if (!_clusters.TryGetValue(en.ClusterId, out var list))
+                        _clusters[en.ClusterId] = list = new List<(Enemy, Vector2)>();
+                    list.Add((en, p));
+                }
+                foreach (var list in _clusters.Values)
+                {
+                    if (list.Count < 2) continue;
+                    var settings = list[0].Item1.Definition.LinkDisplay;
+                    var color = LineColor(settings);
+                    var remaining = new List<(Enemy en, Vector2 pos)>(list);
+                    var current = remaining[0];
+                    remaining.RemoveAt(0);
+                    while (remaining.Count > 0)
+                    {
+                        int nearest = 0;
+                        float best = float.MaxValue;
+                        for (int i = 0; i < remaining.Count; i++)
+                        {
+                            float d = (remaining[i].pos - current.pos).sqrMagnitude;
+                            if (d < best) { best = d; nearest = i; }
+                        }
+                        Draw(current.pos, remaining[nearest].pos, color, settings.LineThickness);
+                        current = remaining[nearest];
+                        remaining.RemoveAt(nearest);
+                    }
                 }
 
                 // Enemy-to-card links (Mage spells, Siren curses).

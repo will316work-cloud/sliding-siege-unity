@@ -176,6 +176,7 @@ namespace SlidingSiege
                     // Golem rule: an absorber linking the target soaks the
                     // damage, recomputed against ITS multipliers (JS parity).
                     var recipient = RouteDamage(_state, target);
+                    target.PendingHit = true; // slime clusters count absorbed hits too
                     int dmg = Mathf.RoundToInt(baseDamage * kv.Value * recipient.DamageTakenMultiplier());
                     dmg = ClampToSurvivor(recipient, dmg);
                     recipient.HP -= dmg;

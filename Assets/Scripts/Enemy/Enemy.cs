@@ -96,6 +96,15 @@ namespace SlidingSiege
         /// next enemy phase (see EnemyDefinition.DiesAtZeroHP, off).
         public bool PendingDetonation;
 
+        /// Slime cluster membership; -1 = none. Assigned on spawn by
+        /// SlimeClusterAssignAbility (new clusters use the owner's Id, so
+        /// ids are globally unique). LinkOverlay chains cluster members.
+        public int ClusterId = -1;
+
+        /// Set whenever damage is aimed at this enemy (even when a Golem
+        /// absorbs it); consumed by SlimeClusterResolveAbility each phase.
+        public bool PendingHit;
+
         /// Living enemies this one is currently linked to.
         public IEnumerable<Enemy> LivingLinkTargets(GridState s)
         {

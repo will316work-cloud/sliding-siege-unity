@@ -56,6 +56,7 @@ namespace SlidingSiege
                 var target = kv.Key;
                 bool damaging = amount < 0f;
                 var recipient = damaging ? CombatSystem.RouteDamage(s, target) : target;
+                if (damaging) target.PendingHit = true; // slime clusters count absorbed hits too
                 float baseAmount = mode switch
                 {
                     ChangeMode.FlatAmount => amount,
