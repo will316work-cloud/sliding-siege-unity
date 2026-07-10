@@ -17,6 +17,8 @@ MonoBehaviour:
   branches:
   - Conditions:
     - {fileID: 11400000, guid: 3265d31040144a5a83bfc0215aec7a0e, type: 2}
-    Ability: {fileID: 11400000, guid: 5547a1492d8a403585d338edc6b7a224, type: 2}
+    Abilities:
+    - {fileID: 11400000, guid: 5547a1492d8a403585d338edc6b7a224, type: 2}
   - Conditions: []
-    Ability: {fileID: 11400000, guid: 263952cad23b44feb16be62b7e3cb1de, type: 2}
+    Abilities:
+    - {fileID: 11400000, guid: 263952cad23b44feb16be62b7e3cb1de, type: 2}
