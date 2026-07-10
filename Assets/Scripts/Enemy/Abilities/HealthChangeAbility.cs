@@ -48,18 +48,28 @@ namespace SlidingSiege
             var killed = new List<int>();
             foreach (var kv in factors)
             {
-                // Damage redirects to a linking absorber (Golem) and is
-                // recomputed against ITS stats — heals stay on the target.
-                var recipient = amount < 0f ? CombatSystem.RouteDamage(s, kv.Key) : kv.Key;
+                // Damage redirects to a linking absorber (Golem) — heals
+                // stay on the target. Proportional amounts are measured
+                // against the ORIGINAL target's health and scaled by its
+                // statuses; a redirect then also applies the absorber's own
+                // statuses to what it actually receives.
+                var target = kv.Key;
+                bool damaging = amount < 0f;
+                var recipient = damaging ? CombatSystem.RouteDamage(s, target) : target;
                 float baseAmount = mode switch
                 {
                     ChangeMode.FlatAmount => amount,
-                    ChangeMode.CurrentHealthFactor => recipient.HP * amount,
-                    _ => recipient.MaxHP * amount,
+                    ChangeMode.CurrentHealthFactor => target.HP * amount,
+                    _ => target.MaxHP * amount,
                 };
                 float scaled = baseAmount * kv.Value;
-                if (scaled < 0f) scaled *= recipient.DamageTakenMultiplier();
+                if (damaging)
+                {
+                    scaled *= target.DamageTakenMultiplier();
+                    if (recipient != target) scaled *= recipient.DamageTakenMultiplier();
+                }
                 int delta = Mathf.RoundToInt(scaled);
+                if (delta < 0 && recipient != target) s.NotifyDamageRedirected(target, recipient);
                 if (delta < 0) delta = -CombatSystem.ClampToDetonator(recipient, -delta);
                 recipient.HP = Mathf.Min(recipient.MaxHP, recipient.HP + delta);
                 if (recipient.HP <= 0 && CombatSystem.HandleZeroHp(s, recipient) && !killed.Contains(recipient.Id))
