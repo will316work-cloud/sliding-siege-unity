@@ -25,8 +25,8 @@ namespace SlidingSiege
         [Tooltip("Golem rule: damage aimed at any enemy this one links is absorbed by this enemy instead (recomputed against ITS stats and statuses).")]
         public bool AbsorbsLinkedDamage;
 
-        [Tooltip("Golem rule: at 0 HP this enemy goes critical (Enemy.PendingDetonation) instead of dying — its own condition-gated abilities handle the detonation next enemy phase.")]
-        public bool DetonatesAtZeroHP;
+        [Tooltip("On (default): dropping to 0 HP kills this enemy immediately. Off (Golem): at 0 HP it goes critical instead (Enemy.PendingDetonation set, links dropped, OnCritical abilities fire) and survives until something removes it, e.g. a condition-gated KillSelfAbility next enemy phase.")]
+        public bool DiesAtZeroHP = true;
 
         [Tooltip("False = link abilities (Golem/Siren) can never pick this enemy as a link target (e.g. Bomb).")]
         public bool CanBeLinkTarget = true;

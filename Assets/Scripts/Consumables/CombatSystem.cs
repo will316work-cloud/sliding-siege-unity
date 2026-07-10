@@ -177,7 +177,7 @@ namespace SlidingSiege
                     // damage, recomputed against ITS multipliers (JS parity).
                     var recipient = RouteDamage(_state, target);
                     int dmg = Mathf.RoundToInt(baseDamage * kv.Value * recipient.DamageTakenMultiplier());
-                    dmg = ClampToDetonator(recipient, dmg);
+                    dmg = ClampToSurvivor(recipient, dmg);
                     recipient.HP -= dmg;
                     if (recipient.Id != target.Id) _state.NotifyDamageRedirected(target, recipient);
                     result.HitEnemyIds.Add(kv.Key);
@@ -215,18 +215,19 @@ namespace SlidingSiege
             return target;
         }
 
-        /// Detonators never drop below 0 HP (avoids a phantom heal indicator
-        /// when clamping back up); everyone else takes the full amount.
-        public static int ClampToDetonator(Enemy en, int dmg) =>
-            en.Definition.DetonatesAtZeroHP ? Mathf.Min(dmg, en.HP) : dmg;
+        /// Enemies that survive at 0 HP never drop below it (avoids a
+        /// phantom heal indicator when clamping back up); everyone else
+        /// takes the full amount.
+        public static int ClampToSurvivor(Enemy en, int dmg) =>
+            en.Definition.DiesAtZeroHP ? dmg : Mathf.Min(dmg, en.HP);
 
-        /// Call when an enemy is at 0 HP or less. Detonators go critical
-        /// (pending detonation, links dropped, OnEnemyWentCritical raised)
-        /// and survive — returns false; returns true when the enemy really
-        /// dies.
+        /// Call when an enemy is at 0 HP or less. Enemies that don't die at
+        /// zero go critical (pending detonation, links dropped,
+        /// OnEnemyWentCritical raised) and survive — returns false; returns
+        /// true when the enemy really dies.
         public static bool HandleZeroHp(GridState s, Enemy en)
         {
-            if (!en.Definition.DetonatesAtZeroHP) return true;
+            if (en.Definition.DiesAtZeroHP) return true;
             if (!en.PendingDetonation)
             {
                 en.PendingDetonation = true;

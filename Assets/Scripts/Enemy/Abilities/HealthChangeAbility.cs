@@ -70,7 +70,7 @@ namespace SlidingSiege
                 }
                 int delta = Mathf.RoundToInt(scaled);
                 if (delta < 0 && recipient != target) s.NotifyDamageRedirected(target, recipient);
-                if (delta < 0) delta = -CombatSystem.ClampToDetonator(recipient, -delta);
+                if (delta < 0) delta = -CombatSystem.ClampToSurvivor(recipient, -delta);
                 recipient.HP = Mathf.Min(recipient.MaxHP, recipient.HP + delta);
                 if (recipient.HP <= 0 && CombatSystem.HandleZeroHp(s, recipient) && !killed.Contains(recipient.Id))
                     killed.Add(recipient.Id);

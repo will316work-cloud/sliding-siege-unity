@@ -19,7 +19,7 @@ MonoBehaviour:
   MaxHP: 14
   VoidsAttackOnHit: 1
   AbsorbsLinkedDamage: 0
-  DetonatesAtZeroHP: 0
+  DiesAtZeroHP: 1
   CanBeLinkTarget: 0
   Shape:
     BodyCells:

@@ -93,7 +93,7 @@ namespace SlidingSiege
         public readonly List<int> LinkedIds = new List<int>();
 
         /// Golem-style critical state: reached 0 HP but survives to detonate
-        /// next enemy phase (see EnemyDefinition.DetonatesAtZeroHP).
+        /// next enemy phase (see EnemyDefinition.DiesAtZeroHP, off).
         public bool PendingDetonation;
 
         /// Living enemies this one is currently linked to.

@@ -18,7 +18,7 @@ MonoBehaviour:
   MaxHP: 25
   VoidsAttackOnHit: 0
   AbsorbsLinkedDamage: 0
-  DetonatesAtZeroHP: 0
+  DiesAtZeroHP: 1
   CanBeLinkTarget: 1
   LinkDisplay:
     LinkColor: {r: 0.75, g: 0.35, b: 1, a: 1}
