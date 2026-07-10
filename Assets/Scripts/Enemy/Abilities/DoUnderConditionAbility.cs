@@ -6,10 +6,11 @@ using UnityEngine;
 namespace SlidingSiege
 {
     /// Composite if/else-if chain: branches are checked first to last, and
-    /// the FIRST branch whose conditions all pass runs its ability — later
-    /// branches are skipped. An empty condition list always passes (put one
-    /// last as an "else"). The executed ability's result flows through, so
-    /// its success gates this asset's post-delay.
+    /// the FIRST branch whose conditions all pass runs its abilities in
+    /// order — later branches are skipped. An empty condition list always
+    /// passes (put one last as an "else"). Each sub-ability's own postDelay
+    /// applies after it succeeds; the branch reports success (gating this
+    /// asset's postDelay) when ANY sub-ability succeeded.
     [CreateAssetMenu(menuName = "SlidingSiege/Abilities/Do Under Condition")]
     public class DoUnderConditionAbility : EnemyAbility
     {
@@ -18,7 +19,8 @@ namespace SlidingSiege
         {
             [Tooltip("ALL must pass for this branch to run. Empty = always passes (else branch).")]
             public List<AbilityCondition> Conditions = new List<AbilityCondition>();
-            public EnemyAbility Ability;
+            [Tooltip("Run in order; each one's own postDelay applies when it succeeds.")]
+            public List<EnemyAbility> Abilities = new List<EnemyAbility>();
         }
 
         [SerializeField] private List<Branch> branches = new List<Branch>();
@@ -31,9 +33,23 @@ namespace SlidingSiege
                 if (!Passes(branch, ctx)) continue;
 
                 // First passing branch consumes the chain, even when its
-                // ability slot is empty (an explicit do-nothing else).
-                if (branch.Ability != null && branch.Ability != this)
-                    yield return branch.Ability.Execute(ctx, result);
+                // ability list is empty (an explicit do-nothing else).
+                if (branch.Abilities == null) yield break;
+                foreach (var ability in branch.Abilities)
+                {
+                    if (ability == null || ability == this) continue;
+                    var subResult = new AbilityResult();
+                    yield return ability.Execute(ctx, subResult);
+                    if (subResult.Success)
+                    {
+                        result.Success = true;
+                        if (ability.PostDelay > 0f)
+                            yield return new WaitForSeconds(ability.PostDelay);
+                    }
+                    // Stop if a sub-ability removed the owner (e.g. KillSelf).
+                    if (ctx.Owner != null && !ctx.State.Enemies.ContainsKey(ctx.Owner.Id))
+                        break;
+                }
                 yield break;
             }
         }
