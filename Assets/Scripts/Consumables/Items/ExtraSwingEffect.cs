@@ -14,7 +14,7 @@ namespace SlidingSiege
 
         public bool Apply(GridState s, ItemDefinition def, CombatSystem combat, Vector2Int? a, Vector2Int? b, out string message)
         {
-            combat.AttacksRemaining++;
+            combat.GrantExtraAttack();
             message = "Extra Swing: +1 attack use this turn!";
             return true;
         }

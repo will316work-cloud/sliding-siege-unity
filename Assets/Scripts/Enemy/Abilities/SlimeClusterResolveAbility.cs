@@ -34,7 +34,7 @@ namespace SlidingSiege
                 var killed = new List<int>();
                 foreach (var m in members)
                 {
-                    m.PendingHit = false;
+                    m.ClearPendingHit();
                     if (m.HP <= 0) killed.Add(m.Id);
                 }
                 foreach (var id in killed) ctx.State.RemoveEnemy(id);
@@ -48,9 +48,9 @@ namespace SlidingSiege
                     if (m.PendingHit)
                     {
                         m.HP = m.MaxHP;
-                        m.PendingDetonation = false; // back from the 0-HP limbo
+                        m.ResetCritical(); // back from the 0-HP limbo
                     }
-                    m.PendingHit = false;
+                    m.ClearPendingHit();
                 }
                 Debug.Log($"[SlidingSiege] A {owner.Definition.name} cluster regenerates! Not every member was struck.");
             }

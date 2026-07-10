@@ -4,6 +4,6 @@ namespace SlidingSiege
     /// abilities can report success (post-delays only apply on success).
     public class AbilityResult
     {
-        public bool Success;
+        public bool Success { get; set; }
     }
 }

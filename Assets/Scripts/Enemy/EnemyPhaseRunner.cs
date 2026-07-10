@@ -106,13 +106,7 @@ namespace SlidingSiege
 
             // Expire turn-limited statuses (permanent ones are negative).
             foreach (var en in _state.Enemies.Values)
-                for (int i = en.Statuses.Count - 1; i >= 0; i--)
-                {
-                    var status = en.Statuses[i];
-                    if (status.TurnsRemaining < 0) continue;
-                    status.TurnsRemaining--;
-                    if (status.TurnsRemaining <= 0) en.Statuses.RemoveAt(i);
-                }
+                en.TickStatuses();
 
             IsRunning = false;
             OnPhaseFinished?.Invoke();

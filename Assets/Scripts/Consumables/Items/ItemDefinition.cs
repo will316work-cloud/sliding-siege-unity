@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -8,13 +9,26 @@ namespace SlidingSiege
     [CreateAssetMenu(menuName = "SlidingSiege/Item Definition")]
     public class ItemDefinition : ScriptableObject
     {
-        public ItemKind Kind;
-        public string DisplayName;
-        public Sprite Icon;
-        [Min(0)] public int StartingCount = 2;
-        [TextArea] public string Description;
+        [FormerlySerializedAs("Kind")]
+        [SerializeField] private ItemKind kind;
+        [FormerlySerializedAs("DisplayName")]
+        [SerializeField] private string displayName;
+        [FormerlySerializedAs("Icon")]
+        [SerializeField] private Sprite icon;
+        [FormerlySerializedAs("StartingCount")]
+        [SerializeField, Min(0)] private int startingCount = 2;
+        [FormerlySerializedAs("Description")]
+        [SerializeField, TextArea] private string description;
 
         [Tooltip("Shape-based effects (e.g. Gravity Orb) resolve this at the target cell; procedural previews use the FIRST part's highlight appearance.")]
-        public Hitbox Hitbox = new Hitbox();
+        [FormerlySerializedAs("Hitbox")]
+        [SerializeField] private Hitbox hitbox = new Hitbox();
+
+        public ItemKind Kind => kind;
+        public string DisplayName => displayName;
+        public Sprite Icon => icon;
+        public int StartingCount => startingCount;
+        public string Description => description;
+        public Hitbox Hitbox => hitbox;
     }
 }

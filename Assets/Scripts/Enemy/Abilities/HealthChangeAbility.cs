@@ -55,8 +55,8 @@ namespace SlidingSiege
                 // statuses to what it actually receives.
                 var target = kv.Key;
                 bool damaging = amount < 0f;
-                var recipient = damaging ? CombatSystem.RouteDamage(s, target) : target;
-                if (damaging) target.PendingHit = true; // slime clusters count absorbed hits too
+                var recipient = damaging ? target.Rules.RouteDamage(s, target) : target;
+                if (damaging) target.MarkPendingHit(); // slime clusters count absorbed hits too
                 float baseAmount = mode switch
                 {
                     ChangeMode.FlatAmount => amount,
@@ -71,9 +71,9 @@ namespace SlidingSiege
                 }
                 int delta = Mathf.RoundToInt(scaled);
                 if (delta < 0 && recipient != target) s.NotifyDamageRedirected(target, recipient);
-                if (delta < 0) delta = -CombatSystem.ClampToSurvivor(recipient, -delta);
+                if (delta < 0) delta = -recipient.Rules.ClampDamage(recipient, -delta);
                 recipient.HP = Mathf.Min(recipient.MaxHP, recipient.HP + delta);
-                if (recipient.HP <= 0 && CombatSystem.HandleZeroHp(s, recipient) && !killed.Contains(recipient.Id))
+                if (recipient.HP <= 0 && recipient.Rules.HandleZeroHp(s, recipient) && !killed.Contains(recipient.Id))
                     killed.Add(recipient.Id);
             }
             foreach (var id in killed) s.RemoveEnemy(id);

@@ -13,8 +13,13 @@ namespace SlidingSiege
         [Serializable]
         public class WeightedAbility
         {
-            public EnemyAbility Ability;
-            [Min(0f)] public float Weight = 1f;
+            [UnityEngine.Serialization.FormerlySerializedAs("Ability")]
+            [SerializeField] private EnemyAbility ability;
+            [UnityEngine.Serialization.FormerlySerializedAs("Weight")]
+            [SerializeField, Min(0f)] private float weight = 1f;
+
+            public EnemyAbility Ability => ability;
+            public float Weight => weight;
         }
 
         [SerializeField] private WeightedAbility[] options = new WeightedAbility[0];

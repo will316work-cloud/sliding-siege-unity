@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -12,32 +13,46 @@ namespace SlidingSiege
     public class EnemyShape
     {
         [Tooltip("Occupied cells, offsets from the bounding box top-left (x = row, y = col); min row/col should be 0. Non-rectangular shapes (L, X, ...) allowed.")]
-        public Vector2Int[] BodyCells = { Vector2Int.zero };
+        [FormerlySerializedAs("BodyCells")]
+        [SerializeField] private Vector2Int[] bodyCells = { Vector2Int.zero };
 
         [Header("Visuals while this shape is active")]
         [Tooltip("Null keeps the definition's sprite.")]
-        public Sprite Sprite;
+        [FormerlySerializedAs("Sprite")]
+        [SerializeField] private Sprite sprite;
         [Tooltip("How the Image rect is sized: stretched to the footprint bounding box, scaled relative to it, or fixed pixels.")]
-        public VisualSizeMode SizeMode = VisualSizeMode.StretchToFootprint;
+        [FormerlySerializedAs("SizeMode")]
+        [SerializeField] private VisualSizeMode sizeMode = VisualSizeMode.StretchToFootprint;
         [Tooltip("FootprintScale mode: multiplier per axis (1,1 = exact bounding box).")]
-        public Vector2 FootprintScale = Vector2.one;
+        [FormerlySerializedAs("FootprintScale")]
+        [SerializeField] private Vector2 footprintScale = Vector2.one;
         [Tooltip("FixedPixels mode: absolute width/height in pixels.")]
-        public Vector2 FixedPixelSize = new Vector2(72f, 72f);
+        [FormerlySerializedAs("FixedPixelSize")]
+        [SerializeField] private Vector2 fixedPixelSize = new Vector2(72f, 72f);
         [Header("Stretch padding (StretchToFootprint only, pixels)")]
-        [Min(0f)] public float PaddingLeft;
-        [Min(0f)] public float PaddingRight;
-        [Min(0f)] public float PaddingTop;
-        [Min(0f)] public float PaddingBottom;
+        [FormerlySerializedAs("PaddingLeft")]
+        [SerializeField, Min(0f)] private float paddingLeft;
+        [FormerlySerializedAs("PaddingRight")]
+        [SerializeField, Min(0f)] private float paddingRight;
+        [FormerlySerializedAs("PaddingTop")]
+        [SerializeField, Min(0f)] private float paddingTop;
+        [FormerlySerializedAs("PaddingBottom")]
+        [SerializeField, Min(0f)] private float paddingBottom;
         [Space]
         [Tooltip("Pixel offset of the visual from the bounding box's top-left (+x right, +y down).")]
-        public Vector2 VisualOffset = Vector2.zero;
+        [FormerlySerializedAs("VisualOffset")]
+        [SerializeField] private Vector2 visualOffset = Vector2.zero;
+
+        public Vector2Int[] BodyCells => bodyCells;
+        public Sprite Sprite => sprite;
+        public VisualSizeMode SizeMode => sizeMode;
 
         /// Final visual rect size for a given footprint pixel size.
-        public Vector2 VisualSize(Vector2 footprintSizePx) => SizeMode switch
+        public Vector2 VisualSize(Vector2 footprintSizePx) => sizeMode switch
         {
-            VisualSizeMode.FootprintScale => Vector2.Scale(footprintSizePx, FootprintScale),
-            VisualSizeMode.FixedPixels => FixedPixelSize,
-            _ => footprintSizePx - new Vector2(PaddingLeft + PaddingRight, PaddingTop + PaddingBottom),
+            VisualSizeMode.FootprintScale => Vector2.Scale(footprintSizePx, footprintScale),
+            VisualSizeMode.FixedPixels => fixedPixelSize,
+            _ => footprintSizePx - new Vector2(paddingLeft + paddingRight, paddingTop + paddingBottom),
         };
 
         /// Pixel offset (anchored-position space: +x right, -y down) placing
@@ -45,11 +60,11 @@ namespace SlidingSiege
         /// sit at (left, top) padding; other modes are centered.
         public Vector2 VisualAnchorOffset(Vector2 footprintSizePx)
         {
-            if (SizeMode == VisualSizeMode.StretchToFootprint)
-                return new Vector2(PaddingLeft + VisualOffset.x, -(PaddingTop + VisualOffset.y));
+            if (sizeMode == VisualSizeMode.StretchToFootprint)
+                return new Vector2(paddingLeft + visualOffset.x, -(paddingTop + visualOffset.y));
             Vector2 size = VisualSize(footprintSizePx);
             Vector2 centered = (footprintSizePx - size) * 0.5f;
-            return new Vector2(centered.x + VisualOffset.x, -(centered.y + VisualOffset.y));
+            return new Vector2(centered.x + visualOffset.x, -(centered.y + visualOffset.y));
         }
     }
 }

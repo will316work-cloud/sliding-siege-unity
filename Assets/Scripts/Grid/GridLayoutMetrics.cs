@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -7,16 +8,23 @@ namespace SlidingSiege
     [Serializable]
     public class GridLayoutMetrics
     {
-        [Tooltip("Computed at build time from the stretched Grid Panel rect.")]
-        public float CellSize = 72f;
-        public float Spacing = 4f;
+        [Tooltip("Cell edge length in pixels.")]
+        [FormerlySerializedAs("CellSize")]
+        [SerializeField] private float cellSize = 72f;
+        [FormerlySerializedAs("Spacing")]
+        [SerializeField] private float spacing = 4f;
+
+        public float CellSize => cellSize;
+        public float Spacing => spacing;
+
         /// Top-left offset (in pixels, +x right / +y down) of the centered
         /// cell content inside the Enemy Layer's stretched rect. Set by
         /// GridUIBuilder.Build().
-        [NonSerialized] public Vector2 ContentOffset;
-        public float Stride => CellSize + Spacing;
+        public Vector2 ContentOffset { get; set; }
+
+        public float Stride => cellSize + spacing;
         public Vector2 GridPixelSize(int rows, int cols) => new Vector2(
-            cols * CellSize + (cols - 1) * Spacing,
-            rows * CellSize + (rows - 1) * Spacing);
+            cols * cellSize + (cols - 1) * spacing,
+            rows * cellSize + (rows - 1) * spacing);
     }
 }

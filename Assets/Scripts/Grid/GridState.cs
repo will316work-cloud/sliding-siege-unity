@@ -29,7 +29,7 @@ namespace SlidingSiege
         public event Action OnRebuilt;
 
         /// Raised when an enemy goes critical (Enemy.PendingDetonation set by
-        /// CombatSystem.HandleZeroHp). Drives OnCritical-triggered abilities.
+        /// CombatRules.HandleZeroHp). Drives OnCritical-triggered abilities.
         public event Action<Enemy> OnEnemyWentCritical;
         public void NotifyEnemyWentCritical(Enemy en) => OnEnemyWentCritical?.Invoke(en);
 
@@ -92,7 +92,7 @@ namespace SlidingSiege
 
         public Enemy SpawnEnemy(EnemyDefinition def, int r, int c)
         {
-            var enemy = new Enemy { Id = _nextEnemyId++, Definition = def, Anchor = new Vector2Int(r, c), HP = def.MaxHP };
+            var enemy = new Enemy(_nextEnemyId++, def, new Vector2Int(r, c));
             WriteBody(enemy);
             Enemies[enemy.Id] = enemy;
             OnEnemySpawned?.Invoke(enemy);
@@ -118,7 +118,7 @@ namespace SlidingSiege
         {
             if (!Enemies.TryGetValue(id, out var enemy)) return;
             ClearRefs(id);
-            enemy.ShapeOverride = shapeOverride;
+            enemy.SetShapeOverride(shapeOverride);
             enemy.Anchor = new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols));
             WriteBody(enemy);
             OnEnemyResized?.Invoke(enemy);
@@ -197,7 +197,7 @@ namespace SlidingSiege
         private ShiftResult Shift(bool rowAxis, int seed, int dir)
         {
             var lines = LinkedLinesForAxis(rowAxis, seed);
-            var result = new ShiftResult { IsRowShift = rowAxis, Direction = dir, ShiftedLines = lines };
+            var result = new ShiftResult(rowAxis, dir, lines);
             foreach (var kv in Enemies) result.OldAnchors[kv.Key] = kv.Value.Anchor;
 
             foreach (var line in lines)

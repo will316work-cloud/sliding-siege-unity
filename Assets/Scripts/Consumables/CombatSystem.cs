@@ -14,15 +14,21 @@ namespace SlidingSiege
         private readonly Dictionary<AttackDefinition, int> _charges = new Dictionary<AttackDefinition, int>();
         private readonly Dictionary<ItemKind, int> _itemCounts = new Dictionary<ItemKind, int>();
 
-        public int AttacksRemaining = 1;
+        public int AttacksRemaining { get; private set; } = 1;
+
+        /// Extra Swing item: one more attack this turn.
+        public void GrantExtraAttack() => AttacksRemaining++;
+
+        /// Turn system hook: reset the per-turn attack allowance.
+        public void SetAttacksRemaining(int count) => AttacksRemaining = count;
 
         /// Debug toggles: when true, using an attack/item consumes nothing
         /// and the ability lists never disable (counts show as infinite).
-        public bool InfiniteAttacks;
-        public bool InfiniteItems;
+        public bool InfiniteAttacks { get; set; }
+        public bool InfiniteItems { get; set; }
 
         /// Global outgoing damage multiplier hook (damage bonus % later).
-        public Func<float> DamageMultiplier = () => 1f;
+        public Func<float> DamageMultiplier { get; set; } = () => 1f;
 
         public event Action<AttackResult> OnAttackResolved;
         public event Action OnInventoryChanged;
@@ -129,7 +135,8 @@ namespace SlidingSiege
             if (!CanAttack(def)) return null;
 
             var hits = def.ResolveCells(_state, anchor, variantIndex);
-            var result = new AttackResult { Cells = hits.Select(h => h.Cell).ToList() };
+            var result = new AttackResult();
+            result.Cells.AddRange(hits.Select(h => h.Cell));
 
             // First (highest-priority) hit cell touching each enemy decides
             // its damage percent — hits are already in part-priority order.
@@ -154,7 +161,7 @@ namespace SlidingSiege
             // rest of the attack — no other enemy takes damage. The attack
             // and its charge are still consumed below.
             var bombIdsHit = hitPercents.Keys
-                .Where(id => _state.Enemies.TryGetValue(id, out var en) && en.Definition.VoidsAttackOnHit)
+                .Where(id => _state.Enemies.TryGetValue(id, out var en) && en.Rules.VoidsAttackOnHit)
                 .ToList();
 
             if (bombIdsHit.Count > 0)
@@ -175,16 +182,16 @@ namespace SlidingSiege
                     if (!_state.Enemies.TryGetValue(kv.Key, out var target)) continue;
                     // Golem rule: an absorber linking the target soaks the
                     // damage, recomputed against ITS multipliers (JS parity).
-                    var recipient = RouteDamage(_state, target);
-                    target.PendingHit = true; // slime clusters count absorbed hits too
+                    var recipient = target.Rules.RouteDamage(_state, target);
+                    target.MarkPendingHit(); // slime clusters count absorbed hits too
                     int dmg = Mathf.RoundToInt(baseDamage * kv.Value * recipient.DamageTakenMultiplier());
-                    dmg = ClampToSurvivor(recipient, dmg);
+                    dmg = recipient.Rules.ClampDamage(recipient, dmg);
                     recipient.HP -= dmg;
                     if (recipient.Id != target.Id) _state.NotifyDamageRedirected(target, recipient);
                     result.HitEnemyIds.Add(kv.Key);
                     result.DamageDealt.TryGetValue(recipient.Id, out var prior);
                     result.DamageDealt[recipient.Id] = prior + dmg;
-                    if (recipient.HP <= 0 && HandleZeroHp(_state, recipient) && !result.KilledEnemyIds.Contains(recipient.Id))
+                    if (recipient.HP <= 0 && recipient.Rules.HandleZeroHp(_state, recipient) && !result.KilledEnemyIds.Contains(recipient.Id))
                         result.KilledEnemyIds.Add(recipient.Id);
                 }
             }
@@ -200,43 +207,6 @@ namespace SlidingSiege
             OnInventoryChanged?.Invoke();
             OnAttackResolved?.Invoke(result);
             return result;
-        }
-
-        // ---------------- Damage routing (shared with abilities) ----------------
-
-        /// The enemy that actually receives damage aimed at `target`: the
-        /// first living, non-critical absorber (Golem) linking it, or the
-        /// target itself. Absorbers never redirect to one another.
-        public static Enemy RouteDamage(GridState s, Enemy target)
-        {
-            if (!target.Definition.AbsorbsLinkedDamage)
-                foreach (var en in s.Enemies.Values)
-                    if (en.Definition.AbsorbsLinkedDamage && !en.PendingDetonation && en.LinkedIds.Contains(target.Id))
-                        return en;
-            return target;
-        }
-
-        /// Enemies that survive at 0 HP never drop below it (avoids a
-        /// phantom heal indicator when clamping back up); everyone else
-        /// takes the full amount.
-        public static int ClampToSurvivor(Enemy en, int dmg) =>
-            en.Definition.DiesAtZeroHP ? dmg : Mathf.Min(dmg, en.HP);
-
-        /// Call when an enemy is at 0 HP or less. Enemies that don't die at
-        /// zero go critical (pending detonation, links dropped,
-        /// OnEnemyWentCritical raised) and survive — returns false; returns
-        /// true when the enemy really dies.
-        public static bool HandleZeroHp(GridState s, Enemy en)
-        {
-            if (en.Definition.DiesAtZeroHP) return true;
-            if (!en.PendingDetonation)
-            {
-                en.PendingDetonation = true;
-                en.LinkedIds.Clear();
-                Debug.Log($"[SlidingSiege] {en.Definition.name} is critically damaged and will explode next enemy phase!");
-                s.NotifyEnemyWentCritical(en);
-            }
-            return false;
         }
 
         // ---------------- Footprint helpers ----------------

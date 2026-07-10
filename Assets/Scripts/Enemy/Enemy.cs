@@ -7,19 +7,35 @@ namespace SlidingSiege
 {
     /// Runtime enemy instance. Anchor is the top-left cell of its footprint
     /// (always normalized into [0,rows) x [0,cols); the footprint may wrap).
+    /// Game-state flags (critical, pending hit, cluster, links) mutate only
+    /// through the methods below.
     public class Enemy
     {
-        public int Id;
-        public EnemyDefinition Definition;
-        public Vector2Int Anchor;          // (row, col) => (x = row, y = col)
+        public Enemy(int id, EnemyDefinition definition, Vector2Int anchor)
+        {
+            Id = id;
+            Definition = definition;
+            Anchor = anchor;
+            _hp = definition != null ? definition.MaxHP : 0;
+        }
+
+        public int Id { get; }
+        public EnemyDefinition Definition { get; }
+
+        /// Combat rules strategy (never null; falls back to defaults).
+        public CombatRules Rules => Definition != null ? Definition.Rules : CombatRules.Default;
+
+        /// (row, col) => (x = row, y = col). Written by GridState only.
+        public Vector2Int Anchor { get; set; }
 
         /// Runtime shape override; null = definition body. Set ONLY via
         /// GridState.ReshapeEnemy so cell refs stay consistent.
-        public EnemyShape ShapeOverride;
+        public EnemyShape ShapeOverride { get; private set; }
+        public void SetShapeOverride(EnemyShape shape) => ShapeOverride = shape;
 
         /// While reshaped: offset from the current anchor back to the
         /// pre-change anchor cell, used to restore it on revert.
-        public Vector2Int? ResizeOriginOffset;
+        public Vector2Int? ResizeOriginOffset { get; set; }
 
         /// The shape currently driving body and visuals.
         public EnemyShape ActiveShape => ShapeOverride ?? Definition.Shape;
@@ -86,49 +102,77 @@ namespace SlidingSiege
         public event Action<int> OnHealthGained;
 
         public bool IsDead => HP <= 0;
-        public readonly List<StatusEffect> Statuses = new List<StatusEffect>();
 
-        /// Ids of enemies this one is linked to (Golem/Siren style), written
-        /// by LinkRandomEnemiesAbility. Dead targets are simply stale ids.
-        public readonly List<int> LinkedIds = new List<int>();
+        // ---------------- Statuses ----------------
 
-        /// Golem-style critical state: reached 0 HP but survives to detonate
-        /// next enemy phase (see EnemyDefinition.DiesAtZeroHP, off).
-        public bool PendingDetonation;
+        private readonly List<StatusEffect> _statuses = new List<StatusEffect>();
+        public IReadOnlyList<StatusEffect> Statuses => _statuses;
 
-        /// Slime cluster membership; -1 = none. Assigned on spawn by
-        /// SlimeClusterAssignAbility (new clusters use the owner's Id, so
-        /// ids are globally unique). LinkOverlay chains cluster members.
-        public int ClusterId = -1;
+        public void AddStatus(StatusEffect status) { if (status != null) _statuses.Add(status); }
+        public void RemoveStatuses(Predicate<StatusEffect> match) => _statuses.RemoveAll(match);
+        public bool HasStatus<T>() where T : StatusEffect => _statuses.OfType<T>().Any();
 
-        /// Set whenever damage is aimed at this enemy (even when a Golem
-        /// absorbs it); consumed by SlimeClusterResolveAbility each phase.
-        public bool PendingHit;
-
-        /// Living enemies this one is currently linked to.
-        public IEnumerable<Enemy> LivingLinkTargets(GridState s)
-        {
-            foreach (var id in LinkedIds)
-                if (s.Enemies.TryGetValue(id, out var en)) yield return en;
-        }
-
-        /// Hitbox stored by SetHitboxAbility; persists until overwritten.
-        /// Cast abilities and conditions resolve it at the current anchor.
-        public Hitbox QueuedHitbox;
+        /// Ticks down turn-limited statuses and drops the expired ones
+        /// (EnemyPhaseRunner calls this at the end of each phase).
+        public void TickStatuses() => _statuses.RemoveAll(s => s.TickAndCheckExpired());
 
         /// Product of all status damage-taken multipliers.
         public float DamageTakenMultiplier()
         {
             float m = 1f;
-            foreach (var s in Statuses) m *= s.DamageTakenMultiplier;
+            foreach (var s in _statuses) m *= s.DamageTakenMultiplier;
             return m;
         }
 
-        public bool HasStatus<T>() where T : StatusEffect => Statuses.OfType<T>().Any();
+        // ---------------- Links ----------------
 
-        /// False while dead or any status (e.g. a future stun) vetoes acting.
-        /// A pending-detonation enemy sits at 0 HP but still acts (it has to
+        private readonly List<int> _linkedIds = new List<int>();
+
+        /// Ids of enemies this one is linked to (Golem/Siren style), written
+        /// by LinkRandomEnemiesAbility. Dead targets are simply stale ids.
+        public IReadOnlyList<int> LinkedIds => _linkedIds;
+
+        public void LinkTo(int enemyId) { if (!_linkedIds.Contains(enemyId)) _linkedIds.Add(enemyId); }
+        public void ClearLinks() => _linkedIds.Clear();
+        public bool IsLinkedTo(int enemyId) => _linkedIds.Contains(enemyId);
+
+        /// Living enemies this one is currently linked to.
+        public IEnumerable<Enemy> LivingLinkTargets(GridState s)
+        {
+            foreach (var id in _linkedIds)
+                if (s.Enemies.TryGetValue(id, out var en)) yield return en;
+        }
+
+        // ---------------- Critical / cluster / pending hit ----------------
+
+        /// Golem-style critical state: reached 0 HP but survives until its
+        /// own abilities remove it (see CombatRules.DiesAtZeroHP, off).
+        public bool PendingDetonation { get; private set; }
+
+        /// Enter the critical state: survives at 0 HP, links dropped.
+        public void GoCritical() { PendingDetonation = true; ClearLinks(); }
+
+        /// Leave the critical state (e.g. a Slime regenerating to full).
+        public void ResetCritical() => PendingDetonation = false;
+
+        /// Slime cluster membership; -1 = none. Assigned once on spawn by
+        /// SlimeClusterAssignAbility. LinkOverlay chains cluster members.
+        public int ClusterId { get; private set; } = -1;
+        public void AssignCluster(int clusterId) => ClusterId = clusterId;
+
+        /// Set whenever damage is aimed at this enemy (even when a Golem
+        /// absorbs it); consumed by SlimeClusterResolveAbility each phase.
+        public bool PendingHit { get; private set; }
+        public void MarkPendingHit() => PendingHit = true;
+        public void ClearPendingHit() => PendingHit = false;
+
+        /// Hitbox stored by SetHitboxAbility; persists until overwritten.
+        /// Cast abilities and conditions resolve it at the current anchor.
+        public Hitbox QueuedHitbox { get; set; }
+
+        /// False while dead or any status (e.g. stun) vetoes acting. A
+        /// pending-detonation enemy sits at 0 HP but still acts (it has to
         /// run its detonation abilities next enemy phase).
-        public bool CanAct => (!IsDead || PendingDetonation) && Statuses.All(s => !s.PreventsAction);
+        public bool CanAct => (!IsDead || PendingDetonation) && _statuses.All(s => !s.PreventsAction);
     }
 }

@@ -39,7 +39,7 @@ namespace SlidingSiege
                 if (chance > 0f && Random.value < chance) winners.Add(kv.Key);
             }
 
-            owner.ClusterId = winners.Count > 0 ? winners[Random.Range(0, winners.Count)] : owner.Id;
+            owner.AssignCluster(winners.Count > 0 ? winners[Random.Range(0, winners.Count)] : owner.Id);
             result.Success = true;
             yield break;
         }

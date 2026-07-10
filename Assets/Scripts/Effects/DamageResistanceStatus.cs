@@ -8,10 +8,9 @@ namespace SlidingSiege
     {
         private readonly float _multiplier;
 
-        public DamageResistanceStatus(float reduction, int turns)
+        public DamageResistanceStatus(float reduction, int turns) : base(turns)
         {
             _multiplier = Mathf.Clamp01(1f - reduction);
-            TurnsRemaining = turns;
         }
 
         public override float DamageTakenMultiplier => _multiplier;

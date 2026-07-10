@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -12,30 +13,55 @@ namespace SlidingSiege
     {
         [Header("Lines")]
         [Tooltip("Color of the link lines drawn from this enemy to its link targets / disabled cards.")]
-        public Color LinkColor = Color.white;
+        [FormerlySerializedAs("LinkColor")]
+        [SerializeField] private Color linkColor = Color.white;
         [Tooltip("Base thickness (px) of this enemy's link lines.")]
-        [Min(1f)] public float LineThickness = 7.5f;
+        [FormerlySerializedAs("LineThickness")]
+        [SerializeField, Min(1f)] private float lineThickness = 4f;
         [Tooltip("Opacity of this enemy's link lines.")]
-        [Range(0f, 1f)] public float LineAlpha = 0.75f;
+        [FormerlySerializedAs("LineAlpha")]
+        [SerializeField, Range(0f, 1f)] private float lineAlpha = 0.75f;
 
         [Header("Redirect pulse (computational default)")]
         [Tooltip("Seconds one grow-and-shrink pulse lasts when no animator prefab is assigned.")]
-        [Min(0.05f)] public float PulseDuration = 0.35f;
+        [FormerlySerializedAs("PulseDuration")]
+        [SerializeField, Min(0.05f)] private float pulseDuration = 0.35f;
         [Tooltip("Peak line-thickness multiplier at the middle of the pulse.")]
-        [Min(1f)] public float LinePulsePeak = 3f;
+        [FormerlySerializedAs("LinePulsePeak")]
+        [SerializeField, Min(1f)] private float linePulsePeak = 3f;
         [Tooltip("Peak overlay scale relative to the linked enemy's piece size.")]
-        [Min(1f)] public float OverlayPulsePeak = 1.4f;
+        [FormerlySerializedAs("OverlayPulsePeak")]
+        [SerializeField, Min(1f)] private float overlayPulsePeak = 1.4f;
         [Tooltip("Peak overlay opacity at the middle of the pulse.")]
-        [Range(0f, 1f)] public float OverlayPulseAlpha = 0.6f;
+        [FormerlySerializedAs("OverlayPulseAlpha")]
+        [SerializeField, Range(0f, 1f)] private float overlayPulseAlpha = 0.6f;
         [Tooltip("Optional sprite for the hit overlay; empty = plain tinted square.")]
-        public Sprite OverlaySprite;
+        [FormerlySerializedAs("OverlaySprite")]
+        [SerializeField] private Sprite overlaySprite;
 
         [Header("Redirect pulse (animator override)")]
         [Tooltip("Optional. Spawned over the linked enemy per pulse (needs an Image); its preset drives the overlay instead of the code pulse. Released when the preset completes.")]
-        public AnimationCaller OverlayAnimatorPrefab;
-        public string OverlayPresetLabel = "LinkPulse";
+        [FormerlySerializedAs("OverlayAnimatorPrefab")]
+        [SerializeField] private AnimationCaller overlayAnimatorPrefab;
+        [FormerlySerializedAs("OverlayPresetLabel")]
+        [SerializeField] private string overlayPresetLabel = "LinkPulse";
         [Tooltip("Optional. Spawned (invisible) per pulse as a curve source: while its preset plays, the link line's thickness multiplier reads the instance's localScale.y each frame.")]
-        public AnimationCaller LineAnimatorPrefab;
-        public string LinePresetLabel = "LinkPulse";
+        [FormerlySerializedAs("LineAnimatorPrefab")]
+        [SerializeField] private AnimationCaller lineAnimatorPrefab;
+        [FormerlySerializedAs("LinePresetLabel")]
+        [SerializeField] private string linePresetLabel = "LinkPulse";
+
+        public Color LinkColor => linkColor;
+        public float LineThickness => lineThickness;
+        public float LineAlpha => lineAlpha;
+        public float PulseDuration => pulseDuration;
+        public float LinePulsePeak => linePulsePeak;
+        public float OverlayPulsePeak => overlayPulsePeak;
+        public float OverlayPulseAlpha => overlayPulseAlpha;
+        public Sprite OverlaySprite => overlaySprite;
+        public AnimationCaller OverlayAnimatorPrefab => overlayAnimatorPrefab;
+        public string OverlayPresetLabel => overlayPresetLabel;
+        public AnimationCaller LineAnimatorPrefab => lineAnimatorPrefab;
+        public string LinePresetLabel => linePresetLabel;
     }
 }

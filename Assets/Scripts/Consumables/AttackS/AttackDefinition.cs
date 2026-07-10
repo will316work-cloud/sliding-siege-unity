@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -9,19 +10,31 @@ namespace SlidingSiege
     [CreateAssetMenu(menuName = "SlidingSiege/Attack Definition")]
     public class AttackDefinition : ScriptableObject
     {
-        public string DisplayName;
-        public Sprite Icon;
-        [Min(0)] public int BaseDamage = 10;
-        [Min(0)] public int StartingCharges = 2;
-        [TextArea] public string Description;
-        public Hitbox[] Hitboxes = new Hitbox[0];
+        [FormerlySerializedAs("DisplayName")]
+        [SerializeField] private string displayName;
+        [FormerlySerializedAs("Icon")]
+        [SerializeField] private Sprite icon;
+        [FormerlySerializedAs("BaseDamage")]
+        [SerializeField, Min(0)] private int baseDamage = 10;
+        [FormerlySerializedAs("StartingCharges")]
+        [SerializeField, Min(0)] private int startingCharges = 2;
+        [FormerlySerializedAs("Description")]
+        [SerializeField, TextArea] private string description;
+        [FormerlySerializedAs("Hitboxes")]
+        [SerializeField] private Hitbox[] hitboxes = new Hitbox[0];
 
-        public int VariantCount => Hitboxes != null && Hitboxes.Length > 0 ? Hitboxes.Length : 1;
+        public string DisplayName => displayName;
+        public Sprite Icon => icon;
+        public int BaseDamage => baseDamage;
+        public int StartingCharges => startingCharges;
+        public string Description => description;
+
+        public int VariantCount => hitboxes != null && hitboxes.Length > 0 ? hitboxes.Length : 1;
 
         public string VariantLabel(int variantIndex)
         {
-            if (Hitboxes == null || Hitboxes.Length == 0) return "";
-            var hb = Hitboxes[Mathf.Clamp(variantIndex, 0, Hitboxes.Length - 1)];
+            if (hitboxes == null || hitboxes.Length == 0) return "";
+            var hb = hitboxes[Mathf.Clamp(variantIndex, 0, hitboxes.Length - 1)];
             return string.IsNullOrEmpty(hb.Label) ? "Variant " + (variantIndex + 1) : hb.Label;
         }
 
@@ -29,8 +42,8 @@ namespace SlidingSiege
         /// the damage percent of the part that claimed it.
         public List<HitCell> ResolveCells(GridState state, Vector2Int anchor, int variantIndex)
         {
-            if (Hitboxes == null || Hitboxes.Length == 0) return new List<HitCell>();
-            return Hitboxes[Mathf.Clamp(variantIndex, 0, Hitboxes.Length - 1)].Resolve(state, anchor);
+            if (hitboxes == null || hitboxes.Length == 0) return new List<HitCell>();
+            return hitboxes[Mathf.Clamp(variantIndex, 0, hitboxes.Length - 1)].Resolve(state, anchor);
         }
     }
 }

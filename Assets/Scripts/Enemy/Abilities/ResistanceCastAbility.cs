@@ -31,8 +31,8 @@ namespace SlidingSiege
 
             foreach (var target in healthy)
             {
-                target.Statuses.RemoveAll(st => st is DamageResistanceStatus);
-                target.Statuses.Add(new DamageResistanceStatus(reductionFactor, wardTurns));
+                target.RemoveStatuses(st => st is DamageResistanceStatus);
+                target.AddStatus(new DamageResistanceStatus(reductionFactor, wardTurns));
             }
             result.Success = true;
         }

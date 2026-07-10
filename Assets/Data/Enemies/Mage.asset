@@ -16,10 +16,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c9e1a2b3d4f5460718293a4b5c6d7e8f, type: 2}
   - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
   MaxHP: 25
-  VoidsAttackOnHit: 0
-  AbsorbsLinkedDamage: 0
-  DiesAtZeroHP: 1
-  CanBeLinkTarget: 1
   LinkDisplay:
     LinkColor: {r: 0.75, g: 0.35, b: 1, a: 1}
     LineThickness: 7.5

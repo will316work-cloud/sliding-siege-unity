@@ -31,7 +31,7 @@ namespace SlidingSiege
         {
             var en = first != null ? s.EnemiesAt(first.Value.x, first.Value.y).FirstOrDefault() : null;
             if (en == null) { message = "No enemy on that tile."; return false; }
-            en.Statuses.Add(new SoulCloudStatus { TurnsRemaining = 1 });
+            en.AddStatus(new SoulCloudStatus());
             message = "Expanded Soul applied!";
             return true;
         }

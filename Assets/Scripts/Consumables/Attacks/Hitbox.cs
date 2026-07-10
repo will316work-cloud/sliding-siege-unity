@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -12,20 +13,25 @@ namespace SlidingSiege
     public class Hitbox
     {
         [Tooltip("Shown on the Confirm button while this arrangement is active.")]
-        public string Label;
+        [FormerlySerializedAs("Label")]
+        [SerializeField] private string label;
 
-        public HitboxPart[] Parts = new HitboxPart[0];
+        [FormerlySerializedAs("Parts")]
+        [SerializeField] private HitboxPart[] parts = new HitboxPart[0];
+
+        public string Label => label;
+        public IReadOnlyList<HitboxPart> Parts => parts;
 
         /// First part, e.g. as the appearance carrier for procedural
         /// previews. Null when the hitbox has no parts.
-        public HitboxPart FirstPart => Parts != null && Parts.Length > 0 ? Parts[0] : null;
+        public HitboxPart FirstPart => parts != null && parts.Length > 0 ? parts[0] : null;
 
         public List<HitCell> Resolve(GridState state, Vector2Int anchor)
         {
             var hits = new List<HitCell>();
-            if (Parts == null) return hits;
+            if (parts == null) return hits;
             var claimed = new HashSet<Vector2Int>();
-            foreach (var part in Parts)
+            foreach (var part in parts)
                 foreach (var cell in part.GetCells(state, anchor))
                     if (claimed.Add(cell))
                         hits.Add(new HitCell(cell, part));
@@ -37,8 +43,8 @@ namespace SlidingSiege
     /// (earlier parts win overlaps — damage factor and highlight alike).
     public struct HitCell
     {
-        public Vector2Int Cell;
-        public HitboxPart Part;
+        public Vector2Int Cell { get; }
+        public HitboxPart Part { get; }
 
         public float DamageFactor => Part?.DamageFactor ?? 1f;
 

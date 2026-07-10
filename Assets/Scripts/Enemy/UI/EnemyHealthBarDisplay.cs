@@ -100,7 +100,7 @@ namespace SlidingSiege
             // Visible only while damaged. Enemies that survive at 0 HP
             // (Golem critical, unresolved Slime) keep an empty bar instead
             // of it vanishing while they're still on the board.
-            bool surviving = _enemy != null && !_enemy.Definition.DiesAtZeroHP;
+            bool surviving = _enemy != null && !_enemy.Rules.DiesAtZeroHP;
             gameObject.SetActive(current < max && (current > 0 || surviving));
 
             for (int i = 0; i < _segments.Count; i++)

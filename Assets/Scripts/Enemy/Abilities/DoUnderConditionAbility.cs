@@ -18,9 +18,14 @@ namespace SlidingSiege
         public class Branch
         {
             [Tooltip("ALL must pass for this branch to run. Empty = always passes (else branch).")]
-            public List<AbilityCondition> Conditions = new List<AbilityCondition>();
+            [UnityEngine.Serialization.FormerlySerializedAs("Conditions")]
+            [SerializeField] private List<AbilityCondition> conditions = new List<AbilityCondition>();
             [Tooltip("Run in order; each one's own postDelay applies when it succeeds.")]
-            public List<EnemyAbility> Abilities = new List<EnemyAbility>();
+            [UnityEngine.Serialization.FormerlySerializedAs("Abilities")]
+            [SerializeField] private List<EnemyAbility> abilities = new List<EnemyAbility>();
+
+            public IReadOnlyList<AbilityCondition> Conditions => conditions;
+            public IReadOnlyList<EnemyAbility> Abilities => abilities;
         }
 
         [SerializeField] private List<Branch> branches = new List<Branch>();

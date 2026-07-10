@@ -29,11 +29,11 @@ namespace SlidingSiege
             if (owner == null || owner.PendingDetonation) yield break;
             if (onlyWhenUnlinked && owner.LivingLinkTargets(ctx.State).Any()) yield break;
 
-            owner.LinkedIds.Clear();
+            owner.ClearLinks();
             var pool = ctx.State.Enemies.Values
                 .Where(en => en.Id != owner.Id
                              && en.Definition != owner.Definition
-                             && en.Definition.CanBeLinkTarget)
+                             && en.Rules.CanBeLinkTarget)
                 .ToList();
             if (pool.Count == 0) yield break;
 
@@ -42,7 +42,7 @@ namespace SlidingSiege
             for (int i = 0; i < count; i++)
             {
                 int idx = Random.Range(0, pool.Count);
-                owner.LinkedIds.Add(pool[idx].Id);
+                owner.LinkTo(pool[idx].Id);
                 pool.RemoveAt(idx);
             }
             if (owner.LinkedIds.Count == 0) yield break;
