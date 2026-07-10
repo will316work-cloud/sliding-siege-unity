@@ -15,6 +15,23 @@ MonoBehaviour:
   Abilities:
   - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
   MaxHP: 15
+  VoidsAttackOnHit: 0
+  AbsorbsLinkedDamage: 0
+  DiesAtZeroHP: 1
+  CanBeLinkTarget: 1
+  LinkDisplay:
+    LinkColor: {r: 1, g: 1, b: 1, a: 1}
+    LineThickness: 4
+    LineAlpha: 0.75
+    PulseDuration: 0.35
+    LinePulsePeak: 3
+    OverlayPulsePeak: 1.4
+    OverlayPulseAlpha: 0.6
+    OverlaySprite: {fileID: 0}
+    OverlayAnimatorPrefab: {fileID: 0}
+    OverlayPresetLabel: LinkPulse
+    LineAnimatorPrefab: {fileID: 0}
+    LinePresetLabel: LinkPulse
   Shape:
     BodyCells:
     - {x: 0, y: 0}
