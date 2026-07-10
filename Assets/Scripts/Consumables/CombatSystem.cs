@@ -179,6 +179,7 @@ namespace SlidingSiege
                     int dmg = Mathf.RoundToInt(baseDamage * kv.Value * recipient.DamageTakenMultiplier());
                     dmg = ClampToDetonator(recipient, dmg);
                     recipient.HP -= dmg;
+                    if (recipient.Id != target.Id) _state.NotifyDamageRedirected(target, recipient);
                     result.HitEnemyIds.Add(kv.Key);
                     result.DamageDealt.TryGetValue(recipient.Id, out var prior);
                     result.DamageDealt[recipient.Id] = prior + dmg;

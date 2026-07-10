@@ -31,8 +31,9 @@ namespace SlidingSiege
         [Tooltip("False = link abilities (Golem/Siren) can never pick this enemy as a link target (e.g. Bomb).")]
         public bool CanBeLinkTarget = true;
 
-        [Tooltip("Color of the link lines LinkOverlay draws from this enemy to its link targets / disabled cards.")]
-        public Color LinkColor = Color.white;
+        [Header("Linking display")]
+        [Tooltip("How LinkOverlay draws this enemy's link lines and the redirected-hit pulse on its linked targets.")]
+        public LinkDisplaySettings LinkDisplay = new LinkDisplaySettings();
 
         [Header("Base shape (body, sprite, visual rect)")]
         public EnemyShape Shape = new EnemyShape();

@@ -38,6 +38,11 @@ namespace SlidingSiege
         public event Action<Enemy> OnEnemyHitboxChanged;
         public void NotifyEnemyHitboxChanged(Enemy en) => OnEnemyHitboxChanged?.Invoke(en);
 
+        /// Raised when damage aimed at a linked enemy was absorbed by its
+        /// linker (Golem): (intended target, absorber). Drives hit feedback.
+        public event Action<Enemy, Enemy> OnDamageRedirected;
+        public void NotifyDamageRedirected(Enemy target, Enemy absorber) => OnDamageRedirected?.Invoke(target, absorber);
+
         public void Initialize(int rows, int cols)
         {
             Rows = rows; Cols = cols;
