@@ -48,17 +48,22 @@ namespace SlidingSiege
             var killed = new List<int>();
             foreach (var kv in factors)
             {
-                var target = kv.Key;
+                // Damage redirects to a linking absorber (Golem) and is
+                // recomputed against ITS stats — heals stay on the target.
+                var recipient = amount < 0f ? CombatSystem.RouteDamage(s, kv.Key) : kv.Key;
                 float baseAmount = mode switch
                 {
                     ChangeMode.FlatAmount => amount,
-                    ChangeMode.CurrentHealthFactor => target.HP * amount,
-                    _ => target.MaxHP * amount,
+                    ChangeMode.CurrentHealthFactor => recipient.HP * amount,
+                    _ => recipient.MaxHP * amount,
                 };
                 float scaled = baseAmount * kv.Value;
-                if (scaled < 0f) scaled *= target.DamageTakenMultiplier();
-                target.HP = Mathf.Min(target.MaxHP, target.HP + Mathf.RoundToInt(scaled));
-                if (target.IsDead) killed.Add(target.Id);
+                if (scaled < 0f) scaled *= recipient.DamageTakenMultiplier();
+                int delta = Mathf.RoundToInt(scaled);
+                if (delta < 0) delta = -CombatSystem.ClampToDetonator(recipient, -delta);
+                recipient.HP = Mathf.Min(recipient.MaxHP, recipient.HP + delta);
+                if (recipient.HP <= 0 && CombatSystem.HandleZeroHp(s, recipient) && !killed.Contains(recipient.Id))
+                    killed.Add(recipient.Id);
             }
             foreach (var id in killed) s.RemoveEnemy(id);
             result.Success = true;
