@@ -73,11 +73,47 @@ namespace SlidingSiege
             _hooks.Remove(en.Id);
         }
 
+        /// Same-frame batching: multiple damage instances landing on one
+        /// enemy in a single frame (attack hit + redirected link damage,
+        /// blast + absorb) merge into ONE summed indicator, flushed at end
+        /// of frame. Heals batch separately from damage — both can show.
+        private class Pending
+        {
+            public List<RectTransform> Rects; // captured on first hit, in case the enemy dies this frame
+            public int Damage;
+            public int Heal;
+        }
+
+        private readonly Dictionary<int, Pending> _pending = new Dictionary<int, Pending>();
+
         private void SpawnForEnemy(Enemy en, int amount, bool isHeal)
         {
-            if (!_viewManager.TryGetPieceRects(en.Id, out var pieceRects)) return;
-            foreach (var pieceRect in pieceRects)
-                SpawnAt(pieceRect, amount, isHeal);
+            if (!_pending.TryGetValue(en.Id, out var pending))
+            {
+                if (!_viewManager.TryGetPieceRects(en.Id, out var pieceRects)) return;
+                _pending[en.Id] = pending = new Pending { Rects = pieceRects };
+            }
+            if (isHeal) pending.Heal += amount;
+            else pending.Damage += amount;
+        }
+
+        /// Flush in Update — one frame after the damage landed. Activating a
+        /// pooled indicator any later in the frame (LateUpdate/end-of-frame)
+        /// loses the Play: the Animator rebinds on its next evaluation and
+        /// resets to the default state, so the completion poll released the
+        /// indicator immediately. Update-phase activation evaluates the same
+        /// frame, exactly like the original per-hit spawning did.
+        private void Update()
+        {
+            if (_pending.Count == 0) return;
+            foreach (var pending in _pending.Values)
+                foreach (var pieceRect in pending.Rects)
+                {
+                    if (pieceRect == null) continue; // piece destroyed this frame
+                    if (pending.Damage > 0) SpawnAt(pieceRect, pending.Damage, false);
+                    if (pending.Heal > 0) SpawnAt(pieceRect, pending.Heal, true);
+                }
+            _pending.Clear();
         }
 
         private void SpawnAt(RectTransform pieceRect, int amount, bool isHeal)
