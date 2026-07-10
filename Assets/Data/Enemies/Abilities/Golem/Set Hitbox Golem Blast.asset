@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fde91959e0c84f139af97e1ddb099ab5, type: 3}
   m_Name: Set Hitbox Golem Blast
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SetHitboxAbility
-  orderIndex: 0
-  postDelay: 0
+  trigger: 3
+  orderIndex: 9
+  postDelay: 0.65
   hitbox:
     Label: Golem Blast
     Parts:
