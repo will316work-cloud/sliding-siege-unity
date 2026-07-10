@@ -24,6 +24,8 @@ namespace SlidingSiege
         [SerializeField] private EnemyPhaseRunner enemyPhaseRunner;
         [Tooltip("Optional: link-line display (Golem/Siren/Mage threads).")]
         [SerializeField] private LinkOverlay linkOverlay;
+        [Tooltip("Optional: tint for slide-disabled rows/columns (Ghost/Phantom curses).")]
+        [SerializeField] private DisabledLineOverlay disabledLineOverlay;
 
         [Header("Animation")]
         [SerializeField, Min(0.01f)] private float shiftDuration = 0.18f;
@@ -63,6 +65,7 @@ namespace SlidingSiege
             damageTextSpawner.Initialize(State, enemyViewManager);
             enemyPhaseRunner.Initialize(State, enemyViewManager);
             if (linkOverlay != null) linkOverlay.Initialize(State, targetingController.Combat, enemyViewManager);
+            if (disabledLineOverlay != null) disabledLineOverlay.Initialize(State, uiBuilder.Metrics);
 
             // Event-triggered abilities (OnSpawn/OnDamaged/OnCritical/OnDeath)
             // run outside the phase runner; the dispatcher pumps on this host.
@@ -79,6 +82,11 @@ namespace SlidingSiege
         private void HandleShiftPressed(bool isRowShift, int index, int direction)
         {
             if (enemyViewManager.IsAnimating) return; // input locked during tween
+
+            // Cursed lines can't slide — including indirectly via the
+            // linked-line expansion (a multi-line enemy would drag them).
+            foreach (var line in State.LinkedLinesForAxis(isRowShift, index))
+                if (State.IsLineDisabled(isRowShift, line)) return;
 
             // 1) Backend updates first...
             ShiftResult result = isRowShift

@@ -129,8 +129,60 @@ namespace SlidingSiege
             if (!Enemies.TryGetValue(id, out var enemy)) return;
             ClearRefs(id);
             Enemies.Remove(id);
+            ClearDisabledLinesFrom(id); // death lifts its curses
             OnEnemyRemoved?.Invoke(enemy);
         }
+
+        // ---------------- Disabled lines (Ghost/Phantom curses) ----------------
+
+        private class DisabledLine
+        {
+            public bool IsRow;
+            public int Index;
+            public int SourceId;
+            public int TurnsRemaining;
+        }
+
+        private readonly List<DisabledLine> _disabledLines = new List<DisabledLine>();
+
+        /// Curse a row (isRow) or column so the player can't slide it.
+        /// Re-cursing the same line from the same source refreshes its turns.
+        public void DisableLine(bool isRow, int index, int sourceEnemyId, int turns)
+        {
+            index = Wrap(index, isRow ? Rows : Cols);
+            foreach (var line in _disabledLines)
+                if (line.IsRow == isRow && line.Index == index && line.SourceId == sourceEnemyId)
+                {
+                    line.TurnsRemaining = Math.Max(line.TurnsRemaining, turns);
+                    return;
+                }
+            _disabledLines.Add(new DisabledLine
+            { IsRow = isRow, Index = index, SourceId = sourceEnemyId, TurnsRemaining = turns });
+        }
+
+        public void ClearDisabledLinesFrom(int sourceEnemyId) =>
+            _disabledLines.RemoveAll(l => l.SourceId == sourceEnemyId);
+
+        public bool IsLineDisabled(bool isRow, int index)
+        {
+            foreach (var line in _disabledLines)
+                if (line.IsRow == isRow && line.Index == index) return true;
+            return false;
+        }
+
+        /// Active curses, for overlays: (isRow, line index, source enemy id).
+        public IEnumerable<(bool IsRow, int Index, int SourceId)> DisabledLines()
+        {
+            foreach (var line in _disabledLines)
+                yield return (line.IsRow, line.Index, line.SourceId);
+        }
+
+        /// Ticks curse durations down; called at the START of each enemy
+        /// phase so a 1-turn curse applied during phase N blocks the
+        /// player's turn and expires as phase N+1 begins (before the source
+        /// re-curses at its new position).
+        public void TickDisabledLines() =>
+            _disabledLines.RemoveAll(l => --l.TurnsRemaining <= 0);
 
         private void WriteBody(Enemy enemy)
         {

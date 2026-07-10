@@ -63,6 +63,9 @@ namespace SlidingSiege
             IsRunning = true;
             OnPhaseStarted?.Invoke();
 
+            // Row/column curses from last phase expire before anyone acts.
+            _state.TickDisabledLines();
+
             _queue.Clear();
             foreach (var en in _state.Enemies.Values)
             {

@@ -182,8 +182,8 @@ MonoBehaviour:
   cellPrefab: {fileID: 3636118875240870077, guid: 7314f90e33736dd40978bfc7fdf1193f, type: 3}
   shiftButtonPrefab: {fileID: 146354710504832982, guid: 85d1a7536f960814b8bbe2a473564f83, type: 3}
   metrics:
-    CellSize: 100
-    Spacing: 10
+    cellSize: 100
+    spacing: 10
   padding:
     m_Left: 20
     m_Right: 20
@@ -1338,6 +1338,7 @@ MonoBehaviour:
   damageTextSpawner: {fileID: 1750795245}
   enemyPhaseRunner: {fileID: 832634357}
   linkOverlay: {fileID: 1689958300}
+  disabledLineOverlay: {fileID: 0}
   shiftDuration: 0.2
   shiftEase: 10
 --- !u!114 &832634357
@@ -1359,6 +1360,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4c24e60901ab58748825b8e92d879ca8, type: 2}
   - {fileID: 11400000, guid: de8ba74ae6c6bad498248a69b51a83a9, type: 2}
   - {fileID: 11400000, guid: f0a2b4c6d8e13579bdf02468ace13570, type: 2}
+  - {fileID: 11400000, guid: 7e8f9a0b1c2d34259607182930415d13, type: 2}
+  - {fileID: 11400000, guid: 5b4c3d2e1f0a9b8c7d6e5f4a3b2c1df7, type: 2}
+  - {fileID: 11400000, guid: 7b6c5d4e3f2a1b0c9d8e7f6a5b4c3db9, type: 2}
+  - {fileID: 11400000, guid: 8c7d6e5f4a3b2c1d0e9f8a7b6c5d4eca, type: 2}
 --- !u!1 &888067550
 GameObject:
   m_ObjectHideFlags: 0
@@ -1621,8 +1626,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.LinkOverlay
   attackList: {fileID: 97442566}
   itemList: {fileID: 685112543}
-  lineThickness: 8
-  lineAlpha: 0.75
 --- !u!224 &1689958301
 RectTransform:
   m_ObjectHideFlags: 0
