@@ -160,6 +160,16 @@ namespace SlidingSiege
         public int ClusterId { get; private set; } = -1;
         public void AssignCluster(int clusterId) => ClusterId = clusterId;
 
+        /// Living members of this enemy's cluster, including itself
+        /// (just itself while unassigned).
+        public IEnumerable<Enemy> ClusterMembers(GridState s)
+        {
+            if (ClusterId < 0) { yield return this; yield break; }
+            foreach (var en in s.Enemies.Values)
+                if (en.Definition == Definition && en.ClusterId == ClusterId)
+                    yield return en;
+        }
+
         /// Set whenever damage is aimed at this enemy (even when a Golem
         /// absorbs it); consumed by SlimeClusterResolveAbility each phase.
         public bool PendingHit { get; private set; }

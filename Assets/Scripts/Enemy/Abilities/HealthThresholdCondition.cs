@@ -9,7 +9,7 @@ namespace SlidingSiege
     [CreateAssetMenu(menuName = "SlidingSiege/Conditions/Health Threshold")]
     public class HealthThresholdCondition : AbilityCondition
     {
-        public enum SubjectKind { AnyHitboxTarget, AllHitboxTargets, Owner }
+        public enum SubjectKind { AnyHitboxTarget, AllHitboxTargets, Owner, AnyClusterMember, AllClusterMembers }
         public enum ComparisonKind { Below, AtOrBelow, Above, AtOrAbove, RoughlyEqual }
 
         [SerializeField] private SubjectKind subject = SubjectKind.AnyHitboxTarget;
@@ -23,6 +23,19 @@ namespace SlidingSiege
         {
             if (subject == SubjectKind.Owner)
                 return ctx.Owner != null && Passes(ctx.Owner);
+
+            if (subject == SubjectKind.AnyClusterMember || subject == SubjectKind.AllClusterMembers)
+            {
+                if (ctx.Owner == null) return false;
+                bool anyMember = subject == SubjectKind.AnyClusterMember;
+                foreach (var member in ctx.Owner.ClusterMembers(ctx.State))
+                {
+                    bool memberPass = Passes(member);
+                    if (anyMember && memberPass) return true;
+                    if (!anyMember && !memberPass) return false;
+                }
+                return !anyMember;
+            }
 
             var targets = ctx.QueuedHitboxTargets();
             if (targets.Count == 0) return false;

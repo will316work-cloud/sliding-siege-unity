@@ -9,9 +9,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a4b5c6d7e8f90e152637485960718d9, type: 3}
+  m_Script: {fileID: 11500000, guid: cc11fb23164f415d8bd1568cec866571, type: 3}
   m_Name: Slime Cluster Resolve
-  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SlimeClusterResolveAbility
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.DoUnderConditionAbility
   trigger: 0
   orderIndex: 6
   postDelay: 0.4
+  branches:
+  - conditions:
+    - {fileID: 11400000, guid: 3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a23, type: 2}
+    - {fileID: 11400000, guid: 4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b34, type: 2}
+    abilities:
+    - {fileID: 11400000, guid: 6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d56, type: 2}
+  - conditions:
+    - {fileID: 11400000, guid: 0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b90, type: 2}
+    - {fileID: 11400000, guid: 9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a89, type: 2}
+    abilities:
+    - {fileID: 11400000, guid: 8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f78, type: 2}

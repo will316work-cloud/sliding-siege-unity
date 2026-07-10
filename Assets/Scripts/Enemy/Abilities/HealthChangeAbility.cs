@@ -14,8 +14,11 @@ namespace SlidingSiege
     public class HealthChangeAbility : EnemyAbility
     {
         public enum ChangeMode { FlatAmount, MaxHealthFactor, CurrentHealthFactor }
+        public enum TargetSource { HitboxTargets, OwnerOnly }
 
         [Header("Health change")]
+        [Tooltip("HitboxTargets: everyone inside the owner's stored hitbox. OwnerOnly: just the owner itself (e.g. Slime regeneration).")]
+        [SerializeField] private TargetSource targets = TargetSource.HitboxTargets;
         [SerializeField] private ChangeMode mode = ChangeMode.MaxHealthFactor;
         [Tooltip("Positive heals, negative damages. FlatAmount: HP; factor modes: fraction of the target's max/current HP.")]
         [SerializeField] private float amount = 0.5f;
@@ -30,17 +33,24 @@ namespace SlidingSiege
         {
             var s = ctx.State;
             var owner = ctx.Owner;
-            var hitbox = owner.QueuedHitbox;
-            if (hitbox == null) yield break;
 
             // First (highest-priority) cell touching a target decides its factor.
             var factors = new Dictionary<Enemy, float>();
-            foreach (var hit in hitbox.Resolve(s, owner.Anchor))
-                foreach (var en in s.EnemiesAt(hit.Cell.x, hit.Cell.y))
-                {
-                    if (!includeOwner && en.Id == owner.Id) continue;
-                    if (!factors.ContainsKey(en)) factors[en] = hit.DamageFactor;
-                }
+            if (targets == TargetSource.OwnerOnly)
+            {
+                factors[owner] = 1f;
+            }
+            else
+            {
+                var hitbox = owner.QueuedHitbox;
+                if (hitbox == null) yield break;
+                foreach (var hit in hitbox.Resolve(s, owner.Anchor))
+                    foreach (var en in s.EnemiesAt(hit.Cell.x, hit.Cell.y))
+                    {
+                        if (!includeOwner && en.Id == owner.Id) continue;
+                        if (!factors.ContainsKey(en)) factors[en] = hit.DamageFactor;
+                    }
+            }
             if (factors.Count == 0) yield break;
 
             yield return ctx.PlayOwnerPresetAndWait(castAnimationPreset);
