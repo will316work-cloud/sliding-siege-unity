@@ -17,6 +17,14 @@ namespace SlidingSiege
         [SerializeField, Range(0f, 1f)] private float chance = 0.5f;
         [SerializeField] private SpawnPlacementMode placement = SpawnPlacementMode.AdjacentToOwner;
 
+        [Header("Population limits (all-or-nothing: exceeding a cap spawns nothing)")]
+        [Tooltip("Max living enemies of the SPAWNED definition allowed after this spawn; if `count` would push past it, nothing spawns. 0 = unlimited.")]
+        [SerializeField, Min(0)] private int maxOfDefinition = 0;
+        [Tooltip("Only spawn while the board's TOTAL living enemy count is at least this.")]
+        [SerializeField, Min(0)] private int minTotalEnemies = 0;
+        [Tooltip("Max TOTAL living enemies allowed after this spawn; if `count` would push past it, nothing spawns. 0 = unlimited.")]
+        [SerializeField, Min(0)] private int maxTotalEnemies = 0;
+
         [Header("Animation")]
         [Tooltip("Optional AnimationCaller preset on the OWNER's piece, played (and awaited) before spawning.")]
         [SerializeField] private string spawnAnimationPreset = "";
@@ -24,6 +32,7 @@ namespace SlidingSiege
         public override IEnumerator Execute(EnemyAbilityContext ctx, AbilityResult result)
         {
             if (spawnDefinition == null) yield break;
+            if (!WithinPopulationLimits(ctx)) yield break; // capped: no roll, no delay
 
             var candidates = GatherCandidates(ctx);
             if (candidates.Count == 0) yield break;      // no room: no roll
@@ -45,6 +54,21 @@ namespace SlidingSiege
             }
 
             result.Success = spawned > 0;
+        }
+
+        private bool WithinPopulationLimits(EnemyAbilityContext ctx)
+        {
+            int total = ctx.State.Enemies.Count;
+            if (total < minTotalEnemies) return false;
+            if (maxTotalEnemies > 0 && total + count > maxTotalEnemies) return false;
+            if (maxOfDefinition > 0)
+            {
+                int sameDefinition = 0;
+                foreach (var en in ctx.State.Enemies.Values)
+                    if (en.Definition == spawnDefinition) sameDefinition++;
+                if (sameDefinition + count > maxOfDefinition) return false;
+            }
+            return true;
         }
 
         private List<Vector2Int> GatherCandidates(EnemyAbilityContext ctx)
