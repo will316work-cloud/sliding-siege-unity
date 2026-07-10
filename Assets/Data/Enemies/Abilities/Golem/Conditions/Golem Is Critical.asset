@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Golem Is Critical
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.HealthThresholdCondition
   subject: 2
-  comparison: 2
+  comparison: 1
   healthFraction: 0
   equalityMargin: 0.001
