@@ -15,7 +15,8 @@ namespace SlidingSiege
     /// 7 segments of ~47.143).
     ///
     /// Binds to Enemy.OnHealthChanged and shows itself only while damaged
-    /// (0 < HP < Max; it also re-hides if HP returns to Max).
+    /// (0 < HP < Max; it also re-hides if HP returns to Max). Enemies whose
+    /// definition unticks DiesAtZeroHP keep an empty bar at exactly 0 HP.
     public class EnemyHealthBarDisplay : MonoBehaviour
     {
         [Header("Wiring")]
@@ -96,8 +97,11 @@ namespace SlidingSiege
 
         private void HandleHealthChanged(int current, int max)
         {
-            // Visible only while damaged.
-            gameObject.SetActive(current > 0 && current < max);
+            // Visible only while damaged. Enemies that survive at 0 HP
+            // (Golem critical, unresolved Slime) keep an empty bar instead
+            // of it vanishing while they're still on the board.
+            bool surviving = _enemy != null && !_enemy.Definition.DiesAtZeroHP;
+            gameObject.SetActive(current < max && (current > 0 || surviving));
 
             for (int i = 0; i < _segments.Count; i++)
                 _segments[i].value = Mathf.Clamp01(current / _healthPerSegment - i);
