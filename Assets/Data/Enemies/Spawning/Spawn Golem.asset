@@ -10,13 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f196201237adb54a8f66c183637392d, type: 3}
-  m_Name: Spawn Ghost
+  m_Name: Spawn Golem
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SpawnAbility
   trigger: 0
   orderIndex: 1
   postDelay: 0.5
-  spawnDefinition: {fileID: 11400000, guid: 5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b97, type: 2}
+  spawnDefinition: {fileID: 11400000, guid: db41854f5acf8a24ba91be101f97156e, type: 2}
   count: 1
-  chance: 1
+  chance: 0
   placement: 1
-  spawnAnimationPreset:
+  maxOfDefinition: 0
+  minTotalEnemies: 0
+  maxTotalEnemies: 0
+  spawnAnimationPreset: 

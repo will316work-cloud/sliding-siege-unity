@@ -19,4 +19,7 @@ MonoBehaviour:
   count: 1
   chance: 0
   placement: 1
+  maxOfDefinition: 0
+  minTotalEnemies: 0
+  maxTotalEnemies: 0
   spawnAnimationPreset: 
