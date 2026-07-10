@@ -17,6 +17,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5b476ae65dfa431c93f1697f48a9a667, type: 2}
   - {fileID: 11400000, guid: f8169738fd964a8f9b086fae7bb4cce3, type: 2}
   MaxHP: 14
+  VoidsAttackOnHit: 1
   Shape:
     BodyCells:
     - {x: 0, y: 0}

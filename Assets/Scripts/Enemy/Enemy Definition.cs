@@ -18,6 +18,10 @@ namespace SlidingSiege
         [Header("Stats")]
         [Min(1)] public int MaxHP = 30;
 
+        [Header("Combat rules")]
+        [Tooltip("Bomb-priority rule: a direct attack hit destroys this enemy outright and voids the rest of the attack — no other enemy takes damage from it.")]
+        public bool VoidsAttackOnHit;
+
         [Header("Base shape (body, sprite, visual rect)")]
         public EnemyShape Shape = new EnemyShape();
 

@@ -79,15 +79,36 @@ namespace SlidingSiege
                     if (halo.Contains(hit.Cell)) { hitPercents[en.Id] = hit.DamageFactor; break; }
             }
 
-            float baseDamage = def.BaseDamage * DamageMultiplier();
-            foreach (var kv in hitPercents)
+            // Bomb-priority rule (mirrors the JS game): a direct hit on any
+            // voiding enemy destroys every hit bomb outright and voids the
+            // rest of the attack — no other enemy takes damage. The attack
+            // and its charge are still consumed below.
+            var bombIdsHit = hitPercents.Keys
+                .Where(id => _state.Enemies.TryGetValue(id, out var en) && en.Definition.VoidsAttackOnHit)
+                .ToList();
+
+            if (bombIdsHit.Count > 0)
             {
-                if (!_state.Enemies.TryGetValue(kv.Key, out var en)) continue;
-                int dmg = Mathf.RoundToInt(baseDamage * kv.Value * en.DamageTakenMultiplier());
-                en.HP -= dmg;
-                result.HitEnemyIds.Add(kv.Key);
-                result.DamageDealt[kv.Key] = dmg;
-                if (en.HP <= 0) result.KilledEnemyIds.Add(kv.Key);
+                result.VoidedByBomb = true;
+                foreach (var id in bombIdsHit)
+                {
+                    _state.Enemies[id].HP = 0;
+                    result.HitEnemyIds.Add(id);
+                    result.KilledEnemyIds.Add(id);
+                }
+            }
+            else
+            {
+                float baseDamage = def.BaseDamage * DamageMultiplier();
+                foreach (var kv in hitPercents)
+                {
+                    if (!_state.Enemies.TryGetValue(kv.Key, out var en)) continue;
+                    int dmg = Mathf.RoundToInt(baseDamage * kv.Value * en.DamageTakenMultiplier());
+                    en.HP -= dmg;
+                    result.HitEnemyIds.Add(kv.Key);
+                    result.DamageDealt[kv.Key] = dmg;
+                    if (en.HP <= 0) result.KilledEnemyIds.Add(kv.Key);
+                }
             }
 
             foreach (var id in result.KilledEnemyIds)
