@@ -17,7 +17,7 @@ MonoBehaviour:
   postDelay: 0.5
   spawnDefinition: {fileID: 11400000, guid: 5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b97, type: 2}
   count: 1
-  chance: 0
+  chance: 1
   placement: 1
   maxOfDefinition: 0
   minTotalEnemies: 0

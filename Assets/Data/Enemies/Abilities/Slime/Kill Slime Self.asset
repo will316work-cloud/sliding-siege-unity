@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.KillSelfAbility
   trigger: 0
   orderIndex: 0
-  postDelay: 0.4
-  animationPreset:
+  postDelay: 0.2
+  animationPreset: 

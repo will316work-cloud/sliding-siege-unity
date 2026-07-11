@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.DoUnderConditionAbility
   trigger: 0
   orderIndex: 6
-  postDelay: 0.4
+  postDelay: 0.15
   branches:
   - conditions:
     - {fileID: 11400000, guid: 3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a23, type: 2}

@@ -9,11 +9,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f19, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c6575c72d9fef8499b4032284d2b7ed, type: 3}
   m_Name: Teleport Self
-  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.TeleportSelfAbility
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.MoveAbility
   trigger: 0
   orderIndex: 0
   postDelay: 0.3
-  chance: 1
-  teleportAnimationPreset:
+  moveChance: 1
+  range: 1
+  maxSteps: 1
+  allowOverlap: 1
+  wrapAroundGrid: 0
+  moveDuration: 0.25
+  shiftEase: 10
+  moveAnimationPreset: Move
+  referenceClipLength: 1

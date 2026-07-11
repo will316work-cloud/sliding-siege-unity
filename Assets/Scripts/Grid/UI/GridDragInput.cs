@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -25,6 +27,8 @@ namespace SlidingSiege
         [SerializeField] private RectTransform gridArea;
         [Tooltip("Optional shift preview (highlight + arrows + nudge).")]
         [SerializeField] private ShiftPreviewOverlay previewOverlay;
+        [Tooltip("Optional: cursed-line overlay, used for blocked-shift feedback (highlight while dragging, shake on release).")]
+        [SerializeField] private DisabledLineOverlay disabledLineOverlay;
 
         [Header("Events")]
         [Tooltip("Raised for every non-drag tap on a grid cell. Wire TargetingController.HandleCellTapped here (or in code).")]
@@ -81,19 +85,31 @@ namespace SlidingSiege
             _dragActive = false;
             UpdatePreview(eventData);
             previewOverlay?.Hide();
+            disabledLineOverlay?.ClearHighlight();
 
             if (_isInputLocked?.Invoke() ?? false) return;
             // Cancel: pointer never left (or returned to) the start cell.
             if (_inCancelZone || _currentDir == 0) return;
 
-            _requestShift?.Invoke(_dragIsHorizontal,
-                _dragIsHorizontal ? _dragStartCell.x : _dragStartCell.y,
-                _currentDir);
+            int index = _dragIsHorizontal ? _dragStartCell.x : _dragStartCell.y;
+            var blocking = BlockingDisabledLines(_dragIsHorizontal, index);
+            if (blocking.Count > 0)
+            {
+                // Cursed: no shift — the blocking line(s) shake instead.
+                if (disabledLineOverlay != null)
+                    foreach (var line in blocking)
+                        disabledLineOverlay.Shake(line.IsRow, line.Index);
+                return;
+            }
+
+            _requestShift?.Invoke(_dragIsHorizontal, index, _currentDir);
         }
 
         /// Recomputes cancel-zone state and current direction from the live
         /// pointer position, and shows/hides/updates the preview overlay.
-        /// Direction can flip mid-drag; the axis never does.
+        /// A shift blocked by cursed lines gets no preview; the blocking
+        /// lines highlight instead. Direction can flip mid-drag; the axis
+        /// never does.
         private void UpdatePreview(PointerEventData eventData)
         {
             // Cancel zone: pointer still within the start cell's bounds.
@@ -106,13 +122,30 @@ namespace SlidingSiege
             if (!Mathf.Approximately(along, 0f))
                 _currentDir = along > 0f ? +1 : -1;
 
+            bool inactive = _inCancelZone || _currentDir == 0;
+            int index = _dragIsHorizontal ? _dragStartCell.x : _dragStartCell.y;
+            var blocking = inactive
+                ? null
+                : BlockingDisabledLines(_dragIsHorizontal, index);
+            bool blocked = blocking != null && blocking.Count > 0;
+
+            disabledLineOverlay?.SetHighlight(blocked ? blocking : null);
             if (previewOverlay == null) return;
-            if (_inCancelZone || _currentDir == 0)
+            if (inactive || blocked)
                 previewOverlay.Hide();
             else
-                previewOverlay.Show(_dragIsHorizontal,
-                    _dragIsHorizontal ? _dragStartCell.x : _dragStartCell.y,
-                    _currentDir);
+                previewOverlay.Show(_dragIsHorizontal, index, _currentDir);
+        }
+
+        /// Cursed lines that block shifting the given line — the line itself
+        /// and anything dragged along via linked-line expansion.
+        private List<(bool IsRow, int Index)> BlockingDisabledLines(bool isRowShift, int index)
+        {
+            var blocking = new List<(bool, int)>();
+            foreach (var line in _state.LinkedLinesForAxis(isRowShift, index))
+                if (_state.IsLineDisabled(isRowShift, line))
+                    blocking.Add((isRowShift, line));
+            return blocking;
         }
 
         // ---------------- Tap = select ----------------

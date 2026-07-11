@@ -426,13 +426,13 @@ namespace SlidingSiege
         /// full wrap-split treatment, using a caller-supplied duration/ease
         /// (MoveAbility). The internal flag suppresses the event-driven
         /// default slide so the move isn't animated twice.
-        public void MoveEnemySlide(Enemy en, Vector2Int destination, float duration, Ease ease, Action onComplete)
+        public void MoveEnemySlide(Enemy en, Vector2Int destination, float duration, Ease ease, Action onComplete, bool wrapPath = true)
         {
             Vector2Int oldAnchor = en.Anchor;
             _suppressNextMoveVisual = true;
             _state.MoveEnemy(en.Id, destination, MoveStyle.Slide);
             _suppressNextMoveVisual = false;
-            AnimateEnemyMove(en, oldAnchor, duration, ease, onComplete);
+            AnimateEnemyMove(en, oldAnchor, duration, ease, onComplete, wrapPath);
         }
 
         private bool _suppressNextMoveVisual;
@@ -440,8 +440,9 @@ namespace SlidingSiege
         /// Wrap-split slide of a single enemy from oldAnchor to its current
         /// anchor: pieces are laid out for the union of (start layout) and
         /// (end layout stepped back by the wrapped delta), all tween by the
-        /// delta, then snap to the canonical resting layout.
-        public void AnimateEnemyMove(Enemy en, Vector2Int oldAnchor, float duration, Ease ease, Action onComplete)
+        /// delta, then snap to the canonical resting layout. wrapPath false
+        /// forces travel across the grid interior (never over an edge).
+        public void AnimateEnemyMove(Enemy en, Vector2Int oldAnchor, float duration, Ease ease, Action onComplete, bool wrapPath = true)
         {
             if (_suppressNextMoveVisual) return;
             if (!_views.TryGetValue(en.Id, out var view))
@@ -450,9 +451,14 @@ namespace SlidingSiege
                 return;
             }
 
-            // Shortest wrapped delta per axis.
-            int dr = ShortestDelta(en.Anchor.x - oldAnchor.x, _state.Rows);
-            int dc = ShortestDelta(en.Anchor.y - oldAnchor.y, _state.Cols);
+            // Per-axis delta: shortest wrapped, or direct when wrapPath is off.
+            int dr = en.Anchor.x - oldAnchor.x;
+            int dc = en.Anchor.y - oldAnchor.y;
+            if (wrapPath)
+            {
+                dr = ShortestDelta(dr, _state.Rows);
+                dc = ShortestDelta(dc, _state.Cols);
+            }
             if (dr == 0 && dc == 0)
             {
                 RebuildEnemyPieces(en);
