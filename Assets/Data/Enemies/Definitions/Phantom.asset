@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Phantom
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
   abilities:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c42, type: 2}
   - {fileID: 11400000, guid: 4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a86, type: 2}
   maxHP: 30
   combatRules: {fileID: 0}
@@ -31,11 +31,11 @@ MonoBehaviour:
     lineAnimatorPrefab: {fileID: 0}
     linePresetLabel: LinkPulse
   disabledLineDisplay:
-    sprite: {fileID: 0}
-    colorOverlay: {r: 0.30738568, g: 0.2536204, b: 0.6754716, a: 0.34901962}
-    imageType: 0
+    sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+    colorOverlay: {r: 0.19805926, g: 0, b: 0.6301887, a: 0.34901962}
+    imageType: 1
     preserveAspect: 0
-    pixelsPerUnitMultiplier: 1
+    pixelsPerUnitMultiplier: 0.2
     fillCenter: 1
     fillMethod: 4
     fillAmount: 1
@@ -46,7 +46,7 @@ MonoBehaviour:
     - {x: 0, y: 1}
     - {x: 1, y: 0}
     - {x: 1, y: 1}
-    sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
     sizeMode: 0
     footprintScale: {x: 0.85, y: 0.85}
     fixedPixelSize: {x: 150, y: 150}
@@ -55,7 +55,7 @@ MonoBehaviour:
     paddingTop: 5
     paddingBottom: 5
     visualOffset: {x: 0, y: 0}
-  imageType: 0
+  imageType: 1
   preserveAspect: 0
   pixelsPerUnitMultiplier: 1
   fillCenter: 0

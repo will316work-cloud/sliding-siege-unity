@@ -12,46 +12,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa303edfcc3402445946bcb5f66ad837, type: 3}
   m_Name: Rolly
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
-  Abilities:
+  abilities:
   - {fileID: 11400000, guid: c12f902e4bde43da92da7712fbdfd7b8, type: 2}
   - {fileID: 11400000, guid: ea978fb5badd4591be00c027914c07f0, type: 2}
   - {fileID: 11400000, guid: e4dce4eb720c6054e9196c2a819b1611, type: 2}
-  MaxHP: 20
-  VoidsAttackOnHit: 0
-  AbsorbsLinkedDamage: 0
-  DiesAtZeroHP: 1
-  CanBeLinkTarget: 1
-  LinkDisplay:
-    LinkColor: {r: 1, g: 1, b: 1, a: 1}
-    LineThickness: 4
-    LineAlpha: 0.75
-    PulseDuration: 0.35
-    LinePulsePeak: 3
-    OverlayPulsePeak: 1.4
-    OverlayPulseAlpha: 0.6
-    OverlaySprite: {fileID: 0}
-    OverlayAnimatorPrefab: {fileID: 0}
-    OverlayPresetLabel: LinkPulse
-    LineAnimatorPrefab: {fileID: 0}
-    LinePresetLabel: LinkPulse
-  Shape:
-    BodyCells:
+  maxHP: 20
+  combatRules: {fileID: 0}
+  linkDisplay:
+    linkColor: {r: 1, g: 1, b: 1, a: 1}
+    lineThickness: 4
+    lineAlpha: 0.75
+    pulseDuration: 0.35
+    linePulsePeak: 3
+    overlayPulsePeak: 1.4
+    overlayPulseAlpha: 0.6
+    overlaySprite: {fileID: 0}
+    overlayAnimatorPrefab: {fileID: 0}
+    overlayPresetLabel: LinkPulse
+    lineAnimatorPrefab: {fileID: 0}
+    linePresetLabel: LinkPulse
+  disabledLineDisplay:
+    sprite: {fileID: 0}
+    colorOverlay: {r: 1, g: 1, b: 1, a: 1}
+    imageType: 0
+    preserveAspect: 0
+    pixelsPerUnitMultiplier: 1
+    fillCenter: 1
+    fillMethod: 4
+    fillAmount: 1
+    material: {fileID: 0}
+  shape:
+    bodyCells:
     - {x: 0, y: 0}
-    Sprite: {fileID: 0}
-    SizeMode: 0
-    FootprintScale: {x: 0.8, y: 0.8}
-    FixedPixelSize: {x: 72, y: 72}
-    PaddingLeft: 5
-    PaddingRight: 5
-    PaddingTop: 5
-    PaddingBottom: 5
-    VisualOffset: {x: 0, y: 0}
-  ImageType: 0
-  PreserveAspect: 0
-  PixelsPerUnitMultiplier: 1
-  FillCenter: 0
-  FillMethod: 0
-  FillAmount: 1
-  ColorOverlay: {r: 0.2, g: 0.7, b: 0.7, a: 1}
-  Material: {fileID: 0}
-  RaycastTarget: 0
+    sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+    sizeMode: 0
+    footprintScale: {x: 0.8, y: 0.8}
+    fixedPixelSize: {x: 72, y: 72}
+    paddingLeft: 5
+    paddingRight: 5
+    paddingTop: 5
+    paddingBottom: 5
+    visualOffset: {x: 0, y: 0}
+  imageType: 0
+  preserveAspect: 0
+  pixelsPerUnitMultiplier: 1
+  fillCenter: 0
+  fillMethod: 0
+  fillAmount: 1
+  colorOverlay: {r: 0.2, g: 0.7, b: 0.7, a: 1}
+  material: {fileID: 0}
+  raycastTarget: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Ghost
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
   abilities:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c42, type: 2}
   - {fileID: 11400000, guid: 3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f75, type: 2}
   maxHP: 20
   combatRules: {fileID: 0}
@@ -31,11 +31,11 @@ MonoBehaviour:
     lineAnimatorPrefab: {fileID: 0}
     linePresetLabel: LinkPulse
   disabledLineDisplay:
-    sprite: {fileID: 0}
+    sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
     colorOverlay: {r: 0.62222064, g: 0.4509434, b: 1, a: 0.34901962}
-    imageType: 0
+    imageType: 1
     preserveAspect: 0
-    pixelsPerUnitMultiplier: 1
+    pixelsPerUnitMultiplier: 0.2
     fillCenter: 1
     fillMethod: 4
     fillAmount: 1
@@ -43,7 +43,7 @@ MonoBehaviour:
   shape:
     bodyCells:
     - {x: 0, y: 0}
-    sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
     sizeMode: 0
     footprintScale: {x: 0.8, y: 0.8}
     fixedPixelSize: {x: 72, y: 72}
