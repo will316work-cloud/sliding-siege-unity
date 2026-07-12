@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -9,9 +8,7 @@ namespace SlidingSiege
     public class GridLayoutMetrics
     {
         [Tooltip("Cell edge length in pixels.")]
-        [FormerlySerializedAs("CellSize")]
         [SerializeField] private float cellSize = 72f;
-        [FormerlySerializedAs("Spacing")]
         [SerializeField] private float spacing = 4f;
 
         public float CellSize => cellSize;

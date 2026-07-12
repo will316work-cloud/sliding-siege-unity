@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c5c456478abd814486e2b7f3f1babc4, type: 3}
   m_Name: Extra Swing
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ItemDefinition
-  Kind: 0
-  DisplayName: Extra Swing
-  Icon: {fileID: 0}
-  StartingCount: 2
-  Description:
-  Hitbox:
-    Label:
-    Parts: []
+  kind: 0
+  displayName: Extra Swing
+  icon: {fileID: 0}
+  startingCount: 2
+  description:
+  hitbox:
+    label:
+    parts: []

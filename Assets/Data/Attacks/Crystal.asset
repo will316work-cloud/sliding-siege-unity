@@ -12,17 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e134b11ccb59bf4097382b20b0dfda1, type: 3}
   m_Name: Crystal
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AttackDefinition
-  DisplayName: Crystal Bomb
-  Icon: {fileID: 0}
-  BaseDamage: 18
-  StartingCharges: 2
-  Description:
-  Hitboxes:
-  - Label: + Shape
-    Parts:
-    - Type: 4
-      Offset: {x: 0, y: 0}
-      GridCells:
+  displayName: Crystal Bomb
+  icon: {fileID: 0}
+  baseDamage: 18
+  startingCharges: 2
+  description:
+  hitboxes:
+  - label: + Shape
+    parts:
+    - type: 4
+      offset: {x: 0, y: 0}
+      gridCells:
       - {x: 0, y: 0}
       - {x: 1, y: 0}
       - {x: 2, y: 0}
@@ -33,11 +33,11 @@ MonoBehaviour:
       - {x: 0, y: -1}
       - {x: 0, y: -2}
       DamagePercent: 100
-  - Label: X Shape
-    Parts:
-    - Type: 4
-      Offset: {x: 0, y: 0}
-      GridCells:
+  - label: X Shape
+    parts:
+    - type: 4
+      offset: {x: 0, y: 0}
+      gridCells:
       - {x: 0, y: 0}
       - {x: 1, y: 1}
       - {x: 2, y: 2}

@@ -81,7 +81,7 @@ namespace SlidingSiege
                     var settings = en.Definition.LinkDisplay;
                     foreach (var id in en.LinkedIds)
                         if (TryEnemyPoint(id, out var to))
-                            Draw(from, to, LineColor(settings),
+                            Draw(from, to, settings.LineImage,
                                 settings.LineThickness * PulseThicknessMultiplier(en.Id, id));
                 }
 
@@ -100,7 +100,6 @@ namespace SlidingSiege
                 {
                     if (list.Count < 2) continue;
                     var settings = list[0].Item1.Definition.LinkDisplay;
-                    var color = LineColor(settings);
                     var remaining = new List<(Enemy en, Vector2 pos)>(list);
                     var current = remaining[0];
                     remaining.RemoveAt(0);
@@ -113,7 +112,7 @@ namespace SlidingSiege
                             float d = (remaining[i].pos - current.pos).sqrMagnitude;
                             if (d < best) { best = d; nearest = i; }
                         }
-                        Draw(current.pos, remaining[nearest].pos, color, settings.LineThickness);
+                        Draw(current.pos, remaining[nearest].pos, settings.LineImage, settings.LineThickness);
                         current = remaining[nearest];
                         remaining.RemoveAt(nearest);
                     }
@@ -127,13 +126,13 @@ namespace SlidingSiege
                             && TryEnemyPoint(sourceId, out var from)
                             && attackList != null && attackList.TryGetAttackCardRect(attack, out var cardRect)
                             && TryCardPoint(cardRect, out var to))
-                            Draw(from, to, LineColor(source.Definition.LinkDisplay), source.Definition.LinkDisplay.LineThickness);
+                            Draw(from, to, source.Definition.LinkDisplay.LineImage, source.Definition.LinkDisplay.LineThickness);
                     foreach (var (sourceId, item) in _combat.ItemDisableEntries())
                         if (_state.Enemies.TryGetValue(sourceId, out var source)
                             && TryEnemyPoint(sourceId, out var from)
                             && itemList != null && itemList.TryGetItemCardRect(item, out var itemRect)
                             && TryCardPoint(itemRect, out var to))
-                            Draw(from, to, LineColor(source.Definition.LinkDisplay), source.Definition.LinkDisplay.LineThickness);
+                            Draw(from, to, source.Definition.LinkDisplay.LineImage, source.Definition.LinkDisplay.LineThickness);
                 }
             }
             for (int i = _used; i < _pool.Count; i++)
@@ -218,11 +217,11 @@ namespace SlidingSiege
                 {
                     float t01 = Mathf.Clamp01(pulse.Elapsed / settings.PulseDuration);
                     float wave = Mathf.Sin(Mathf.PI * t01);
-                    if (pulse.Overlay == null) pulse.Overlay = NextOverlay(settings.OverlaySprite);
+                    if (pulse.Overlay == null) pulse.Overlay = NextOverlay(settings.OverlayImage);
                     var rt = (RectTransform)pulse.Overlay.transform;
                     rt.anchoredPosition = center;
                     rt.sizeDelta = pieceSize * (1f + (settings.OverlayPulsePeak - 1f) * wave);
-                    var c = settings.LinkColor;
+                    var c = settings.OverlayImage.ColorOverlay;
                     c.a = settings.OverlayPulseAlpha * wave;
                     pulse.Overlay.color = c;
                 }
@@ -236,12 +235,12 @@ namespace SlidingSiege
             if (pulse.LineAnim != null) Destroy(pulse.LineAnim.gameObject);
         }
 
-        private Image NextOverlay(Sprite sprite)
+        private Image NextOverlay(ImageSettings settings)
         {
             foreach (var img in _overlayPool)
                 if (!img.gameObject.activeSelf)
                 {
-                    img.sprite = sprite;
+                    settings.ApplyTo(img);
                     img.gameObject.SetActive(true);
                     return img;
                 }
@@ -250,20 +249,12 @@ namespace SlidingSiege
             var rt = (RectTransform)go.transform;
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             var image = go.GetComponent<Image>();
-            image.raycastTarget = false;
-            image.sprite = sprite;
+            settings.ApplyTo(image);
             _overlayPool.Add(image);
             return image;
         }
 
         // ---------------- Line drawing ----------------
-
-        private static Color LineColor(LinkDisplaySettings settings)
-        {
-            var c = settings.LinkColor;
-            c.a = settings.LineAlpha;
-            return c;
-        }
 
         private bool TryEnemyPoint(int enemyId, out Vector2 local)
         {
@@ -290,15 +281,15 @@ namespace SlidingSiege
             return local;
         }
 
-        private void Draw(Vector2 a, Vector2 b, Color color, float thickness)
+        private void Draw(Vector2 a, Vector2 b, ImageSettings image, float thickness)
         {
             var img = NextLine();
+            image.ApplyTo(img);
             var rt = (RectTransform)img.transform;
             var d = b - a;
             rt.anchoredPosition = (a + b) * 0.5f;
             rt.sizeDelta = new Vector2(d.magnitude, thickness);
             rt.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
-            img.color = color;
             if (!img.gameObject.activeSelf) img.gameObject.SetActive(true);
         }
 

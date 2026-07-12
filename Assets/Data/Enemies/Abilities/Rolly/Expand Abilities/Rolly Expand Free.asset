@@ -15,7 +15,7 @@ MonoBehaviour:
   orderIndex: -1
   postDelay: 0.4
   options:
-  - Ability: {fileID: 11400000, guid: 57e31c4f7d141954d8fd687121a0e36d, type: 2}
-    Weight: 1
-  - Ability: {fileID: 11400000, guid: 0cf8b62df5013c84db03baf71c622bf6, type: 2}
-    Weight: 1
+  - ability: {fileID: 11400000, guid: 57e31c4f7d141954d8fd687121a0e36d, type: 2}
+    weight: 1
+  - ability: {fileID: 11400000, guid: 0cf8b62df5013c84db03baf71c622bf6, type: 2}
+    weight: 1

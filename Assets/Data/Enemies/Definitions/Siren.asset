@@ -12,17 +12,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa303edfcc3402445946bcb5f66ad837, type: 3}
   m_Name: Siren
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
-  Abilities:
+  abilities:
   - {fileID: 11400000, guid: 1d0e9f8a7b6c5d4e3f2a1b0c9d8e7fb3, type: 2}
   - {fileID: 11400000, guid: 2e1f0a9b8c7d6e5f4a3b2c1d0e9f8ac4, type: 2}
   - {fileID: 11400000, guid: 3f2a1b0c9d8e7f6a5b4c3d2e1f0a9bd5, type: 2}
   - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
-  MaxHP: 60
-  LinkDisplay:
-    LinkColor: {r: 0.176, g: 0.878, b: 0.839, a: 1}
-    LineThickness: 7.5
-  Shape:
-    BodyCells:
+  maxHP: 60
+  combatRules: {fileID: 0}
+  linkDisplay:
+    lineImage:
+      sprite: {fileID: 0}
+      colorOverlay: {r: 0.176, g: 0.878, b: 0.839, a: 0.75}
+      imageType: 0
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 4
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
+    lineThickness: 7.5
+    pulseDuration: 0.35
+    linePulsePeak: 3
+    overlayPulsePeak: 1.4
+    overlayPulseAlpha: 0.6
+    overlayImage:
+      sprite: {fileID: 0}
+      colorOverlay: {r: 0.176, g: 0.878, b: 0.839, a: 1}
+      imageType: 0
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 4
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
+    overlayAnimatorPrefab: {fileID: 0}
+    overlayPresetLabel: LinkPulse
+    lineAnimatorPrefab: {fileID: 0}
+    linePresetLabel: LinkPulse
+  disabledLineDisplay:
+    sprite: {fileID: 0}
+    colorOverlay: {r: 1, g: 1, b: 1, a: 1}
+    imageType: 0
+    preserveAspect: 0
+    pixelsPerUnitMultiplier: 1
+    fillCenter: 1
+    fillMethod: 4
+    fillAmount: 1
+    material: {fileID: 0}
+    raycastTarget: 0
+  shape:
+    bodyCells:
     - {x: 0, y: 0}
     - {x: 0, y: 1}
     - {x: 0, y: 2}
@@ -32,21 +73,22 @@ MonoBehaviour:
     - {x: 2, y: 0}
     - {x: 2, y: 1}
     - {x: 2, y: 2}
-    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-    SizeMode: 0
-    FootprintScale: {x: 0.85, y: 0.85}
-    FixedPixelSize: {x: 220, y: 220}
-    PaddingLeft: 5
-    PaddingRight: 5
-    PaddingTop: 5
-    PaddingBottom: 5
-    VisualOffset: {x: 0, y: 0}
-  ImageType: 0
-  PreserveAspect: 0
-  PixelsPerUnitMultiplier: 1
-  FillCenter: 0
-  FillMethod: 0
-  FillAmount: 1
-  ColorOverlay: {r: 0.15, g: 0.75, b: 0.72, a: 1}
-  Material: {fileID: 0}
-  RaycastTarget: 0
+    image:
+      sprite: {fileID: 1734704026, guid: 7133ff82da6368442a64e569082649f3, type: 3}
+      colorOverlay: {r: 0.15, g: 0.75, b: 0.72, a: 1}
+      imageType: 2
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 0
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
+    sizeMode: 0
+    footprintScale: {x: 0.85, y: 0.85}
+    fixedPixelSize: {x: 220, y: 220}
+    paddingLeft: 5
+    paddingRight: 5
+    paddingTop: 5
+    paddingBottom: 5
+    visualOffset: {x: 0, y: 0}

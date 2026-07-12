@@ -16,13 +16,13 @@ MonoBehaviour:
   orderIndex: 9
   postDelay: 0.65
   hitbox:
-    Label: Golem Blast
-    Parts:
-    - Type: 5
-      Offset: {x: -1, y: -1}
-      GridCells: []
-      RectSize: {x: 4, y: 4}
-      PerimeterOnly: 1
-      DamageFactor: 1
-      HighlightColor: {r: 1, g: 0.6, b: 0.1, a: 0.5}
-      HighlightSprite: {fileID: 0}
+    label: Golem Blast
+    parts:
+    - type: 5
+      offset: {x: -1, y: -1}
+      gridCells: []
+      rectSize: {x: 4, y: 4}
+      perimeterOnly: 1
+      damageFactor: 1
+      highlightColor: {r: 1, g: 0.6, b: 0.1, a: 0.5}
+      highlightSprite: {fileID: 0}

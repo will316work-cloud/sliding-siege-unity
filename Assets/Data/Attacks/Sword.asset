@@ -12,21 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e134b11ccb59bf4097382b20b0dfda1, type: 3}
   m_Name: Sword
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AttackDefinition
-  DisplayName: Sword Swing
-  Icon: {fileID: 0}
-  BaseDamage: 15
-  StartingCharges: 2
-  Description:
-  Hitboxes:
-  - Label: "↗ Diagonal"
-    Parts:
-    - Type: 2
-      Offset: {x: 0, y: 0}
-      GridCells: []
+  displayName: Sword Swing
+  icon: {fileID: 0}
+  baseDamage: 15
+  startingCharges: 2
+  description:
+  hitboxes:
+  - label: "↗ Diagonal"
+    parts:
+    - type: 2
+      offset: {x: 0, y: 0}
+      gridCells: []
       DamagePercent: 100
-  - Label: "↘ Diagonal"
-    Parts:
-    - Type: 3
-      Offset: {x: 0, y: 0}
-      GridCells: []
+  - label: "↘ Diagonal"
+    parts:
+    - type: 3
+      offset: {x: 0, y: 0}
+      gridCells: []
       DamagePercent: 100

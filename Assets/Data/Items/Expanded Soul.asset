@@ -12,20 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c5c456478abd814486e2b7f3f1babc4, type: 3}
   m_Name: Expanded Soul
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ItemDefinition
-  Kind: 2
-  DisplayName: Expanded Soul
-  Icon: {fileID: 0}
-  StartingCount: 2
-  Description:
-  Hitbox:
-    Label: Soul Halo
-    Parts:
-    - Type: 4
-      Offset: {x: 0, y: 0}
-      GridCells:
+  kind: 2
+  displayName: Expanded Soul
+  icon: {fileID: 0}
+  startingCount: 2
+  description:
+  hitbox:
+    label: Soul Halo
+    parts:
+    - type: 4
+      offset: {x: 0, y: 0}
+      gridCells:
       - {x: 0, y: 0}
-      RectSize: {x: 1, y: 1}
-      PerimeterOnly: 0
-      DamageFactor: 1
-      HighlightColor: {r: 0.4, g: 0.7, b: 1, a: 0.55}
-      HighlightSprite: {fileID: 0}
+      rectSize: {x: 1, y: 1}
+      perimeterOnly: 0
+      damageFactor: 1
+      highlightColor: {r: 0.4, g: 0.7, b: 1, a: 0.55}
+      highlightSprite: {fileID: 0}

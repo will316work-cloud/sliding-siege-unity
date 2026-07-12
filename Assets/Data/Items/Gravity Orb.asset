@@ -12,19 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c5c456478abd814486e2b7f3f1babc4, type: 3}
   m_Name: Gravity Orb
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ItemDefinition
-  Kind: 1
-  DisplayName: Gravity Orb
-  Icon: {fileID: 0}
-  StartingCount: 2
-  Description:
-  Hitbox:
-    Label: Pull Area
-    Parts:
-    - Type: 5
-      Offset: {x: -2, y: -2}
-      GridCells: []
-      RectSize: {x: 5, y: 5}
-      PerimeterOnly: 0
-      DamageFactor: 1
-      HighlightColor: {r: 0.4, g: 0.7, b: 1, a: 0.55}
-      HighlightSprite: {fileID: 0}
+  kind: 1
+  displayName: Gravity Orb
+  icon: {fileID: 0}
+  startingCount: 2
+  description:
+  hitbox:
+    label: Pull Area
+    parts:
+    - type: 5
+      offset: {x: -2, y: -2}
+      gridCells: []
+      rectSize: {x: 5, y: 5}
+      perimeterOnly: 0
+      damageFactor: 1
+      highlightColor: {r: 0.4, g: 0.7, b: 1, a: 0.55}
+      highlightSprite: {fileID: 0}

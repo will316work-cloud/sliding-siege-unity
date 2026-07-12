@@ -7,7 +7,7 @@ namespace SlidingSiege
 {
     /// Composite if/else-if chain: branches are checked first to last, and
     /// the FIRST branch whose conditions all pass runs its abilities in
-    /// order — later branches are skipped. An empty condition list always
+    /// order â€” later branches are skipped. An empty condition list always
     /// passes (put one last as an "else"). Each sub-ability's own postDelay
     /// applies after it succeeds; the branch reports success (gating this
     /// asset's postDelay) when ANY sub-ability succeeded.
@@ -18,10 +18,8 @@ namespace SlidingSiege
         public class Branch
         {
             [Tooltip("ALL must pass for this branch to run. Empty = always passes (else branch).")]
-            [UnityEngine.Serialization.FormerlySerializedAs("Conditions")]
             [SerializeField] private List<AbilityCondition> conditions = new List<AbilityCondition>();
             [Tooltip("Run in order; each one's own postDelay applies when it succeeds.")]
-            [UnityEngine.Serialization.FormerlySerializedAs("Abilities")]
             [SerializeField] private List<EnemyAbility> abilities = new List<EnemyAbility>();
 
             public IReadOnlyList<AbilityCondition> Conditions => conditions;

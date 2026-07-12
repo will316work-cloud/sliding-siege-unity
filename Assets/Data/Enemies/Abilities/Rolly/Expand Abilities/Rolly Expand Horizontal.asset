@@ -17,19 +17,20 @@ MonoBehaviour:
   revertToDefinition: 0
   anchorOffset: {x: 0, y: 0}
   shape:
-    BodyCells:
+    bodyCells:
     - {x: 0, y: -1}
     - {x: 0, y: 0}
     - {x: 0, y: 1}
-    Sprite: {fileID: 0}
-    SizeMode: 0
-    FootprintScale: {x: 0.85, y: 0.85}
-    FixedPixelSize: {x: 72, y: 72}
-    PaddingLeft: 5
-    PaddingRight: 5
-    PaddingTop: 5
-    PaddingBottom: 5
-    VisualOffset: {x: 0, y: 0}
+    image:
+      sprite: {fileID: 0}
+    sizeMode: 0
+    footprintScale: {x: 0.85, y: 0.85}
+    fixedPixelSize: {x: 72, y: 72}
+    paddingLeft: 5
+    paddingRight: 5
+    paddingTop: 5
+    paddingBottom: 5
+    visualOffset: {x: 0, y: 0}
   animationPreset: 
   tweenDuration: 0.15
   tweenEase: 10

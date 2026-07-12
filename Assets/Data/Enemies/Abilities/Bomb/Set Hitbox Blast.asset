@@ -15,13 +15,13 @@ MonoBehaviour:
   orderIndex: 0
   postDelay: 0
   hitbox:
-    Label: 3x3 Blast
-    Parts:
-    - Type: 5
-      Offset: {x: -1, y: -1}
-      GridCells: []
-      RectSize: {x: 3, y: 3}
-      PerimeterOnly: 0
-      DamageFactor: 1
-      HighlightColor: {r: 1, g: 0.35, b: 0.15, a: 0.29803923}
-      HighlightSprite: {fileID: 0}
+    label: 3x3 Blast
+    parts:
+    - type: 5
+      offset: {x: -1, y: -1}
+      gridCells: []
+      rectSize: {x: 3, y: 3}
+      perimeterOnly: 0
+      damageFactor: 1
+      highlightColor: {r: 1, g: 0.35, b: 0.15, a: 0.29803923}
+      highlightSprite: {fileID: 0}

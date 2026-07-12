@@ -1,50 +1,41 @@
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
     /// A body arrangement: occupied cells (offsets from the bounding box's
-    /// top-left, normalized so min row = min col = 0 — the anchor may be an
-    /// empty cell for shapes like an L) plus the sprite and visual rect used
-    /// while this shape is active. Applied as a runtime override via
+    /// top-left, normalized so min row = min col = 0 â€” the anchor may be an
+    /// empty cell for shapes like an L) plus the Image settings (sprite,
+    /// tint, fills...) and visual rect used while this shape is active.
+    /// Applied as a runtime override via
     /// GridState.ReshapeEnemy (see ChangeShapeAbility).
     [Serializable]
     public class EnemyShape
     {
         [Tooltip("Occupied cells, offsets from the bounding box top-left (x = row, y = col); min row/col should be 0. Non-rectangular shapes (L, X, ...) allowed.")]
-        [FormerlySerializedAs("BodyCells")]
         [SerializeField] private Vector2Int[] bodyCells = { Vector2Int.zero };
 
         [Header("Visuals while this shape is active")]
-        [Tooltip("Null keeps the definition's sprite.")]
-        [FormerlySerializedAs("Sprite")]
-        [SerializeField] private Sprite sprite;
+        [Tooltip("Sprite + Image settings applied while this shape is active. On a runtime override shape, an empty sprite keeps the base shape's entire Image settings.")]
+        [SerializeField] private ImageSettings image = new ImageSettings();
         [Tooltip("How the Image rect is sized: stretched to the footprint bounding box, scaled relative to it, or fixed pixels.")]
-        [FormerlySerializedAs("SizeMode")]
         [SerializeField] private VisualSizeMode sizeMode = VisualSizeMode.StretchToFootprint;
         [Tooltip("FootprintScale mode: multiplier per axis (1,1 = exact bounding box).")]
-        [FormerlySerializedAs("FootprintScale")]
         [SerializeField] private Vector2 footprintScale = Vector2.one;
         [Tooltip("FixedPixels mode: absolute width/height in pixels.")]
-        [FormerlySerializedAs("FixedPixelSize")]
         [SerializeField] private Vector2 fixedPixelSize = new Vector2(72f, 72f);
         [Header("Stretch padding (StretchToFootprint only, pixels)")]
-        [FormerlySerializedAs("PaddingLeft")]
         [SerializeField, Min(0f)] private float paddingLeft;
-        [FormerlySerializedAs("PaddingRight")]
         [SerializeField, Min(0f)] private float paddingRight;
-        [FormerlySerializedAs("PaddingTop")]
         [SerializeField, Min(0f)] private float paddingTop;
-        [FormerlySerializedAs("PaddingBottom")]
         [SerializeField, Min(0f)] private float paddingBottom;
         [Space]
         [Tooltip("Pixel offset of the visual from the bounding box's top-left (+x right, +y down).")]
-        [FormerlySerializedAs("VisualOffset")]
         [SerializeField] private Vector2 visualOffset = Vector2.zero;
 
         public Vector2Int[] BodyCells => bodyCells;
-        public Sprite Sprite => sprite;
+        public ImageSettings Image => image;
+        public Sprite Sprite => image.Sprite;
         public VisualSizeMode SizeMode => sizeMode;
 
         /// Final visual rect size for a given footprint pixel size.

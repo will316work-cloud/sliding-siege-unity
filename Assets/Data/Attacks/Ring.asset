@@ -12,33 +12,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e134b11ccb59bf4097382b20b0dfda1, type: 3}
   m_Name: Ring
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AttackDefinition
-  DisplayName: Ring Spell
-  Icon: {fileID: 0}
-  BaseDamage: 12
-  StartingCharges: 2
-  Description:
-  Hitboxes:
-  - Label: Radius 1
-    Parts:
-    - Type: 5
-      Offset: {x: -1, y: -1}
-      GridCells: []
-      RectSize: {x: 3, y: 3}
-      PerimeterOnly: 1
-      DamageFactor: 1
-  - Label: Radius 2
-    Parts:
-    - Type: 5
-      Offset: {x: -2, y: -2}
-      GridCells: []
-      RectSize: {x: 5, y: 5}
-      PerimeterOnly: 1
-      DamageFactor: 1
-  - Label: Radius 3
-    Parts:
-    - Type: 5
-      Offset: {x: -3, y: -3}
-      GridCells: []
-      RectSize: {x: 7, y: 7}
-      PerimeterOnly: 1
-      DamageFactor: 1
+  displayName: Ring Spell
+  icon: {fileID: 0}
+  baseDamage: 12
+  startingCharges: 2
+  description:
+  hitboxes:
+  - label: Radius 1
+    parts:
+    - type: 5
+      offset: {x: -1, y: -1}
+      gridCells: []
+      rectSize: {x: 3, y: 3}
+      perimeterOnly: 1
+      damageFactor: 1
+  - label: Radius 2
+    parts:
+    - type: 5
+      offset: {x: -2, y: -2}
+      gridCells: []
+      rectSize: {x: 5, y: 5}
+      perimeterOnly: 1
+      damageFactor: 1
+  - label: Radius 3
+    parts:
+    - type: 5
+      offset: {x: -3, y: -3}
+      gridCells: []
+      rectSize: {x: 7, y: 7}
+      perimeterOnly: 1
+      damageFactor: 1

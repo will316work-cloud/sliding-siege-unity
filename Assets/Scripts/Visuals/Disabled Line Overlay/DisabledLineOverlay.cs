@@ -14,7 +14,7 @@ namespace SlidingSiege
     /// wires state + metrics at startup.
     public class DisabledLineOverlay : MonoBehaviour
     {
-        private static readonly DisabledLineDisplaySettings FallbackSettings = new DisabledLineDisplaySettings();
+        private static readonly ImageSettings FallbackSettings = new ImageSettings();
 
         [Header("Blocked-shift feedback")]
         [Tooltip("Extra opacity added to a cursed line while the player drags a shift it blocks.")]

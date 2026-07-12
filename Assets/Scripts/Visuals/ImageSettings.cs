@@ -4,17 +4,16 @@ using UnityEngine.UI;
 
 namespace SlidingSiege
 {
-    /// Per-definition styling consumed by DisabledLineOverlay: how the
-    /// cursed (slide-disabled) rows/columns sourced by this enemy look.
-    /// Defaults reproduce the classic look: a plain fill in the enemy's
-    /// LinkDisplay color at low alpha.
+    /// Shared UI-Image styling block used everywhere a definition drives a
+    /// pooled/managed Image: enemy piece sprites (EnemyShape), link redirect
+    /// overlays (LinkDisplaySettings), and cursed-line fills
+    /// (EnemyDefinition.DisabledLineDisplay). ApplyTo pushes every field.
     [Serializable]
-    public class DisabledLineDisplaySettings
+    public class ImageSettings
     {
-        [Header("Image")]
-        [Tooltip("Optional sprite drawn along the line; empty = plain tinted fill.")]
+        [Tooltip("Sprite drawn by the Image; empty = plain tinted fill.")]
         [SerializeField] private Sprite sprite;
-        [Tooltip("Tint used when Use Link Color is off (multiplied over the sprite, if any). Its alpha is replaced by Tint Alpha.")]
+        [Tooltip("Color overlay / tint multiplied over the sprite.")]
         [SerializeField] private Color colorOverlay = Color.white;
         [SerializeField] private Image.Type imageType = Image.Type.Simple;
         [Tooltip("Simple/Filled only.")]
@@ -28,13 +27,16 @@ namespace SlidingSiege
         [Tooltip("Filled only."), Range(0f, 1f)]
         [SerializeField] private float fillAmount = 1f;
         [SerializeField] private Material material;
+        [SerializeField] private bool raycastTarget = false;
 
-        /// Applies all settings to a pooled line Image. linkColor is the
-        /// source enemy's LinkDisplay color, used when Use Link Color is on.
+        public Sprite Sprite => sprite;
+        public Color ColorOverlay => colorOverlay;
+
+        /// Applies every setting to the Image, sprite included.
         public void ApplyTo(Image img)
         {
-            img.color = colorOverlay;
             img.sprite = sprite;
+            img.color = colorOverlay;
             img.type = imageType;
             img.preserveAspect = preserveAspect;
             img.pixelsPerUnitMultiplier = pixelsPerUnitMultiplier;
@@ -42,6 +44,7 @@ namespace SlidingSiege
             img.fillMethod = fillMethod;
             img.fillAmount = fillAmount;
             img.material = material;
+            img.raycastTarget = raycastTarget;
         }
     }
 }

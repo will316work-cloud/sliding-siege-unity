@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -13,10 +12,7 @@ namespace SlidingSiege
     public class Hitbox
     {
         [Tooltip("Shown on the Confirm button while this arrangement is active.")]
-        [FormerlySerializedAs("Label")]
         [SerializeField] private string label;
-
-        [FormerlySerializedAs("Parts")]
         [SerializeField] private HitboxPart[] parts = new HitboxPart[0];
 
         public string Label => label;
@@ -40,7 +36,7 @@ namespace SlidingSiege
     }
 
     /// One resolved cell of a hitbox, carrying the part that claimed it
-    /// (earlier parts win overlaps — damage factor and highlight alike).
+    /// (earlier parts win overlaps â€” damage factor and highlight alike).
     public struct HitCell
     {
         public Vector2Int Cell { get; }

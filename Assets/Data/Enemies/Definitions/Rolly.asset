@@ -19,14 +19,33 @@ MonoBehaviour:
   maxHP: 20
   combatRules: {fileID: 0}
   linkDisplay:
-    linkColor: {r: 1, g: 1, b: 1, a: 1}
+    lineImage:
+      sprite: {fileID: 0}
+      colorOverlay: {r: 1, g: 1, b: 1, a: 0.75}
+      imageType: 0
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 4
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
     lineThickness: 4
-    lineAlpha: 0.75
     pulseDuration: 0.35
     linePulsePeak: 3
     overlayPulsePeak: 1.4
     overlayPulseAlpha: 0.6
-    overlaySprite: {fileID: 0}
+    overlayImage:
+      sprite: {fileID: 0}
+      colorOverlay: {r: 1, g: 1, b: 1, a: 1}
+      imageType: 0
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 4
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
     overlayAnimatorPrefab: {fileID: 0}
     overlayPresetLabel: LinkPulse
     lineAnimatorPrefab: {fileID: 0}
@@ -41,10 +60,21 @@ MonoBehaviour:
     fillMethod: 4
     fillAmount: 1
     material: {fileID: 0}
+    raycastTarget: 0
   shape:
     bodyCells:
     - {x: 0, y: 0}
-    sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+    image:
+      sprite: {fileID: 1734704026, guid: 7133ff82da6368442a64e569082649f3, type: 3}
+      colorOverlay: {r: 0.2, g: 0.7, b: 0.7, a: 1}
+      imageType: 2
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 0
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
     sizeMode: 0
     footprintScale: {x: 0.8, y: 0.8}
     fixedPixelSize: {x: 72, y: 72}
@@ -53,12 +83,3 @@ MonoBehaviour:
     paddingTop: 5
     paddingBottom: 5
     visualOffset: {x: 0, y: 0}
-  imageType: 0
-  preserveAspect: 0
-  pixelsPerUnitMultiplier: 1
-  fillCenter: 0
-  fillMethod: 0
-  fillAmount: 1
-  colorOverlay: {r: 0.2, g: 0.7, b: 0.7, a: 1}
-  material: {fileID: 0}
-  raycastTarget: 0

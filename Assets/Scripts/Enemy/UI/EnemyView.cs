@@ -39,7 +39,6 @@ namespace SlidingSiege
         /// piece's health bar bound to the enemy (shared health display).
         public void EnsurePieceCount(int count, Enemy enemy, Vector2 footprintSizePx)
         {
-            var def = enemy.Definition;
             while (_pieces.Count < count)
             {
                 var piece = _acquirePiece();
@@ -58,8 +57,7 @@ namespace SlidingSiege
             Vector2 visualSize = enemy.VisualSize(footprintSizePx);
             foreach (var piece in _pieces)
             {
-                def.ApplyTo(piece.SpriteImage);
-                piece.SpriteImage.sprite = enemy.CurrentSprite;
+                enemy.CurrentImage.ApplyTo(piece.SpriteImage);
                 var rt = piece.RectTransform;
                 rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f); // top-left of Enemy Layer
                 rt.pivot = new Vector2(0f, 1f);

@@ -17,11 +17,12 @@ MonoBehaviour:
   revertToDefinition: 1
   anchorOffset: {x: 0, y: 0}
   shape:
-    BodyCells:
+    bodyCells:
     - {x: 0, y: 0}
-    Sprite: {fileID: 0}
-    SizeMode: 0
-    FootprintScale: {x: 1, y: 1}
-    FixedPixelSize: {x: 72, y: 72}
-    VisualOffset: {x: 0, y: 0}
+    image:
+      sprite: {fileID: 0}
+    sizeMode: 0
+    footprintScale: {x: 1, y: 1}
+    fixedPixelSize: {x: 72, y: 72}
+    visualOffset: {x: 0, y: 0}
   animationPreset: 

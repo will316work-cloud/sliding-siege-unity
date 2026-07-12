@@ -15,10 +15,10 @@ MonoBehaviour:
   orderIndex: 4
   postDelay: 0.3
   branches:
-  - Conditions:
+  - conditions:
     - {fileID: 11400000, guid: 3265d31040144a5a83bfc0215aec7a0e, type: 2}
-    Abilities:
+    abilities:
     - {fileID: 11400000, guid: 5547a1492d8a403585d338edc6b7a224, type: 2}
-  - Conditions: []
-    Abilities:
+  - conditions: []
+    abilities:
     - {fileID: 11400000, guid: 263952cad23b44feb16be62b7e3cb1de, type: 2}

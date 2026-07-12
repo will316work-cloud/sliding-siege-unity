@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -10,35 +9,27 @@ namespace SlidingSiege
     [Serializable]
     public class HitboxPart
     {
-        [FormerlySerializedAs("Type")]
         [SerializeField] private HitboxPartType type;
 
         [Tooltip("Shifts this part's origin away from the tapped anchor cell (x = row, y = col).")]
-        [FormerlySerializedAs("Offset")]
         [SerializeField] private Vector2Int offset;
 
         [Tooltip("Grid parts only: affected cells relative to the shifted origin (x = row, y = col).")]
-        [FormerlySerializedAs("GridCells")]
         [SerializeField] private Vector2Int[] gridCells = { Vector2Int.zero };
 
         [Tooltip("Rectangle parts only: extent in (rows, cols); the shifted origin is the top-left cell.")]
-        [FormerlySerializedAs("RectSize")]
         [SerializeField] private Vector2Int rectSize = new Vector2Int(1, 1);
 
         [Tooltip("Rectangle parts only: only the 1-cell-thick border instead of the full area.")]
-        [FormerlySerializedAs("PerimeterOnly")]
         [SerializeField] private bool perimeterOnly;
 
         [Tooltip("Percent of the attack's BaseDamage this part deals.")]
-        [FormerlySerializedAs("DamageFactor")]
         [SerializeField, Min(0)] private float damageFactor = 1.0f;
 
         [Tooltip("Tint used when this part's cells are highlighted on the grid.")]
-        [FormerlySerializedAs("HighlightColor")]
         [SerializeField] private Color highlightColor = new Color(1f, 0.4f, 0.3f, 0.55f);
 
         [Tooltip("Optional highlight sprite for this part's cells; null uses the overlay default.")]
-        [FormerlySerializedAs("HighlightSprite")]
         [SerializeField] private Sprite highlightSprite;
 
         public HitboxPartType Type => type;

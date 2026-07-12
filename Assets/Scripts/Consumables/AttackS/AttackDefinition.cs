@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace SlidingSiege
 {
@@ -10,17 +9,11 @@ namespace SlidingSiege
     [CreateAssetMenu(menuName = "SlidingSiege/Attack Definition")]
     public class AttackDefinition : ScriptableObject
     {
-        [FormerlySerializedAs("DisplayName")]
         [SerializeField] private string displayName;
-        [FormerlySerializedAs("Icon")]
         [SerializeField] private Sprite icon;
-        [FormerlySerializedAs("BaseDamage")]
         [SerializeField, Min(0)] private int baseDamage = 10;
-        [FormerlySerializedAs("StartingCharges")]
         [SerializeField, Min(0)] private int startingCharges = 2;
-        [FormerlySerializedAs("Description")]
         [SerializeField, TextArea] private string description;
-        [FormerlySerializedAs("Hitboxes")]
         [SerializeField] private Hitbox[] hitboxes = new Hitbox[0];
 
         public string DisplayName => displayName;

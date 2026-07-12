@@ -12,41 +12,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e134b11ccb59bf4097382b20b0dfda1, type: 3}
   m_Name: Hammer
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AttackDefinition
-  DisplayName: Hammer Slam
-  Icon: {fileID: 0}
-  BaseDamage: 20
-  StartingCharges: 2
-  Description:
-  Hitboxes:
-  - Label: "0\xB0"
-    Parts:
-    - Type: 5
-      Offset: {x: 0, y: 0}
-      GridCells: []
-      RectSize: {x: 2, y: 2}
-      PerimeterOnly: 0
-      DamageFactor: 1
-  - Label: "90\xB0"
-    Parts:
-    - Type: 5
-      Offset: {x: 0, y: -1}
-      GridCells: []
-      RectSize: {x: 2, y: 2}
-      PerimeterOnly: 0
-      DamageFactor: 1
-  - Label: "180\xB0"
-    Parts:
-    - Type: 5
-      Offset: {x: -1, y: -1}
-      GridCells: []
-      RectSize: {x: 2, y: 2}
-      PerimeterOnly: 0
-      DamageFactor: 1
-  - Label: "270\xB0"
-    Parts:
-    - Type: 5
-      Offset: {x: -1, y: 0}
-      GridCells: []
-      RectSize: {x: 2, y: 2}
-      PerimeterOnly: 0
-      DamageFactor: 1
+  displayName: Hammer Slam
+  icon: {fileID: 0}
+  baseDamage: 20
+  startingCharges: 2
+  description:
+  hitboxes:
+  - label: "0\xB0"
+    parts:
+    - type: 5
+      offset: {x: 0, y: 0}
+      gridCells: []
+      rectSize: {x: 2, y: 2}
+      perimeterOnly: 0
+      damageFactor: 1
+  - label: "90\xB0"
+    parts:
+    - type: 5
+      offset: {x: 0, y: -1}
+      gridCells: []
+      rectSize: {x: 2, y: 2}
+      perimeterOnly: 0
+      damageFactor: 1
+  - label: "180\xB0"
+    parts:
+    - type: 5
+      offset: {x: -1, y: -1}
+      gridCells: []
+      rectSize: {x: 2, y: 2}
+      perimeterOnly: 0
+      damageFactor: 1
+  - label: "270\xB0"
+    parts:
+    - type: 5
+      offset: {x: -1, y: 0}
+      gridCells: []
+      rectSize: {x: 2, y: 2}
+      perimeterOnly: 0
+      damageFactor: 1

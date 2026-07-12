@@ -15,13 +15,13 @@ MonoBehaviour:
   orderIndex: 0
   postDelay: 0
   hitbox:
-    Label: Row
-    Parts:
-    - Type: 0
-      Offset: {x: 0, y: 0}
-      GridCells: []
-      RectSize: {x: 1, y: 1}
-      PerimeterOnly: 0
-      DamageFactor: 1
-      HighlightColor: {r: 0.3, g: 0.9, b: 0.4, a: 0.2}
-      HighlightSprite: {fileID: 0}
+    label: Row
+    parts:
+    - type: 0
+      offset: {x: 0, y: 0}
+      gridCells: []
+      rectSize: {x: 1, y: 1}
+      perimeterOnly: 0
+      damageFactor: 1
+      highlightColor: {r: 0.3, g: 0.9, b: 0.4, a: 0.2}
+      highlightSprite: {fileID: 0}

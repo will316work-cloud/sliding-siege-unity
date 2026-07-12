@@ -12,16 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e134b11ccb59bf4097382b20b0dfda1, type: 3}
   m_Name: Spear
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.AttackDefinition
-  DisplayName: Spear Thrust
-  Icon: {fileID: 0}
-  BaseDamage: 40
-  StartingCharges: 2
-  Description:
-  Hitboxes:
-  - Label: Thrust
-    Parts:
-    - Type: 4
-      Offset: {x: 0, y: 0}
-      GridCells:
+  displayName: Spear Thrust
+  icon: {fileID: 0}
+  baseDamage: 40
+  startingCharges: 2
+  description:
+  hitboxes:
+  - label: Thrust
+    parts:
+    - type: 4
+      offset: {x: 0, y: 0}
+      gridCells:
       - {x: 0, y: 0}
       DamagePercent: 100
