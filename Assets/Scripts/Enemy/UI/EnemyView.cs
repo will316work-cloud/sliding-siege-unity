@@ -34,10 +34,17 @@ namespace SlidingSiege
             return list;
         }
 
+        /// Converts a top-left-anchored/top-left-pivot anchored position into
+        /// the equivalent center-anchored/center-pivot one for a rect of
+        /// `visualSize` inside a layer of `layerSize` (same on-screen rect).
+        public static Vector2 CenterAnchorOffset(Vector2 visualSize, Vector2 layerSize) => new Vector2(
+            (visualSize.x - layerSize.x) * 0.5f,
+            (layerSize.y - visualSize.y) * 0.5f);
+
         /// Ensures exactly `count` pieces exist, configured from the enemy's
         /// definition (sprite, image type, tint, material, sizing) with each
         /// piece's health bar bound to the enemy (shared health display).
-        public void EnsurePieceCount(int count, Enemy enemy, Vector2 footprintSizePx)
+        public void EnsurePieceCount(int count, Enemy enemy, Vector2 footprintSizePx, Vector2 layerSize)
         {
             while (_pieces.Count < count)
             {
@@ -53,14 +60,25 @@ namespace SlidingSiege
                 _releasePiece(last);
             }
             // Shape overrides may swap the sprite and visual rect at runtime.
-            _visualOffset = enemy.VisualAnchorOffset(footprintSizePx);
             Vector2 visualSize = enemy.VisualSize(footprintSizePx);
+            // Positions arrive in top-left space; pieces are center-pivoted
+            // (so shakes/scales originate from the middle), so fold the
+            // top-left -> center conversion into the standing offset.
+            _visualOffset = enemy.VisualAnchorOffset(footprintSizePx)
+                + CenterAnchorOffset(visualSize, layerSize);
+            var def = enemy.Definition;
+            var visualShape = enemy.CurrentVisualShape;
             foreach (var piece in _pieces)
             {
-                enemy.CurrentImage.ApplyTo(piece.SpriteImage);
+                piece.ResetToggles();
+                visualShape.Image.ApplyTo(piece.SpriteImage);
+                piece.SetFaceSource(visualShape);
+                piece.SetAnimatorController(def.AnimatorController);
+                piece.ApplyRemains(def.RemainsColorOverlay, def.ExplosionFlakesColorOverlay,
+                    def.ExplosionCloudColorOverlay, visualSize);
                 var rt = piece.RectTransform;
-                rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f); // top-left of Enemy Layer
-                rt.pivot = new Vector2(0f, 1f);
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); // center of Enemy Layer
+                rt.pivot = new Vector2(0.5f, 0.5f);
                 rt.sizeDelta = visualSize;
             }
         }

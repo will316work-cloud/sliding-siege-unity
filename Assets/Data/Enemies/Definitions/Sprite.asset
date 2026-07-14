@@ -65,7 +65,7 @@ MonoBehaviour:
     bodyCells:
     - {x: 0, y: 0}
     image:
-      sprite: {fileID: 1734704026, guid: 7133ff82da6368442a64e569082649f3, type: 3}
+      sprite: {fileID: 1766491284, guid: 7133ff82da6368442a64e569082649f3, type: 3}
       colorOverlay: {r: 1, g: 0.5, b: 0.8, a: 1}
       imageType: 0
       preserveAspect: 0
@@ -83,3 +83,31 @@ MonoBehaviour:
     paddingTop: 5
     paddingBottom: 5
     visualOffset: {x: 0, y: 0}
+    faceImage:
+      sprite: {fileID: -1725491888, guid: 1e0a529288c3b8945b8671a59a992c11, type: 3}
+      colorOverlay: {r: 1, g: 1, b: 1, a: 1}
+      imageType: 0
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 4
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
+    facePaddingLeft: 0
+    facePaddingRight: 0
+    facePaddingTop: 0
+    facePaddingBottom: 0
+  animatorController: {fileID: 9100000, guid: 3e175bed993433c4090f48dbe6c17756, type: 2}
+  hurtPreset:
+    presetLabel: Hurt
+    referenceClipLength: 1
+  deathPreset:
+    presetLabel: Death
+    referenceClipLength: 1
+  idlePreset:
+    presetLabel: Idle
+    referenceClipLength: 1
+  remainsColorOverlay: {r: 1, g: 0.5019608, b: 0.8, a: 1}
+  explosionFlakesColorOverlay: {r: 1, g: 1, b: 1, a: 1}
+  explosionCloudColorOverlay: {r: 1, g: 1, b: 1, a: 1}

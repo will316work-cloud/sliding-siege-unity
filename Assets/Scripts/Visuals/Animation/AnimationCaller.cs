@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
+using UnityEngine.Events;
 
 /// <summary>
 /// Fluent Animator dispatcher. Supports per-request playback speed
@@ -15,6 +17,8 @@ using UnityEngine;
 public class AnimationCaller : MonoBehaviour
 {
     #region Serialized Fields
+
+
     [Header("Presets")]
     [Tooltip("Named presets callable from the Inspector, UnityEvents, or code via PlayPreset().")]
     [SerializeField] private List<AnimationPreset> _presets = new();
@@ -33,7 +37,12 @@ public class AnimationCaller : MonoBehaviour
     [SerializeField] private List<LayerSpeedParameter> _layerSpeedParameters = new();
 
     [Tooltip("Fallback speed parameter for layers with no mapping. Empty = speed is skipped for those layers.")]
-    [SerializeField] private string _defaultSpeedParameterName = "SpeedMultiplier";
+    [SerializeField] private string _defaultSpeedParameterName = "Speed Multiplier";
+
+    [Header("Animation Event Parameters")]
+    [SerializeField] private AnimationEventParameters[] animationEvents;
+
+
     #endregion
 
     #region Private Fields
@@ -42,6 +51,10 @@ public class AnimationCaller : MonoBehaviour
     private readonly HashSet<int> _existingParameterHashes = new();
     private readonly HashSet<int> _warnedMissingParameters = new();
     private int _defaultSpeedParameterHash;
+    /// <summary>The most recently dispatched request — used by WaitForStateComplete
+    /// to tell "a newer Dispatch() truly superseded us" apart from "the Animator
+    /// just hasn't caught up to our own Play() yet" (see its remarks).</summary>
+    private AnimationRequest _activeRequest;
     #endregion
 
     #region Properties
@@ -150,7 +163,9 @@ public class AnimationCaller : MonoBehaviour
     {
         if (!enabled || request == null) return;
 
-        ApplySpeed(request);
+        _activeRequest = request;
+
+        int speedHash = ApplySpeed(request);
 
         if (request.FadeTime <= 0f)
             _animator.Play(request.StateHash, request.LayerIndex, request.NormalisedTime);
@@ -159,10 +174,23 @@ public class AnimationCaller : MonoBehaviour
                 request.StateHash, request.FadeTime,
                 request.LayerIndex, 0f, request.NormalisedTime);
 
+        // Force the transition to actually apply THIS frame. Helps most
+        // cases, but the very first Animator ever bound to a given
+        // AnimatorController in the scene (e.g. the pool's first-ever
+        // piece) can still take an extra frame or two for its playable
+        // graph to catch up even after this call — see the interruption
+        // check in WaitForStateComplete for how that's handled.
+        _animator.Update(0f);
+
         request.OnPlay?.Invoke();
 
-        if (request.OnComplete != null)
-            StartCoroutine(WaitForStateComplete(request));
+        // Watch for completion whenever a caller wants the callback, OR
+        // whenever this request drove the speed parameter away from its
+        // neutral default (1) — the reset below needs the wait either way,
+        // even for fire-and-forget presets with no OnComplete.
+        bool needsSpeedReset = speedHash != 0 && !Mathf.Approximately(request.Speed, 1f);
+        if (request.OnComplete != null || needsSpeedReset)
+            StartCoroutine(WaitForStateComplete(request, speedHash));
     }
 
     // ── Layer utility ─────────────────────────────────────────────────────────
@@ -186,11 +214,45 @@ public class AnimationCaller : MonoBehaviour
         SetLayerSpeedParameter(ResolveLayerIndex(layerName), parameterName);
     }
 
+    /// <summary>
+    /// Re-reads the Animator's current layer names and float parameters.
+    /// Call this whenever something swaps <c>Animator.runtimeAnimatorController</c>
+    /// at runtime (e.g. per-enemy-definition controller overrides) — the
+    /// caches built at Awake() describe whichever controller was bound at
+    /// that moment and go stale the instant a different one is assigned.
+    /// </summary>
+    public void RefreshAnimatorBindings()
+    {
+        CacheLayerNames();
+        CacheParameterHashes();
+    }
+
+    public void CallAnimationEvent(string label)
+    {
+        foreach (AnimationEventParameters parameters in animationEvents)
+        {
+            if (parameters.MatchingLabel(label))
+            {
+                parameters.CallEvent();
+                break;
+            }
+        }
+    }
+
     #endregion
 
     #region Private Methods
 
-    private void ApplySpeed(AnimationRequest request)
+    /// <summary>
+    /// Writes the request's speed to its resolved Animator float parameter
+    /// and returns the parameter's hash (0 if speed isn't supported for this
+    /// request — no mapping and no default). The existence cache is used
+    /// only to decide whether to log a one-time diagnostic warning; it must
+    /// NOT gate the SetFloat call itself; a stale/empty cache (e.g. read
+    /// before the Animator's parameters were available) would otherwise
+    /// silently skip applying a perfectly valid speed.
+    /// </summary>
+    private int ApplySpeed(AnimationRequest request)
     {
         int hash;
         if (!string.IsNullOrEmpty(request.SpeedParameterOverride))
@@ -198,17 +260,15 @@ public class AnimationCaller : MonoBehaviour
         else
             hash = ResolveSpeedParameterHash(request.LayerIndex);
 
-        if (hash == 0) return; // no mapping and no default: speed unsupported here
+        if (hash == 0) return 0; // no mapping and no default: speed unsupported here
 
-        if (!_existingParameterHashes.Contains(hash))
-        {
-            if (_warnedMissingParameters.Add(hash))
-                Debug.LogWarning("[AnimationCaller] Speed parameter not found on this Animator — " +
-                                 "add the float parameter and bind it as the state's Speed Multiplier, " +
-                                 "or speed requests will have no effect.", this);
-            return;
-        }
-        _animator.SetFloat(hash, request.Speed);
+        if (!_existingParameterHashes.Contains(hash) && _warnedMissingParameters.Add(hash))
+            Debug.LogWarning("[AnimationCaller] Speed parameter not found on this Animator — " +
+                             "add the float parameter and bind it as the state's Speed Multiplier, " +
+                             "or speed requests will have no effect.", this);
+
+        _animator.SetFloat(hash, request.Speed); // safe no-op if the parameter truly doesn't exist
+        return hash;
     }
 
     private int ResolveSpeedParameterHash(int layerIndex)
@@ -255,13 +315,24 @@ public class AnimationCaller : MonoBehaviour
     /// its normalised time passes the end (or the start, for negative
     /// speeds), or the Animator has moved on to a different state
     /// (interruption also counts as completion so callbacks always fire).
+    /// Afterwards, resets the driven speed parameter back to its neutral
+    /// default (1) — unless a newer request already re-drove the same
+    /// parameter to a different value in the meantime, in which case
+    /// resetting here would incorrectly clobber it.
     /// </summary>
-    private IEnumerator WaitForStateComplete(AnimationRequest request)
+    private IEnumerator WaitForStateComplete(AnimationRequest request, int speedHash)
     {
         // Let the Play/CrossFade register with the Animator first.
         yield return null;
 
         bool reverse = request.Speed < 0f;
+        // The very first Animator ever bound to a given AnimatorController
+        // in the scene (e.g. the object pool's first-ever piece) can take
+        // several extra frames for its playable graph to catch up to a
+        // Play() call, even after Dispatch()'s forced Update(0f) — cap how
+        // long we tolerate "not there yet" before giving up so a genuinely
+        // broken Animator can't hang this coroutine forever.
+        int staleFramesLeft = 120;
         while (enabled && _animator != null && _animator.isActiveAndEnabled)
         {
             bool inTransition = _animator.IsInTransition(request.LayerIndex);
@@ -274,8 +345,13 @@ public class AnimationCaller : MonoBehaviour
 
             if (!isOurState)
             {
-                // Interrupted or replaced — treat as complete.
-                break;
+                // A newer Dispatch() truly superseded us -> done. Otherwise
+                // this is still our own request — the Animator just hasn't
+                // caught up to it yet — so keep waiting instead of bailing
+                // and firing OnComplete (and any Idle resume) prematurely.
+                if (_activeRequest != request || --staleFramesLeft <= 0) break;
+                yield return null;
+                continue;
             }
 
             if (!inTransition)
@@ -285,6 +361,12 @@ public class AnimationCaller : MonoBehaviour
             }
 
             yield return null;
+        }
+
+        if (speedHash != 0 && _animator != null && !Mathf.Approximately(request.Speed, 1f)
+            && Mathf.Approximately(_animator.GetFloat(speedHash), request.Speed))
+        {
+            _animator.SetFloat(speedHash, 1f);
         }
 
         request.OnComplete?.Invoke();
@@ -305,6 +387,7 @@ public class AnimationCaller : MonoBehaviour
 
     private void CacheParameterHashes()
     {
+        if (_animator == null || _animator.runtimeAnimatorController == null) return;
         _existingParameterHashes.Clear();
         foreach (var p in _animator.parameters)
             if (p.type == AnimatorControllerParameterType.Float)
@@ -313,6 +396,7 @@ public class AnimationCaller : MonoBehaviour
 
     private void CacheLayerNames()
     {
+        if (_animator == null || _animator.runtimeAnimatorController == null) return;
         _layerIndexByName.Clear();
         for (int i = 0; i < _animator.layerCount; i++)
             _layerIndexByName[_animator.GetLayerName(i)] = i;

@@ -64,11 +64,13 @@ namespace SlidingSiege
         public int SizeRows { get { int lo = int.MaxValue, hi = int.MinValue; foreach (var c in BodyCells) { if (c.x < lo) lo = c.x; if (c.x > hi) hi = c.x; } return lo == int.MaxValue ? 1 : hi - lo + 1; } }
         public int SizeCols { get { int lo = int.MaxValue, hi = int.MinValue; foreach (var c in BodyCells) { if (c.y < lo) lo = c.y; if (c.y > hi) hi = c.y; } return lo == int.MaxValue ? 1 : hi - lo + 1; } }
 
-        /// Active visuals: the shape override's when present, else the base
-        /// shape's (an override with no sprite keeps the base shape's entire
-        /// Image settings).
-        public ImageSettings CurrentImage =>
-            ShapeOverride != null && ShapeOverride.Sprite != null ? ShapeOverride.Image : Definition.Shape.Image;
+        /// Shape whose visuals (body Image settings, face, visual rect) are
+        /// active: the override's when present, else the base shape (an
+        /// override with no body sprite keeps the base shape's visuals).
+        public EnemyShape CurrentVisualShape =>
+            ShapeOverride != null && ShapeOverride.Sprite != null ? ShapeOverride : Definition.Shape;
+
+        public ImageSettings CurrentImage => CurrentVisualShape.Image;
 
         public Vector2 VisualSize(Vector2 footprintSizePx) => ActiveShape.VisualSize(footprintSizePx);
 

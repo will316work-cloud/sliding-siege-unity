@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f15a782c804c445ba7f551e448cfa3b3, type: 3}
   m_Name: Rolly Contract
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.ChangeShapeAbility
+  trigger: 0
   orderIndex: 3
   postDelay: 0.3
   revertToDefinition: 1
@@ -21,8 +22,38 @@ MonoBehaviour:
     - {x: 0, y: 0}
     image:
       sprite: {fileID: 0}
+      colorOverlay: {r: 1, g: 1, b: 1, a: 1}
+      imageType: 0
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 4
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
     sizeMode: 0
     footprintScale: {x: 1, y: 1}
     fixedPixelSize: {x: 72, y: 72}
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
     visualOffset: {x: 0, y: 0}
-  animationPreset: 
+    faceImage:
+      sprite: {fileID: 0}
+      colorOverlay: {r: 1, g: 1, b: 1, a: 1}
+      imageType: 0
+      preserveAspect: 0
+      pixelsPerUnitMultiplier: 1
+      fillCenter: 1
+      fillMethod: 4
+      fillAmount: 1
+      material: {fileID: 0}
+      raycastTarget: 0
+    facePaddingLeft: 5
+    facePaddingRight: 10
+    facePaddingTop: 5
+    facePaddingBottom: 10
+  animationPreset: Ability 2
+  tweenDuration: 0.25
+  tweenEase: 9

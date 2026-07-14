@@ -23,7 +23,7 @@ namespace SlidingSiege
 
         [Header("Animation")]
         [Tooltip("Optional AnimationCaller preset on the OWNER's piece, played (and awaited) before spawning.")]
-        [SerializeField] private string spawnAnimationPreset = "";
+        [SerializeField] private TimedAnimationPreset spawnPreset = new TimedAnimationPreset();
 
         public override IEnumerator Execute(EnemyAbilityContext ctx, AbilityResult result)
         {
@@ -34,16 +34,19 @@ namespace SlidingSiege
             if (candidates.Count == 0) yield break;      // no room: no roll
             if (Random.value >= chance) yield break;      // roll failed
 
-            yield return ctx.PlayOwnerPresetAndWait(spawnAnimationPreset);
-
             int spawned = 0;
             for (int i = 0; i < count && candidates.Count > 0; i++)
             {
                 var cell = candidates[Random.Range(0, candidates.Count)];
                 if (ctx.State.CanPlaceAt(cell.x, cell.y, spawnDefinition))
                 {
-                    ctx.State.SpawnEnemy(spawnDefinition, cell.x, cell.y);
+                    var newEnemy = ctx.State.SpawnEnemy(spawnDefinition, cell.x, cell.y);
                     spawned++;
+
+                    // Spawn-in flourish on the NEW enemy's own piece; fire
+                    // and forget so it doesn't block placing the rest.
+                    var newCtx = new EnemyAbilityContext(newEnemy, ctx.State, ctx.Views, ctx.Host, ctx.Combat);
+                    ctx.Host.StartCoroutine(spawnPreset.PlayAnim(newCtx, null));
                 }
                 // Revalidate: earlier spawns may block remaining candidates.
                 candidates = GatherCandidates(ctx);

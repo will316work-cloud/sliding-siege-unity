@@ -34,11 +34,33 @@ namespace SlidingSiege
         [Header("Base shape (body, Image settings, visual rect)")]
         [SerializeField] private EnemyShape shape = new EnemyShape();
 
+        [Header("Animation")]
+        [Tooltip("Replaces the enemy piece prefab's Animator controller for this enemy; empty keeps the prefab default. State names must match the prefab's AnimationCaller presets (Enemy Spawn/Move/Hurt/Death/Idle).")]
+        [SerializeField] private RuntimeAnimatorController animatorController;
+        [SerializeField] private TimedAnimationPreset hurtPreset = new TimedAnimationPreset();
+        [SerializeField] private TimedAnimationPreset deathPreset = new TimedAnimationPreset();
+        [SerializeField] private TimedAnimationPreset idlePreset = new TimedAnimationPreset();
+
+        [Header("Enemy remains")]
+        [Tooltip("Multiplied over every color of the Enemy Remains particle system.")]
+        [SerializeField] private Color remainsColorOverlay = Color.white;
+        [Tooltip("Multiplied over every color of the Explosion Flakes particle system.")]
+        [SerializeField] private Color explosionFlakesColorOverlay = Color.white;
+        [Tooltip("Multiplied over every color of the Explosion Cloud particle system.")]
+        [SerializeField] private Color explosionCloudColorOverlay = Color.white;
+
         public IReadOnlyList<EnemyAbility> Abilities => abilities;
         public int MaxHP => maxHP;
         public CombatRules Rules => combatRules != null ? combatRules : CombatRules.Default;
         public LinkDisplaySettings LinkDisplay => linkDisplay;
         public ImageSettings DisabledLineDisplay => disabledLineDisplay;
         public EnemyShape Shape => shape;
+        public RuntimeAnimatorController AnimatorController => animatorController;
+        public TimedAnimationPreset HurtPreset => hurtPreset;
+        public TimedAnimationPreset DeathPreset => deathPreset;
+        public TimedAnimationPreset IdlePreset => idlePreset;
+        public Color RemainsColorOverlay => remainsColorOverlay;
+        public Color ExplosionFlakesColorOverlay => explosionFlakesColorOverlay;
+        public Color ExplosionCloudColorOverlay => explosionCloudColorOverlay;
     }
 }

@@ -80,7 +80,7 @@ namespace SlidingSiege
 
         private IEnumerator PlayAnim(EnemyAbilityContext ctx, System.Action onDone)
         {
-            float speedScale = referenceClipLength / moveDuration;
+            float speedScale = 1 / referenceClipLength;
             yield return ctx.PlayOwnerPresetAndWait(moveAnimationPreset, speedScale);
             onDone();
         }

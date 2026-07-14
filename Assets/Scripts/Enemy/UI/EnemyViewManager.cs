@@ -23,11 +23,6 @@ namespace SlidingSiege
         [SerializeField, Min(0.01f)] private float defaultMoveDuration = 0.25f;
         [SerializeField] private Ease defaultMoveEase = Ease.OutCubic;
 
-        [Header("Animation preset labels (played on each piece's AnimationCaller)")]
-        [SerializeField] private string spawnPresetLabel = "Spawn";
-        [SerializeField] private string hurtPresetLabel = "Hurt";
-        [SerializeField] private string deathPresetLabel = "Death";
-
         private GridState _state;
         private GridLayoutMetrics _metrics;
         private IMoveAnimator _animator;
@@ -83,8 +78,10 @@ namespace SlidingSiege
 
         // ---------------- Piece placement math ----------------
 
-        /// Anchored position (top-left pivot, top-left anchor) of a footprint
-        /// whose top-left cell is at unwrapped (r, c). r/c may be negative.
+        /// Top-left-space position of a footprint whose top-left cell is at
+        /// unwrapped (r, c). r/c may be negative. Pieces themselves are
+        /// center-anchored/center-pivoted; EnemyView folds the conversion
+        /// into its visual offset (see EnemyView.CenterAnchorOffset).
         private Vector2 PiecePos(int r, int c) => new Vector2(
             _metrics.ContentOffset.x + c * _metrics.Stride,
             -(_metrics.ContentOffset.y + r * _metrics.Stride));
@@ -135,7 +132,7 @@ namespace SlidingSiege
             if (!_views.TryGetValue(en.Id, out var view)) return;
             var origins = PieceOrigins(en, en.Anchor);
             origins.RemoveAll(o => !OverlapsGrid(en, o));
-            view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en));
+            view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en), enemyLayer.rect.size);
             var positions = new List<Vector2>(origins.Count);
             foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
             view.SnapPieces(positions);
@@ -192,7 +189,7 @@ namespace SlidingSiege
                 }
 
                 var origins = new List<Vector2Int>(originSet);
-                view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en));
+                view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en), enemyLayer.rect.size);
                 var positions = new List<Vector2>(origins.Count);
                 foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
                 view.SnapPieces(positions);
@@ -268,11 +265,13 @@ namespace SlidingSiege
             RebuildEnemyPieces(en);
 
             // Hurt animation on every non-lethal hit (death handles the rest).
-            Action<int> onLost = _ => { if (!en.IsDead) PlayPresetFireAndForget(view, hurtPresetLabel); };
+            Action<int> onLost = _ =>
+            {
+                if (en.IsDead) return;
+                PlayPresetFireAndForget(view, en.Definition?.HurtPreset, () => !en.IsDead, en.Definition?.IdlePreset);
+            };
             en.OnHealthLost += onLost;
             _hurtHooks[en.Id] = onLost;
-
-            PlayPresetFireAndForget(view, spawnPresetLabel);
         }
 
         private void UnhookHurt(Enemy en)
@@ -297,13 +296,13 @@ namespace SlidingSiege
             _views.Remove(en.Id);
 
             _pendingRemovals++;
-            StartCoroutine(RemovalSequence(view));
+            StartCoroutine(RemovalSequence(view, en.Definition));
         }
 
-        private IEnumerator RemovalSequence(EnemyView view)
+        private IEnumerator RemovalSequence(EnemyView view, EnemyDefinition definition)
         {
-            yield return PlayPresetOnAllPieces(view, hurtPresetLabel, fadeFallback: false);
-            yield return PlayPresetOnAllPieces(view, deathPresetLabel, fadeFallback: true);
+            yield return PlayPresetOnAllPieces(view, definition?.HurtPreset, fadeFallback: false);
+            yield return PlayPresetOnAllPieces(view, definition?.DeathPreset, fadeFallback: true);
             view.ReleaseAll();
             _pendingRemovals--;
         }
@@ -312,16 +311,17 @@ namespace SlidingSiege
         /// waits for all of them to complete. Pieces without a caller do
         /// nothing — unless fadeFallback is set, in which case they fade
         /// out over removalFadeDuration instead.
-        private IEnumerator PlayPresetOnAllPieces(EnemyView view, string label, bool fadeFallback)
+        private IEnumerator PlayPresetOnAllPieces(EnemyView view, TimedAnimationPreset preset, bool fadeFallback)
         {
+            bool hasLabel = preset != null && !string.IsNullOrEmpty(preset.PresetLabel);
             int pending = 0;
             foreach (var piece in view.Pieces)
             {
                 var caller = piece.AnimationCaller;
-                if (caller != null && !string.IsNullOrEmpty(label))
+                if (caller != null && hasLabel)
                 {
                     pending++;
-                    caller.PlayPreset(label, () => pending--);
+                    caller.PlayPreset(preset.PresetLabel, preset.ReferenceClipLength, () => pending--);
                 }
                 else if (fadeFallback && removalFadeDuration > 0f)
                 {
@@ -334,12 +334,31 @@ namespace SlidingSiege
             while (pending > 0) yield return null;
         }
 
-        private void PlayPresetFireAndForget(EnemyView view, string label)
+        /// Plays `preset` on every piece's AnimationCaller. When
+        /// `resumeIdleIf` is given, each piece plays `idlePreset` once
+        /// `preset` finishes — but only if the predicate still holds then
+        /// (e.g. the enemy hasn't died since) — replacing the Animator's
+        /// old exit-time transitions back to Idle.
+        private void PlayPresetFireAndForget(EnemyView view, TimedAnimationPreset preset, Func<bool> resumeIdleIf, TimedAnimationPreset idlePreset)
         {
-            if (string.IsNullOrEmpty(label)) return;
+            if (preset == null || string.IsNullOrEmpty(preset.PresetLabel)) return;
             foreach (var piece in view.Pieces)
-                if (piece.AnimationCaller != null)
-                    piece.AnimationCaller.PlayPreset(label);
+            {
+                var caller = piece.AnimationCaller;
+                if (caller == null) continue;
+                if (resumeIdleIf != null)
+                {
+                    caller.PlayPreset(preset.PresetLabel, preset.ReferenceClipLength, () =>
+                    {
+                        if (resumeIdleIf() && idlePreset != null && !string.IsNullOrEmpty(idlePreset.PresetLabel))
+                            caller.PlayPreset(idlePreset.PresetLabel, idlePreset.ReferenceClipLength);
+                    });
+                }
+                else
+                {
+                    caller.PlayPreset(preset.PresetLabel, preset.ReferenceClipLength);
+                }
+            }
         }
 
         /// Footprint size changed: re-lay the pieces at the new metrics.
@@ -376,10 +395,11 @@ namespace SlidingSiege
             var origins = PieceOrigins(en, en.Anchor);
             origins.RemoveAll(o => !OverlapsGrid(en, o));
             Vector2 fp = FootprintSizePx(en);
-            view.EnsurePieceCount(origins.Count, en, fp);
+            view.EnsurePieceCount(origins.Count, en, fp, enemyLayer.rect.size);
 
             Vector2 targetSize = en.VisualSize(fp);
-            Vector2 visualOffset = en.VisualAnchorOffset(fp);
+            Vector2 visualOffset = en.VisualAnchorOffset(fp)
+                + EnemyView.CenterAnchorOffset(targetSize, enemyLayer.rect.size);
 
             _pendingMoves++;
             int pending = 0;
@@ -476,7 +496,7 @@ namespace SlidingSiege
                 if (OverlapsGrid(en, o)) originSet.Add(o + stepBack);
 
             var origins = new List<Vector2Int>(originSet);
-            view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en));
+            view.EnsurePieceCount(origins.Count, en, FootprintSizePx(en), enemyLayer.rect.size);
             var positions = new List<Vector2>(origins.Count);
             foreach (var o in origins) positions.Add(PiecePos(o.x, o.y));
             view.SnapPieces(positions);

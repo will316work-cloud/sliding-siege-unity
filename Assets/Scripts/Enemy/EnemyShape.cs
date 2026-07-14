@@ -18,6 +18,7 @@ namespace SlidingSiege
         [Header("Visuals while this shape is active")]
         [Tooltip("Sprite + Image settings applied while this shape is active. On a runtime override shape, an empty sprite keeps the base shape's entire Image settings.")]
         [SerializeField] private ImageSettings image = new ImageSettings();
+
         [Tooltip("How the Image rect is sized: stretched to the footprint bounding box, scaled relative to it, or fixed pixels.")]
         [SerializeField] private VisualSizeMode sizeMode = VisualSizeMode.StretchToFootprint;
         [Tooltip("FootprintScale mode: multiplier per axis (1,1 = exact bounding box).")]
@@ -33,10 +34,37 @@ namespace SlidingSiege
         [Tooltip("Pixel offset of the visual from the bounding box's top-left (+x right, +y down).")]
         [SerializeField] private Vector2 visualOffset = Vector2.zero;
 
+        [Header("Face")]
+        [Tooltip("Image settings for the face drawn over the body sprite; an empty sprite hides the face.")]
+        [SerializeField] private ImageSettings faceImage = new ImageSettings();
+
+        [Tooltip("Face rect inset from the body sprite rect, pixels (left/right/top/bottom).")]
+        [SerializeField] private float facePaddingLeft;
+        [SerializeField] private float facePaddingRight;
+        [SerializeField] private float facePaddingTop;
+        [SerializeField] private float facePaddingBottom;
+
         public Vector2Int[] BodyCells => bodyCells;
         public ImageSettings Image => image;
         public Sprite Sprite => image.Sprite;
+        public ImageSettings FaceImage => faceImage;
         public VisualSizeMode SizeMode => sizeMode;
+
+        /// Applies the face Image settings and padding to the stretch-anchored
+        /// Face child of the body sprite. An empty face sprite hides the face.
+        public void ApplyFaceTo(UnityEngine.UI.Image face)
+        {
+            if (face == null) return;
+            bool visible = faceImage.Sprite != null;
+            if (face.gameObject.activeSelf != visible) face.gameObject.SetActive(visible);
+            if (!visible) return;
+            faceImage.ApplyTo(face);
+            var rt = face.rectTransform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(facePaddingLeft, facePaddingBottom);
+            rt.offsetMax = new Vector2(-facePaddingRight, -facePaddingTop);
+        }
 
         /// Final visual rect size for a given footprint pixel size.
         public Vector2 VisualSize(Vector2 footprintSizePx) => sizeMode switch

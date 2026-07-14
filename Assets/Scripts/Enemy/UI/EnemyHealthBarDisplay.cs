@@ -19,6 +19,9 @@ namespace SlidingSiege
     /// definition unticks DiesAtZeroHP keep an empty bar at exactly 0 HP.
     public class EnemyHealthBarDisplay : MonoBehaviour
     {
+        #region Serialized Fields
+
+
         [Header("Wiring")]
         [Tooltip("Display-only Slider prefab (fill only; no handle needed).")]
         [SerializeField] private Slider sliderPrefab;
@@ -29,31 +32,38 @@ namespace SlidingSiege
         [Tooltip("Approximate HP each notch represents; actual per-notch HP is fitted to MaxHP (see class docs).")]
         [SerializeField, Min(1f)] private float expectedHealthPerNotch = 50f;
 
+
+        #endregion
+
+        #region Private Fields
+
+
         private ObjectPool<Slider> _pool;
         private readonly List<Slider> _segments = new List<Slider>();
         private Enemy _enemy;
         private float _healthPerSegment;
+
+
+        #endregion
+
+        #region MonoBehavior Callbacks
+
 
         private void Awake()
         {
             if (container == null) container = (RectTransform)transform;
         }
 
-        private void EnsurePool()
+        private void OnDestroy()
         {
-            _pool ??= new ObjectPool<Slider>(
-                createFunc: () =>
-                {
-                    var s = Instantiate(sliderPrefab, container);
-                    s.interactable = false;
-                    s.transition = Selectable.Transition.None;
-                    return s;
-                },
-                actionOnGet: s => { s.gameObject.SetActive(true); s.transform.SetParent(container, false); s.transform.SetAsLastSibling(); },
-                actionOnRelease: s => s.gameObject.SetActive(false),
-                actionOnDestroy: s => Destroy(s.gameObject),
-                defaultCapacity: 8);
+            if (_enemy != null) _enemy.OnHealthChanged -= HandleHealthChanged;
         }
+
+
+        #endregion
+
+        #region Public Methods
+
 
         /// Attach to an enemy: builds segments for its MaxHP and starts
         /// listening to its health changes.
@@ -77,6 +87,28 @@ namespace SlidingSiege
             foreach (var s in _segments) _pool.Release(s);
             _segments.Clear();
             gameObject.SetActive(false);
+        }
+
+
+        #endregion
+
+        #region Private Methods
+
+
+        private void EnsurePool()
+        {
+            _pool ??= new ObjectPool<Slider>(
+                createFunc: () =>
+                {
+                    var s = Instantiate(sliderPrefab, container);
+                    s.interactable = false;
+                    s.transition = Selectable.Transition.None;
+                    return s;
+                },
+                actionOnGet: s => { s.gameObject.SetActive(true); s.transform.SetParent(container, false); s.transform.SetAsLastSibling(); },
+                actionOnRelease: s => s.gameObject.SetActive(false),
+                actionOnDestroy: s => Destroy(s.gameObject),
+                defaultCapacity: 8);
         }
 
         private void BuildSegments(int maxHP)
@@ -107,9 +139,7 @@ namespace SlidingSiege
                 _segments[i].value = Mathf.Clamp01(current / _healthPerSegment - i);
         }
 
-        private void OnDestroy()
-        {
-            if (_enemy != null) _enemy.OnHealthChanged -= HandleHealthChanged;
-        }
+
+        #endregion
     }
 }

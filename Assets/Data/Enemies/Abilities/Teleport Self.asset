@@ -23,4 +23,4 @@ MonoBehaviour:
   moveDuration: 0.25
   shiftEase: 10
   moveAnimationPreset: Move
-  referenceClipLength: 1
+  referenceClipLength: 0.35

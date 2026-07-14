@@ -12,11 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c6575c72d9fef8499b4032284d2b7ed, type: 3}
   m_Name: Move By One
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.MoveAbility
+  trigger: 0
   orderIndex: 0
   postDelay: 0.1
   moveChance: 0.7
+  range: 0
   maxSteps: 1
-  moveDuration: 0.2
+  allowOverlap: 0
+  wrapAroundGrid: 1
+  moveDuration: 0.25
   shiftEase: 10
   moveAnimationPreset: Move
-  referenceClipLength: 1
+  referenceClipLength: 0.35

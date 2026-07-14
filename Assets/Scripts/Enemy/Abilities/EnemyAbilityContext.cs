@@ -43,8 +43,10 @@ namespace SlidingSiege
         }
 
         /// Plays an AnimationCaller preset on the owner's main piece and
-        /// waits for it to complete. Yields nothing (no wait) if the label
-        /// is empty or the piece has no AnimationCaller.
+        /// waits for it to complete, then resumes Idle (replacing the
+        /// Animator's old exit-time transitions back to Idle). Yields
+        /// nothing (no wait, no Idle resume) if the label is empty or the
+        /// piece has no AnimationCaller.
         public IEnumerator PlayOwnerPresetAndWait(string presetLabel) =>
             PlayOwnerPresetAndWait(presetLabel, 1f);
 
@@ -61,6 +63,12 @@ namespace SlidingSiege
             bool done = false;
             caller.PlayPreset(presetLabel, speedScale, () => done = true);
             while (!done) yield return null;
+
+            // Fire-and-forget so this never recurses back through
+            // PlayOwnerPresetAndWait (Idle resuming Idle would loop forever).
+            var idle = Owner.Definition != null ? Owner.Definition.IdlePreset : null;
+            if (!Owner.IsDead && idle != null && !string.IsNullOrEmpty(idle.PresetLabel))
+                caller.PlayPreset(idle.PresetLabel, idle.ReferenceClipLength);
         }
     }
 }
