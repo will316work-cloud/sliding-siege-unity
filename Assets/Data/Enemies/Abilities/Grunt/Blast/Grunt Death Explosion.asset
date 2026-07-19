@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc11fb23164f415d8bd1568cec866571, type: 3}
+  m_Name: Grunt Death Explosion
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.DoUnderConditionAbility
+  trigger: 0
+  orderIndex: 7
+  postDelay: 0.3
+  branches:
+  - conditions:
+    - {fileID: 11400000, guid: a731b5df51b04ed4db7bcb028179625b, type: 2}
+    abilities:
+    - {fileID: 11400000, guid: 16db053d66fe51049a2262a47fbd0407, type: 2}
+    - {fileID: 11400000, guid: 07f9a9cb5d5f6824683780eb36cbddd1, type: 2}

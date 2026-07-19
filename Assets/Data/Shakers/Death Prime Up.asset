@@ -15,7 +15,7 @@ MonoBehaviour:
   shakeType: 1
   strength: 100
   roughness: 20
-  fadeIn: 10
+  fadeIn: 0.5
   fadeOut: 0.2
   positionInfluence: {x: 1, y: 1, z: 0}
   rotationInfluence: {x: 0, y: 0, z: 0}

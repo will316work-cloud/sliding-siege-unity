@@ -30,7 +30,7 @@ namespace SlidingSiege
                 onDone?.Invoke();
                 yield break;
             }
-            yield return ctx.PlayOwnerPresetAndWait(presetLabel, referenceClipLength);
+            yield return ctx.PlayOwnerPresetAndWait(presetLabel, 1 / referenceClipLength);
             onDone?.Invoke();
         }
     }

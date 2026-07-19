@@ -22,4 +22,4 @@ MonoBehaviour:
   conditions: []
   spawnPreset:
     presetLabel: Spawn
-    referenceClipLength: 1
+    referenceClipLength: 0.5
