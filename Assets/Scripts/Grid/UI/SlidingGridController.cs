@@ -71,7 +71,7 @@ namespace SlidingSiege
             // run outside the phase runner; the dispatcher pumps on this host.
             _triggerDispatcher = new AbilityTriggerDispatcher(
                 State, enemyViewManager, enemyPhaseRunner, targetingController.Combat, this);
-            enemyPhaseRunner.TriggerDispatcher = _triggerDispatcher;
+            enemyPhaseRunner.AttachTriggerDispatcher(_triggerDispatcher);
 
             // Opening enemy phase: the runner's spawn abilities populate the
             // board (and newcomers run their not-yet-passed abilities, e.g.

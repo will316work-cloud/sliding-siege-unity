@@ -26,10 +26,7 @@ namespace SlidingSiege
             var owner = ctx.Owner;
             if (owner == null || owner.ClusterId >= 0) yield break;
 
-            var clusterSizes = new Dictionary<int, int>();
-            foreach (var en in ctx.State.Enemies.Values)
-                if (en.Id != owner.Id && en.Definition == owner.Definition && en.ClusterId >= 0)
-                    clusterSizes[en.ClusterId] = clusterSizes.TryGetValue(en.ClusterId, out var n) ? n + 1 : 1;
+            var clusterSizes = ctx.State.ClusterSizes(owner.Definition, owner.Id);
 
             var winners = new List<int>();
             foreach (var kv in clusterSizes)

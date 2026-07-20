@@ -23,12 +23,14 @@ namespace SlidingSiege
 
         /// Player combat/inventory, wired by TargetingController so
         /// abilities can disable attacks/items through the context.
-        public CombatSystem Combat { get; set; }
+        public CombatSystem Combat { get; private set; }
+        public void AttachCombat(CombatSystem combat) => Combat = combat;
 
         /// Event-trigger dispatcher, wired by SlidingGridController. The
         /// runner flushes it between ability steps so mid-phase triggers
         /// (crits, deaths from blasts) run before the next enemy acts.
-        public AbilityTriggerDispatcher TriggerDispatcher { get; set; }
+        public AbilityTriggerDispatcher TriggerDispatcher { get; private set; }
+        public void AttachTriggerDispatcher(AbilityTriggerDispatcher dispatcher) => TriggerDispatcher = dispatcher;
 
         public event Action OnPhaseStarted;
         public event Action OnPhaseFinished;
@@ -67,13 +69,9 @@ namespace SlidingSiege
             _state.TickDisabledLines();
 
             _queue.Clear();
-            foreach (var en in _state.Enemies.Values)
-            {
-                if (en.Definition.Abilities == null) continue;
-                foreach (var ability in en.Definition.Abilities)
-                    if (ability != null && ability.Trigger == AbilityTrigger.EnemyPhase)
-                        _queue.Add((ability, en));
-            }
+            foreach (var en in _state.AllEnemies)
+                foreach (var ability in en.AbilitiesFor(AbilityTrigger.EnemyPhase))
+                    _queue.Add((ability, en));
             foreach (var ability in spawnAbilities)
                 if (ability != null) _queue.Add((ability, null));
             _queue.Sort((a, b) => a.ability.OrderIndex != b.ability.OrderIndex
@@ -88,7 +86,7 @@ namespace SlidingSiege
 
                 if (enemy != null)
                 {
-                    if (!_state.Enemies.ContainsKey(enemy.Id)) continue; // died mid-phase
+                    if (!_state.ContainsEnemy(enemy.Id)) continue; // died mid-phase
                     if (!enemy.CanAct) continue;                          // stunned etc.
                 }
 
@@ -108,7 +106,7 @@ namespace SlidingSiege
             }
 
             // Expire turn-limited statuses (permanent ones are negative).
-            foreach (var en in _state.Enemies.Values)
+            foreach (var en in _state.AllEnemies)
                 en.TickStatuses();
 
             IsRunning = false;
@@ -120,10 +118,9 @@ namespace SlidingSiege
         /// currently executing one), inserted in sorted position.
         private void HandleEnemySpawned(Enemy en)
         {
-            if (!IsRunning || en.Definition.Abilities == null) return;
-            foreach (var ability in en.Definition.Abilities)
+            if (!IsRunning) return;
+            foreach (var ability in en.AbilitiesFor(AbilityTrigger.EnemyPhase))
             {
-                if (ability == null || ability.Trigger != AbilityTrigger.EnemyPhase) continue;
                 if (ability.OrderIndex > _currentOrderIndex) continue;
                 int i = 0;
                 while (i < _queue.Count && _queue[i].ability.OrderIndex >= ability.OrderIndex) i++;

@@ -33,7 +33,7 @@ namespace SlidingSiege
             if (onlyWhenUnlinked && owner.LivingLinkTargets(ctx.State).Any()) yield break;
 
             owner.ClearLinks();
-            var pool = ctx.State.Enemies.Values
+            var pool = ctx.State.AllEnemies
                 .Where(en => en.Id != owner.Id
                              && en.Definition != owner.Definition
                              && en.Rules.CanBeLinkTarget)

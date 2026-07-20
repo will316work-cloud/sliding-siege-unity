@@ -20,12 +20,12 @@ namespace SlidingSiege
             int count;
             if (definitionFilter == null)
             {
-                count = ctx.State.Enemies.Count;
+                count = ctx.State.EnemyCount;
             }
             else
             {
                 count = 0;
-                foreach (var en in ctx.State.Enemies.Values)
+                foreach (var en in ctx.State.AllEnemies)
                     if (en.Definition == definitionFilter) count++;
             }
 

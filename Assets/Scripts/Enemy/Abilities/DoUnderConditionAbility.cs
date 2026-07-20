@@ -50,7 +50,7 @@ namespace SlidingSiege
                             yield return new WaitForSeconds(ability.PostDelay);
                     }
                     // Stop if a sub-ability removed the owner (e.g. KillSelf).
-                    if (ctx.Owner != null && !ctx.State.Enemies.ContainsKey(ctx.Owner.Id))
+                    if (ctx.Owner != null && !ctx.State.ContainsEnemy(ctx.Owner.Id))
                         break;
                 }
                 yield break;

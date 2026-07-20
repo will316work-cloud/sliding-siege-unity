@@ -40,7 +40,7 @@ namespace SlidingSiege
             _state.OnEnemySpawned += HandleSpawned;
             _state.OnEnemyRemoved += HandleRemoved;
             _state.OnEnemyWentCritical += en => Enqueue(en, AbilityTrigger.OnCritical);
-            foreach (var en in _state.Enemies.Values) HookDamage(en);
+            foreach (var en in _state.AllEnemies) HookDamage(en);
 
             _host.StartCoroutine(Pump());
         }
@@ -62,7 +62,7 @@ namespace SlidingSiege
 
             // Link-break watch: any linker whose LAST living link just died
             // fires its OnLinkBroken abilities (Siren stun).
-            foreach (var linker in _state.Enemies.Values)
+            foreach (var linker in _state.AllEnemies)
                 if (linker.IsLinkedTo(en.Id) && !System.Linq.Enumerable.Any(linker.LivingLinkTargets(_state)))
                     Enqueue(linker, AbilityTrigger.OnLinkBroken);
         }
@@ -111,7 +111,7 @@ namespace SlidingSiege
                 // requires the owner alive (or critical) and able to act.
                 if (trigger != AbilityTrigger.OnDeath)
                 {
-                    if (!_state.Enemies.ContainsKey(enemy.Id)) continue;
+                    if (!_state.ContainsEnemy(enemy.Id)) continue;
                     if (!enemy.CanAct) continue;
                 }
 

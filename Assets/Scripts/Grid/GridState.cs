@@ -18,8 +18,24 @@ namespace SlidingSiege
 
         // [row, col] -> occupant refs
         private List<OccupantRef>[,] _cells;
-        public readonly Dictionary<int, Enemy> Enemies = new Dictionary<int, Enemy>();
+        private readonly Dictionary<int, Enemy> _enemies = new Dictionary<int, Enemy>();
         private int _nextEnemyId = 1;
+
+        public IEnumerable<Enemy> AllEnemies => _enemies.Values;
+        public int EnemyCount => _enemies.Count;
+        public bool TryGetEnemy(int id, out Enemy enemy) => _enemies.TryGetValue(id, out enemy);
+        public bool ContainsEnemy(int id) => _enemies.ContainsKey(id);
+
+        /// Cluster id -> member count over living enemies of a definition,
+        /// excluding one enemy (the joiner). For cluster-assign abilities.
+        public Dictionary<int, int> ClusterSizes(EnemyDefinition def, int excludeEnemyId)
+        {
+            var sizes = new Dictionary<int, int>();
+            foreach (var en in _enemies.Values)
+                if (en.Id != excludeEnemyId && en.Definition == def && en.ClusterId >= 0)
+                    sizes[en.ClusterId] = sizes.TryGetValue(en.ClusterId, out var n) ? n + 1 : 1;
+            return sizes;
+        }
 
         public event Action<ShiftResult> OnShifted;
         public event Action<Enemy> OnEnemySpawned;
@@ -50,7 +66,7 @@ namespace SlidingSiege
             for (int r = 0; r < rows; r++)
                 for (int c = 0; c < cols; c++)
                     _cells[r, c] = new List<OccupantRef>(2);
-            Enemies.Clear();
+            _enemies.Clear();
             _nextEnemyId = 1;
             OnRebuilt?.Invoke();
         }
@@ -60,7 +76,7 @@ namespace SlidingSiege
         public IEnumerable<Enemy> EnemiesAt(int r, int c)
         {
             foreach (var rf in _cells[r, c])
-                if (rf.Kind == OccupantKind.Enemy && Enemies.TryGetValue(rf.Id, out var e))
+                if (rf.Kind == OccupantKind.Enemy && _enemies.TryGetValue(rf.Id, out var e))
                     yield return e;
         }
 
@@ -94,7 +110,7 @@ namespace SlidingSiege
         {
             var enemy = new Enemy(_nextEnemyId++, def, new Vector2Int(r, c));
             WriteBody(enemy);
-            Enemies[enemy.Id] = enemy;
+            _enemies[enemy.Id] = enemy;
             OnEnemySpawned?.Invoke(enemy);
             return enemy;
         }
@@ -103,10 +119,10 @@ namespace SlidingSiege
         /// Caller must have validated with CanPlaceBodyAtIgnoring.
         public void MoveEnemy(int id, Vector2Int newAnchor, MoveStyle style = MoveStyle.Instant)
         {
-            if (!Enemies.TryGetValue(id, out var enemy)) return;
+            if (!_enemies.TryGetValue(id, out var enemy)) return;
             Vector2Int old = enemy.Anchor;
             ClearRefs(id);
-            enemy.Anchor = new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols));
+            enemy.SetAnchor(new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols)));
             WriteBody(enemy);
             OnEnemyMoved?.Invoke(enemy, old, style);
         }
@@ -116,19 +132,19 @@ namespace SlidingSiege
         /// gate with a Shape Fits condition; overlaps stack refs.
         public void ReshapeEnemy(int id, Vector2Int newAnchor, EnemyShape shapeOverride)
         {
-            if (!Enemies.TryGetValue(id, out var enemy)) return;
+            if (!_enemies.TryGetValue(id, out var enemy)) return;
             ClearRefs(id);
             enemy.SetShapeOverride(shapeOverride);
-            enemy.Anchor = new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols));
+            enemy.SetAnchor(new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols)));
             WriteBody(enemy);
             OnEnemyResized?.Invoke(enemy);
         }
 
         public void RemoveEnemy(int id)
         {
-            if (!Enemies.TryGetValue(id, out var enemy)) return;
+            if (!_enemies.TryGetValue(id, out var enemy)) return;
             ClearRefs(id);
-            Enemies.Remove(id);
+            _enemies.Remove(id);
             ClearDisabledLinesFrom(id); // death lifts its curses
             OnEnemyRemoved?.Invoke(enemy);
         }
@@ -219,7 +235,7 @@ namespace SlidingSiege
             while (changed)
             {
                 changed = false;
-                foreach (var en in Enemies.Values)
+                foreach (var en in _enemies.Values)
                 {
                     var spanned = LinesSpanned(en, rowAxis);
                     if (spanned.Count < 2) continue;
@@ -240,7 +256,7 @@ namespace SlidingSiege
         public HashSet<int> EnemiesOnLines(bool rowAxis, HashSet<int> lines)
         {
             var ids = new HashSet<int>();
-            foreach (var en in Enemies.Values)
+            foreach (var en in _enemies.Values)
                 if (LinesSpanned(en, rowAxis).Any(lines.Contains))
                     ids.Add(en.Id);
             return ids;
@@ -250,7 +266,7 @@ namespace SlidingSiege
         {
             var lines = LinkedLinesForAxis(rowAxis, seed);
             var result = new ShiftResult(rowAxis, dir, lines);
-            foreach (var kv in Enemies) result.OldAnchors[kv.Key] = kv.Value.Anchor;
+            foreach (var kv in _enemies) result.OldAnchors[kv.Key] = kv.Value.Anchor;
 
             foreach (var line in lines)
             {
@@ -263,10 +279,10 @@ namespace SlidingSiege
             // anchors move by the shift delta instead of being re-derived.
             foreach (var id in EnemiesOnLines(rowAxis, lines))
             {
-                var en = Enemies[id];
-                en.Anchor = rowAxis
+                var en = _enemies[id];
+                en.SetAnchor(rowAxis
                     ? new Vector2Int(en.Anchor.x, Wrap(en.Anchor.y + dir, Cols))
-                    : new Vector2Int(Wrap(en.Anchor.x + dir, Rows), en.Anchor.y);
+                    : new Vector2Int(Wrap(en.Anchor.x + dir, Rows), en.Anchor.y));
                 result.MovedEnemyIds.Add(id);
             }
 

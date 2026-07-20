@@ -140,7 +140,7 @@ namespace SlidingSiege
 
         public void RebuildAll()
         {
-            foreach (var en in _state.Enemies.Values)
+            foreach (var en in _state.AllEnemies)
             {
                 if (!_views.ContainsKey(en.Id)) HandleSpawned(en);
                 RebuildEnemyPieces(en);
@@ -169,7 +169,7 @@ namespace SlidingSiege
 
             foreach (var id in result.MovedEnemyIds)
             {
-                if (!_state.Enemies.TryGetValue(id, out var en)) continue;
+                if (!_state.TryGetEnemy(id, out var en)) continue;
                 if (!_views.TryGetValue(id, out var view)) continue;
 
                 Vector2Int oldAnchor = result.OldAnchors[id];
@@ -202,7 +202,7 @@ namespace SlidingSiege
                 // Snap to canonical resting layout (drops transient ghosts,
                 // keeps persistent wrap ghosts).
                 foreach (var id in result.MovedEnemyIds)
-                    if (_state.Enemies.TryGetValue(id, out var en))
+                    if (_state.TryGetEnemy(id, out var en))
                         RebuildEnemyPieces(en);
                 _shiftAnimating = false;
                 onComplete?.Invoke();
@@ -527,11 +527,11 @@ namespace SlidingSiege
 
         private void HandleRebuilt()
         {
-            foreach (var en in _state.Enemies.Values) UnhookHurt(en);
+            foreach (var en in _state.AllEnemies) UnhookHurt(en);
             _hurtHooks.Clear();
             foreach (var view in _views.Values) view.ReleaseAll();
             _views.Clear();
-            foreach (var en in _state.Enemies.Values) HandleSpawned(en);
+            foreach (var en in _state.AllEnemies) HandleSpawned(en);
         }
     }
 }

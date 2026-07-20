@@ -33,10 +33,9 @@ namespace SlidingSiege
         public List<Enemy> QueuedHitboxTargets()
         {
             var targets = new List<Enemy>();
-            var hitbox = Owner?.QueuedHitbox;
-            if (hitbox == null) return targets;
+            if (Owner == null || !Owner.TryResolveQueuedHitbox(State, out var hits)) return targets;
             var seen = new HashSet<int>();
-            foreach (var hit in hitbox.Resolve(State, Owner.Anchor))
+            foreach (var hit in hits)
                 foreach (var en in State.EnemiesAt(hit.Cell.x, hit.Cell.y))
                     if (seen.Add(en.Id)) targets.Add(en);
             return targets;

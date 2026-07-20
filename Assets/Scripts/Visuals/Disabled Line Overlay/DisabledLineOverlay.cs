@@ -66,7 +66,7 @@ namespace SlidingSiege
                 foreach (var (isRow, index, sourceId) in _state.DisabledLines())
                 {
                     var settings = FallbackSettings;
-                    if (_state.Enemies.TryGetValue(sourceId, out var source))
+                    if (_state.TryGetEnemy(sourceId, out var source))
                     {
                         settings = source.Definition.DisabledLineDisplay;
                     }
