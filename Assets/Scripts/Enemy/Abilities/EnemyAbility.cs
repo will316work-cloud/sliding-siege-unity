@@ -20,12 +20,16 @@ namespace SlidingSiege
         [Tooltip("Delay (seconds) after this ability, applied ONLY when it succeeds.")]
         [SerializeField, Min(0f)] private float postDelay = 1f;
 
+        [Tooltip("EnemyPhase only: batches with every OTHER queued entry tied at the same order index that ALSO has this on (any owner, any ability asset) — the runner starts all their Execute coroutines the same frame instead of one at a time, then waits for the whole batch (each one's own postDelay, then any animations) before moving to the next order index.")]
+        [SerializeField] private bool runSimultaneously = false;
+
         [Tooltip("AnimationEvent trigger only: the ability runs when an animation event on the owner's piece fires this label (case-insensitive).")]
         [SerializeField] private string animationEventLabel = "";
 
         public AbilityTrigger Trigger => trigger;
         public int OrderIndex => orderIndex;
         public float PostDelay => postDelay;
+        public bool RunSimultaneously => runSimultaneously;
         public string AnimationEventLabel => animationEventLabel;
 
         /// Coroutine-executed ability. Set result.Success = true if the

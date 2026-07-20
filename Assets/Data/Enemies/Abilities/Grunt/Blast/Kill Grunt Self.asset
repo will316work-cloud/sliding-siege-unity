@@ -15,5 +15,6 @@ MonoBehaviour:
   trigger: 0
   orderIndex: 7
   postDelay: 0.3
+  runSimultaneously: 1
   animationEventLabel: 
   animationPreset: 
