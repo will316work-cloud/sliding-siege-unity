@@ -42,9 +42,8 @@ namespace SlidingSiege
             }
             else
             {
-                var hitbox = owner.QueuedHitbox;
-                if (hitbox == null) yield break;
-                foreach (var hit in hitbox.Resolve(s, owner.Anchor))
+                if (!owner.TryResolveQueuedHitbox(s, out var hits)) yield break;
+                foreach (var hit in hits)
                     foreach (var en in s.EnemiesAt(hit.Cell.x, hit.Cell.y))
                     {
                         if (!includeOwner && en.Id == owner.Id) continue;
@@ -65,8 +64,7 @@ namespace SlidingSiege
                 // statuses to what it actually receives.
                 var target = kv.Key;
                 bool damaging = amount < 0f;
-                var recipient = damaging ? target.Rules.RouteDamage(s, target) : target;
-                if (damaging) target.MarkPendingHit(); // slime clusters count absorbed hits too
+                var recipient = damaging ? target.ResolveDamageRecipient(s) : target;
                 float baseAmount = mode switch
                 {
                     ChangeMode.FlatAmount => amount,
@@ -81,9 +79,17 @@ namespace SlidingSiege
                 }
                 int delta = Mathf.RoundToInt(scaled);
                 if (delta < 0 && recipient != target) s.NotifyDamageRedirected(target, recipient);
-                if (delta < 0) delta = -recipient.Rules.ClampDamage(recipient, -delta);
-                recipient.HP = Mathf.Min(recipient.MaxHP, recipient.HP + delta);
-                if (recipient.HP <= 0 && recipient.Rules.HandleZeroHp(s, recipient) && !killed.Contains(recipient.Id))
+                bool died;
+                if (delta < 0)
+                {
+                    recipient.ApplyDamage(s, -scaled, out died);
+                }
+                else
+                {
+                    recipient.Heal(delta);
+                    died = recipient.HP <= 0 && recipient.Rules.HandleZeroHp(s, recipient);
+                }
+                if (died && !killed.Contains(recipient.Id))
                     killed.Add(recipient.Id);
             }
             foreach (var id in killed) s.RemoveEnemy(id);

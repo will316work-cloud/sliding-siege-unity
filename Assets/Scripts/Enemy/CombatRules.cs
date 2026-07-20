@@ -37,7 +37,7 @@ namespace SlidingSiege
         public virtual Enemy RouteDamage(GridState s, Enemy target)
         {
             if (!target.Rules.AbsorbsLinkedDamage)
-                foreach (var en in s.Enemies.Values)
+                foreach (var en in s.AllEnemies)
                     if (en.Rules.AbsorbsLinkedDamage && !en.PendingDetonation && en.IsLinkedTo(target.Id))
                         return en;
             return target;

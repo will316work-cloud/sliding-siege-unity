@@ -69,7 +69,7 @@ namespace SlidingSiege
             };
             foreach (var def in attackDefinitions) _combat.SetupAttack(def);
             foreach (var def in itemDefinitions) _combat.SetupItem(def);
-            if (_phaseRunner != null) _phaseRunner.Combat = _combat;
+            if (_phaseRunner != null) _phaseRunner.AttachCombat(_combat);
             _combat.OnInventoryChanged += RefreshLists;
 
             // Enemy telegraphs (stored hitboxes) re-render on any board change.
@@ -225,12 +225,12 @@ namespace SlidingSiege
             // cells render once; different definitions overlay one another.
             var telegraphs = new List<(Vector2Int, Color, Sprite)>();
             var claimedByDef = new Dictionary<EnemyDefinition, HashSet<Vector2Int>>();
-            foreach (var en in _state.Enemies.Values.OrderBy(e => e.Id))
+            foreach (var en in _state.AllEnemies.OrderBy(e => e.Id))
             {
-                if (en.QueuedHitbox == null) continue;
+                if (!en.TryResolveQueuedHitbox(_state, out var telegraphHits)) continue;
                 if (!claimedByDef.TryGetValue(en.Definition, out var claimed))
                     claimedByDef[en.Definition] = claimed = new HashSet<Vector2Int>();
-                foreach (var hit in en.QueuedHitbox.Resolve(_state, en.Anchor))
+                foreach (var hit in telegraphHits)
                     if (claimed.Add(hit.Cell))
                         telegraphs.Add((hit.Cell, PartColor(hit.Part), hit.Part?.HighlightSprite));
             }

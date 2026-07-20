@@ -44,7 +44,7 @@ namespace SlidingSiege
 
             _state.OnEnemySpawned += HookEnemy;
             _state.OnEnemyRemoved += UnhookEnemy;
-            foreach (var en in _state.Enemies.Values) HookEnemy(en);
+            foreach (var en in _state.AllEnemies) HookEnemy(en);
         }
 
         private void OnDestroy()
@@ -52,7 +52,7 @@ namespace SlidingSiege
             if (_state == null) return;
             _state.OnEnemySpawned -= HookEnemy;
             _state.OnEnemyRemoved -= UnhookEnemy;
-            foreach (var en in _state.Enemies.Values) UnhookEnemy(en);
+            foreach (var en in _state.AllEnemies) UnhookEnemy(en);
         }
 
         private void HookEnemy(Enemy en)

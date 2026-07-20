@@ -145,10 +145,10 @@ namespace SlidingSiege
 
             // Soul cloud halo: an un-hit enemy counts as hit if any halo cell
             // is in the attack's cell set (earliest such cell sets the percent).
-            foreach (var en in _state.Enemies.Values)
+            foreach (var en in _state.AllEnemies)
             {
                 if (hitPercents.ContainsKey(en.Id)) continue;
-                if (!en.Statuses.OfType<SoulCloudStatus>().Any()) continue;
+                if (!en.HasStatus<SoulCloudStatus>()) continue;
                 var halo = new HashSet<Vector2Int>(HaloCells(_state, en));
                 foreach (var hit in hits)
                     if (halo.Contains(hit.Cell)) { hitPercents[en.Id] = hit.DamageFactor; break; }
@@ -159,7 +159,7 @@ namespace SlidingSiege
             // rest of the attack — no other enemy takes damage. The attack
             // and its charge are still consumed below.
             var bombIdsHit = hitPercents.Keys
-                .Where(id => _state.Enemies.TryGetValue(id, out var en) && en.Rules.VoidsAttackOnHit)
+                .Where(id => _state.TryGetEnemy(id, out var en) && en.Rules.VoidsAttackOnHit)
                 .ToList();
 
             if (bombIdsHit.Count > 0)
@@ -167,7 +167,7 @@ namespace SlidingSiege
                 result.VoidedByBomb = true;
                 foreach (var id in bombIdsHit)
                 {
-                    _state.Enemies[id].HP = 0;
+                    if (_state.TryGetEnemy(id, out var bomb)) bomb.KillInstantly();
                     result.HitEnemyIds.Add(id);
                     result.KilledEnemyIds.Add(id);
                 }
@@ -177,19 +177,16 @@ namespace SlidingSiege
                 float baseDamage = def.BaseDamage * DamageMultiplier();
                 foreach (var kv in hitPercents)
                 {
-                    if (!_state.Enemies.TryGetValue(kv.Key, out var target)) continue;
+                    if (!_state.TryGetEnemy(kv.Key, out var target)) continue;
                     // Golem rule: an absorber linking the target soaks the
                     // damage, recomputed against ITS multipliers (JS parity).
-                    var recipient = target.Rules.RouteDamage(_state, target);
-                    target.MarkPendingHit(); // slime clusters count absorbed hits too
-                    int dmg = Mathf.RoundToInt(baseDamage * kv.Value * recipient.DamageTakenMultiplier());
-                    dmg = recipient.Rules.ClampDamage(recipient, dmg);
-                    recipient.HP -= dmg;
+                    var recipient = target.ResolveDamageRecipient(_state);
+                    int dmg = recipient.ApplyDamage(_state, baseDamage * kv.Value * recipient.DamageTakenMultiplier(), out bool died);
                     if (recipient.Id != target.Id) _state.NotifyDamageRedirected(target, recipient);
                     result.HitEnemyIds.Add(kv.Key);
                     result.DamageDealt.TryGetValue(recipient.Id, out var prior);
                     result.DamageDealt[recipient.Id] = prior + dmg;
-                    if (recipient.HP <= 0 && recipient.Rules.HandleZeroHp(_state, recipient) && !result.KilledEnemyIds.Contains(recipient.Id))
+                    if (died && !result.KilledEnemyIds.Contains(recipient.Id))
                         result.KilledEnemyIds.Add(recipient.Id);
                 }
             }

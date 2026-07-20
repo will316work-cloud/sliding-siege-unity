@@ -74,7 +74,7 @@ namespace SlidingSiege
             if (_state != null)
             {
                 // Enemy-to-enemy links (Golem, Siren).
-                foreach (var en in _state.Enemies.Values)
+                foreach (var en in _state.AllEnemies)
                 {
                     if (en.LinkedIds.Count == 0) continue;
                     if (!TryEnemyPoint(en.Id, out var from)) continue;
@@ -88,7 +88,7 @@ namespace SlidingSiege
                 // Cluster chains (Slime): mutual groups sharing a ClusterId,
                 // drawn as a nearest-neighbor chain in the cluster's style.
                 _clusters.Clear();
-                foreach (var en in _state.Enemies.Values)
+                foreach (var en in _state.AllEnemies)
                 {
                     if (en.ClusterId < 0) continue;
                     if (!TryEnemyPoint(en.Id, out var p)) continue;
@@ -122,13 +122,13 @@ namespace SlidingSiege
                 if (_combat != null)
                 {
                     foreach (var (sourceId, attack) in _combat.AttackDisableEntries())
-                        if (_state.Enemies.TryGetValue(sourceId, out var source)
+                        if (_state.TryGetEnemy(sourceId, out var source)
                             && TryEnemyPoint(sourceId, out var from)
                             && attackList != null && attackList.TryGetAttackCardRect(attack, out var cardRect)
                             && TryCardPoint(cardRect, out var to))
                             Draw(from, to, source.Definition.LinkDisplay.LineImage, source.Definition.LinkDisplay.LineThickness);
                     foreach (var (sourceId, item) in _combat.ItemDisableEntries())
-                        if (_state.Enemies.TryGetValue(sourceId, out var source)
+                        if (_state.TryGetEnemy(sourceId, out var source)
                             && TryEnemyPoint(sourceId, out var from)
                             && itemList != null && itemList.TryGetItemCardRect(item, out var itemRect)
                             && TryCardPoint(itemRect, out var to))
