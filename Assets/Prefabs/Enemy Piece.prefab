@@ -15008,6 +15008,19 @@ MonoBehaviour:
     _onComplete:
       m_PersistentCalls:
         m_Calls: []
+  - _label: Critical
+    _stateName: Enemy Critical
+    _layerIndex: 0
+    _fadeTime: 0
+    _normalisedTime: 0
+    _speed: 1
+    _speedParameterOverride: 
+    _onPlay:
+      m_PersistentCalls:
+        m_Calls: []
+    _onComplete:
+      m_PersistentCalls:
+        m_Calls: []
   - _label: Ability 1
     _stateName: Enemy Ability 1
     _layerIndex: 0

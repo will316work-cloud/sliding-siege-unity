@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Death Prime Up
   m_EditorClassIdentifier: Assembly-CSharp::MilkShake.ShakePreset
   shakeType: 1
-  strength: 100
+  strength: 25
   roughness: 20
-  fadeIn: 0.5
-  fadeOut: 0.2
+  fadeIn: 1
+  fadeOut: 0.05
   positionInfluence: {x: 1, y: 1, z: 0}
   rotationInfluence: {x: 0, y: 0, z: 0}

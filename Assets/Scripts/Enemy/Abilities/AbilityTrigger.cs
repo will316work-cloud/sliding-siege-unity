@@ -14,5 +14,11 @@ namespace SlidingSiege
         OnDeath = 4,
         /// Fires on an enemy when the LAST living enemy it links dies.
         OnLinkBroken = 5,
+        /// Fires from an animation event on the owner's main piece
+        /// (EnemyPieceView.TriggerAbilityEvent) whose string parameter
+        /// matches the ability's AnimationEventLabel. Executes immediately
+        /// at the event frame — even for an already-removed owner, so death
+        /// clips can time effects like the Grunt's explosion.
+        AnimationEvent = 6,
     }
 }

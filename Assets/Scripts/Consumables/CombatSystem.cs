@@ -167,7 +167,7 @@ namespace SlidingSiege
                 result.VoidedByBomb = true;
                 foreach (var id in bombIdsHit)
                 {
-                    if (_state.TryGetEnemy(id, out var bomb)) bomb.KillInstantly();
+                    if (_state.TryGetEnemy(id, out var bomb)) bomb.SetHP(0);
                     result.HitEnemyIds.Add(id);
                     result.KilledEnemyIds.Add(id);
                 }
@@ -181,7 +181,9 @@ namespace SlidingSiege
                     // Golem rule: an absorber linking the target soaks the
                     // damage, recomputed against ITS multipliers (JS parity).
                     var recipient = target.ResolveDamageRecipient(_state);
-                    int dmg = recipient.ApplyDamage(_state, baseDamage * kv.Value * recipient.DamageTakenMultiplier(), out bool died);
+                    int rawDamage = Mathf.RoundToInt(baseDamage * kv.Value * recipient.DamageTakenMultiplier());
+                    int dmg = -recipient.ChangeHP(-rawDamage);
+                    bool died = recipient.HP <= 0 && recipient.Rules.HandleZeroHp(_state, recipient);
                     if (recipient.Id != target.Id) _state.NotifyDamageRedirected(target, recipient);
                     result.HitEnemyIds.Add(kv.Key);
                     result.DamageDealt.TryGetValue(recipient.Id, out var prior);

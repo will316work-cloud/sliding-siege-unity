@@ -46,11 +46,14 @@ namespace SlidingSiege
             _state = state;
             _views = views;
             _state.OnEnemySpawned += HandleEnemySpawned;
+            _state.OnEnemyWentCritical += HandleEnemyWentCritical;
         }
 
         private void OnDestroy()
         {
-            if (_state != null) _state.OnEnemySpawned -= HandleEnemySpawned;
+            if (_state == null) return;
+            _state.OnEnemySpawned -= HandleEnemySpawned;
+            _state.OnEnemyWentCritical -= HandleEnemyWentCritical;
         }
 
         /// Public entry point (wire to a button). Ignored while running.
@@ -114,14 +117,40 @@ namespace SlidingSiege
         }
 
         /// A mid-phase newcomer joins the running enumeration with only the
-        /// abilities the phase hasn't passed yet (OrderIndex at or below the
-        /// currently executing one), inserted in sorted position.
+        /// abilities the phase hasn't reached yet (OrderIndex STRICTLY below
+        /// the currently executing one), inserted in sorted position. Equal
+        /// indices are excluded — a spawn ability whose own definition
+        /// re-spawns copies of itself at the same order index (e.g. a
+        /// self-duplicating enemy) would otherwise insert its own entry into
+        /// the still-running step and chain-replicate every phase instead of
+        /// running once per activation.
         private void HandleEnemySpawned(Enemy en)
         {
             if (!IsRunning) return;
             foreach (var ability in en.AbilitiesFor(AbilityTrigger.EnemyPhase))
             {
-                if (ability.OrderIndex > _currentOrderIndex) continue;
+                if (ability.OrderIndex >= _currentOrderIndex) continue;
+                int i = 0;
+                while (i < _queue.Count && _queue[i].ability.OrderIndex >= ability.OrderIndex) i++;
+                _queue.Insert(i, (ability, en));
+            }
+        }
+
+        /// An enemy sent critical MID-phase (e.g. caught in another Grunt's
+        /// blast) chain-reacts in the SAME phase: any of its EnemyPhase
+        /// abilities whose queue entry was already consumed this phase
+        /// (its order index has passed) is re-inserted so it runs again now
+        /// that its conditions can pass. Entries still waiting in the queue
+        /// are left alone. The dispatcher's OnCritical flush (e.g. Set
+        /// Hitbox) always runs between steps, before the re-inserted entry.
+        private void HandleEnemyWentCritical(Enemy en)
+        {
+            if (!IsRunning || en.Definition.Abilities == null) return;
+            foreach (var ability in en.Definition.Abilities)
+            {
+                if (ability == null || ability.Trigger != AbilityTrigger.EnemyPhase) continue;
+                if (ability.OrderIndex < _currentOrderIndex) continue; // hasn't run yet: still queued below
+                if (_queue.Contains((ability, en))) continue;
                 int i = 0;
                 while (i < _queue.Count && _queue[i].ability.OrderIndex >= ability.OrderIndex) i++;
                 _queue.Insert(i, (ability, en));

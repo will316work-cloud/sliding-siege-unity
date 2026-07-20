@@ -111,8 +111,11 @@ namespace SlidingSiege
                 defaultCapacity: 8);
         }
 
+        private int _builtMaxHP;
+
         private void BuildSegments(int maxHP)
         {
+            _builtMaxHP = maxHP;
             int wholeNotches = Mathf.FloorToInt(maxHP / expectedHealthPerNotch);
             bool hasRemainder = maxHP - wholeNotches * expectedHealthPerNotch > 0f;
             int count = Mathf.Max(1, hasRemainder ? wholeNotches + 1 : wholeNotches);
@@ -129,6 +132,15 @@ namespace SlidingSiege
 
         private void HandleHealthChanged(int current, int max)
         {
+            // Max HP can change after binding (per-instance override from
+            // SpawnAbility replication): re-fit the segments to the new max.
+            if (max != _builtMaxHP)
+            {
+                foreach (var s in _segments) _pool.Release(s);
+                _segments.Clear();
+                BuildSegments(max);
+            }
+
             // Visible only while damaged. Enemies that survive at 0 HP
             // (Golem critical, unresolved Slime) keep an empty bar instead
             // of it vanishing while they're still on the board.

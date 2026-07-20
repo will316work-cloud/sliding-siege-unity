@@ -48,7 +48,13 @@ namespace SlidingSiege
                 createFunc: () => Instantiate(enemyPiecePrefab, enemyLayer),
                 actionOnGet: piece =>
                 {
+                    piece.AbilityEventHandler = null; // stale main-piece routing from a previous owner
                     piece.gameObject.SetActive(true);
+                    // Toggles FIRST: the rebind below snapshots current values
+                    // as the Animator's defaults, so the sprite must already
+                    // be re-enabled or Write-Defaults states would re-hide it.
+                    piece.ResetToggles();
+                    piece.AnimationCaller?.ResetToDefaultState(); // never inherit a Death end-state from a previous life
                     piece.transform.SetParent(enemyLayer, false);
                     piece.CanvasGroup.DOKill();
                     piece.CanvasGroup.alpha = 1f; // undo any removal fade
@@ -62,9 +68,15 @@ namespace SlidingSiege
             _state.OnEnemyMoved += HandleMoved;
             _state.OnEnemyResized += HandleResized;
             _state.OnRebuilt += HandleRebuilt;
+            _state.OnEnemyWentCritical += HandleWentCritical;
 
             HandleRebuilt();
         }
+
+        /// (enemy, label) from an animation event on an enemy's main piece;
+        /// AbilityTriggerDispatcher executes the matching AnimationEvent
+        /// abilities immediately.
+        public event Action<Enemy, string> OnPieceAbilityEvent;
 
         private void OnDestroy()
         {
@@ -74,6 +86,7 @@ namespace SlidingSiege
             _state.OnEnemyMoved -= HandleMoved;
             _state.OnEnemyResized -= HandleResized;
             _state.OnRebuilt -= HandleRebuilt;
+            _state.OnEnemyWentCritical -= HandleWentCritical;
         }
 
         // ---------------- Piece placement math ----------------
@@ -264,14 +277,34 @@ namespace SlidingSiege
             _views[en.Id] = view;
             RebuildEnemyPieces(en);
 
-            // Hurt animation on every non-lethal hit (death handles the rest).
+            // Animation events on the main piece route to the enemy's
+            // AnimationEvent-triggered abilities (ghost pieces stay unwired
+            // so a wrapped enemy's clips can't double-fire the same event).
+            if (view.Pieces.Count > 0)
+                view.Pieces[0].AbilityEventHandler = label => OnPieceAbilityEvent?.Invoke(en, label);
+
+            // Hurt animation on every surviving hit. A hit that sends the
+            // enemy critical fires OnHealthLost while IsDead is already true
+            // but BEFORE GoCritical runs — HandleWentCritical covers that
+            // case; removal covers real deaths.
             Action<int> onLost = _ =>
             {
                 if (en.IsDead) return;
-                PlayPresetFireAndForget(view, en.Definition?.HurtPreset, () => !en.IsDead, en.Definition?.IdlePreset);
+                PlayPresetFireAndForget(view, en.Definition?.HurtPreset,
+                    () => !en.IsDead || en.PendingDetonation, en.Definition?.RestingPresetFor(en));
             };
             en.OnHealthLost += onLost;
             _hurtHooks[en.Id] = onLost;
+        }
+
+        /// A hit just sent this enemy critical (it survives at 0 HP, so no
+        /// removal sequence plays): play Hurt now, then settle on the
+        /// critical resting preset while it is still on the board.
+        private void HandleWentCritical(Enemy en)
+        {
+            if (!_views.TryGetValue(en.Id, out var view)) return;
+            PlayPresetFireAndForget(view, en.Definition?.HurtPreset,
+                () => _state.ContainsEnemy(en.Id), en.Definition?.RestingPresetFor(en));
         }
 
         private void UnhookHurt(Enemy en)
@@ -296,12 +329,15 @@ namespace SlidingSiege
             _views.Remove(en.Id);
 
             _pendingRemovals++;
-            StartCoroutine(RemovalSequence(view, en.Definition));
+            // A critical enemy already played Hurt when it went critical
+            // (HandleWentCritical), so its removal goes straight to Death.
+            StartCoroutine(RemovalSequence(view, en.Definition, playHurt: !en.PendingDetonation));
         }
 
-        private IEnumerator RemovalSequence(EnemyView view, EnemyDefinition definition)
+        private IEnumerator RemovalSequence(EnemyView view, EnemyDefinition definition, bool playHurt)
         {
-            yield return PlayPresetOnAllPieces(view, definition?.HurtPreset, fadeFallback: false);
+            if (playHurt)
+                yield return PlayPresetOnAllPieces(view, definition?.HurtPreset, fadeFallback: false);
             yield return PlayPresetOnAllPieces(view, definition?.DeathPreset, fadeFallback: true);
             view.ReleaseAll();
             _pendingRemovals--;

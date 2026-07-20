@@ -65,9 +65,13 @@ namespace SlidingSiege
 
             // Fire-and-forget so this never recurses back through
             // PlayOwnerPresetAndWait (Idle resuming Idle would loop forever).
-            var idle = Owner.Definition != null ? Owner.Definition.IdlePreset : null;
-            if (!Owner.IsDead && idle != null && !string.IsNullOrEmpty(idle.PresetLabel))
-                caller.PlayPreset(idle.PresetLabel, idle.ReferenceClipLength);
+            // Critical enemies sit at 0 HP (IsDead) but still rest on their
+            // critical/idle preset while they remain on the board.
+            var resting = Owner.Definition != null ? Owner.Definition.RestingPresetFor(Owner) : null;
+            bool onBoard = State == null || State.ContainsEnemy(Owner.Id);
+            if ((!Owner.IsDead || Owner.PendingDetonation) && onBoard
+                && resting != null && !string.IsNullOrEmpty(resting.PresetLabel))
+                caller.PlayPreset(resting.PresetLabel, resting.ReferenceClipLength);
         }
     }
 }

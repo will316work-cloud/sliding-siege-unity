@@ -80,6 +80,17 @@ namespace SlidingSiege
 
         public RectTransform RectTransform => (RectTransform)transform;
 
+        /// Routes animation-event ability labels to the owning enemy's
+        /// AnimationEvent-triggered abilities. EnemyViewManager assigns it
+        /// on the MAIN piece only (wrap ghosts keep it null so their
+        /// Animators firing the same clip event don't double-execute) and
+        /// the pool clears it on reuse.
+        public System.Action<string> AbilityEventHandler { get; set; }
+
+        /// Call target for animation events authored on this piece's clips
+        /// (string parameter = the ability's AnimationEventLabel).
+        public void TriggerAbilityEvent(string label) => AbilityEventHandler?.Invoke(label);
+
         public CanvasGroup CanvasGroup
         {
             get

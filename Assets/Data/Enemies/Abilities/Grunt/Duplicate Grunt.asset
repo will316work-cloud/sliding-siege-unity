@@ -10,23 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f196201237adb54a8f66c183637392d, type: 3}
-  m_Name: Spawn Grunt
+  m_Name: Duplicate Grunt
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.SpawnAbility
   trigger: 0
-  orderIndex: 1
-  postDelay: 0.5
+  orderIndex: 2
+  postDelay: 1
   animationEventLabel: 
   spawnDefinition: {fileID: 11400000, guid: c7f6c816ae9598448a780655ac9cc52a, type: 2}
   count: 1
-  chance: 1
-  placement: 1
+  chance: 0.3
+  placement: 0
   replicate:
-    copyMaxHP: 0
+    copyMaxHP: 1
     maxHPFactor: 1
-    copyCurrentHP: 0
+    copyCurrentHP: 1
     currentHPFactor: 1
     copyStatuses: 0
-    copyShapeOverride: 0
+    copyShapeOverride: 1
     copyQueuedHitbox: 0
     copyChargeCounter: 0
     chargeCounterFactor: 1

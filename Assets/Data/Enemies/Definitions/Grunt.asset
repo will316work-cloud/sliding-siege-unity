@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Grunt
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.EnemyDefinition
   abilities:
+  - {fileID: 11400000, guid: 16db053d66fe51049a2262a47fbd0407, type: 2}
+  - {fileID: 11400000, guid: 8bbd8aa005ec9ba4d9defbfa440e95d6, type: 2}
   - {fileID: 11400000, guid: 90f06a0d0947ba7409a0dbf3a3e26b39, type: 2}
   - {fileID: 11400000, guid: 11a4142c0dc953448a13f02b7f81c6d4, type: 2}
   - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
@@ -107,6 +109,9 @@ MonoBehaviour:
     referenceClipLength: 1
   idlePreset:
     presetLabel: Idle
+    referenceClipLength: 1
+  criticalPreset:
+    presetLabel: Critical
     referenceClipLength: 1
   remainsColorOverlay: {r: 0.6745098, g: 0.15294118, b: 0.15294118, a: 1}
   explosionFlakesColorOverlay: {r: 1, g: 1, b: 1, a: 1}

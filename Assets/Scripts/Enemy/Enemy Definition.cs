@@ -40,6 +40,8 @@ namespace SlidingSiege
         [SerializeField] private TimedAnimationPreset hurtPreset = new TimedAnimationPreset();
         [SerializeField] private TimedAnimationPreset deathPreset = new TimedAnimationPreset();
         [SerializeField] private TimedAnimationPreset idlePreset = new TimedAnimationPreset();
+        [Tooltip("Looping label played instead of Idle while the enemy is critical (pending detonation). Empty falls back to Idle.")]
+        [SerializeField] private TimedAnimationPreset criticalPreset = new TimedAnimationPreset();
 
         [Header("Enemy remains")]
         [Tooltip("Multiplied over every color of the Enemy Remains particle system.")]
@@ -59,6 +61,14 @@ namespace SlidingSiege
         public TimedAnimationPreset HurtPreset => hurtPreset;
         public TimedAnimationPreset DeathPreset => deathPreset;
         public TimedAnimationPreset IdlePreset => idlePreset;
+        public TimedAnimationPreset CriticalPreset => criticalPreset;
+
+        /// The preset this enemy should rest on right now: the critical
+        /// preset while it is pending detonation (when one is labeled),
+        /// otherwise Idle.
+        public TimedAnimationPreset RestingPresetFor(Enemy en) =>
+            en != null && en.PendingDetonation && !string.IsNullOrEmpty(criticalPreset.PresetLabel)
+                ? criticalPreset : idlePreset;
         public Color RemainsColorOverlay => remainsColorOverlay;
         public Color ExplosionFlakesColorOverlay => explosionFlakesColorOverlay;
         public Color ExplosionCloudColorOverlay => explosionCloudColorOverlay;

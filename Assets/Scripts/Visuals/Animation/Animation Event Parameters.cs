@@ -25,7 +25,7 @@ public class AnimationEventParameters
 
     public bool MatchingLabel(string label)
     {
-        return eventLabel != null && eventLabel.Length <= 0 && eventLabel.Equals(label);
+        return !string.IsNullOrEmpty(eventLabel) && eventLabel.Equals(label);
     }
 
 

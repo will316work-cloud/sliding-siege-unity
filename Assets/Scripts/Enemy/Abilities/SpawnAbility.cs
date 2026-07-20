@@ -17,6 +17,10 @@ namespace SlidingSiege
         [SerializeField, Range(0f, 1f)] private float chance = 0.5f;
         [SerializeField] private SpawnPlacementMode placement = SpawnPlacementMode.AdjacentToOwner;
 
+        [Header("Replication (copy values from the owner)")]
+        [Tooltip("Values copied from the OWNER onto each spawned enemy (health/statuses/shape...). Ignored for runner-owned spawn abilities, which have no owner.")]
+        [SerializeField] private SpawnReplication replicate = new SpawnReplication();
+
         [Header("Conditions")]
         [Tooltip("All must pass before spawning (e.g. Population caps); failing skips the spawn with no roll and no delay.")]
         [SerializeField] private List<AbilityCondition> conditions = new List<AbilityCondition>();
@@ -42,6 +46,11 @@ namespace SlidingSiege
                 {
                     var newEnemy = ctx.State.SpawnEnemy(spawnDefinition, cell.x, cell.y);
                     spawned++;
+
+                    // Replicated values (health/statuses/shape...) may kill
+                    // the spawn outright — skip the flourish in that case.
+                    if (ctx.Owner != null) replicate.ApplyTo(ctx.Owner, newEnemy, ctx.State);
+                    if (!ctx.State.ContainsEnemy(newEnemy.Id)) { candidates = GatherCandidates(ctx); continue; }
 
                     // Spawn-in flourish on the NEW enemy's own piece; fire
                     // and forget so it doesn't block placing the rest.

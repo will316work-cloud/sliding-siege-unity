@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85e8f89f9b4f4d938af00791d8b7bb5b, type: 3}
   m_Name: Kill Grunt Self
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.KillSelfAbility
+  trigger: 0
   orderIndex: 7
-  postDelay: 0.75
+  postDelay: 0.3
+  animationEventLabel: 
   animationPreset: 

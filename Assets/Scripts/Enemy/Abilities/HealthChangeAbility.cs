@@ -79,16 +79,8 @@ namespace SlidingSiege
                 }
                 int delta = Mathf.RoundToInt(scaled);
                 if (delta < 0 && recipient != target) s.NotifyDamageRedirected(target, recipient);
-                bool died;
-                if (delta < 0)
-                {
-                    recipient.ApplyDamage(s, -scaled, out died);
-                }
-                else
-                {
-                    recipient.Heal(delta);
-                    died = recipient.HP <= 0 && recipient.Rules.HandleZeroHp(s, recipient);
-                }
+                recipient.ChangeHP(delta); // clamps damage via Rules and heals via MaxHP either way
+                bool died = recipient.HP <= 0 && recipient.Rules.HandleZeroHp(s, recipient);
                 if (died && !killed.Contains(recipient.Id))
                     killed.Add(recipient.Id);
             }

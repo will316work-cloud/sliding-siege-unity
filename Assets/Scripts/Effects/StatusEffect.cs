@@ -24,5 +24,9 @@ namespace SlidingSiege
 
         /// True if this status prevents the enemy from acting (stun etc.).
         public virtual bool PreventsAction => false;
+
+        /// Independent copy (own expiry countdown) for transferring a
+        /// status onto another enemy, e.g. SpawnAbility replication.
+        public StatusEffect Clone() => (StatusEffect)MemberwiseClone();
     }
 }

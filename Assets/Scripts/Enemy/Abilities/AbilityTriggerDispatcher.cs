@@ -40,9 +40,30 @@ namespace SlidingSiege
             _state.OnEnemySpawned += HandleSpawned;
             _state.OnEnemyRemoved += HandleRemoved;
             _state.OnEnemyWentCritical += en => Enqueue(en, AbilityTrigger.OnCritical);
+            if (_views != null) _views.OnPieceAbilityEvent += HandleAnimationAbilityEvent;
             foreach (var en in _state.AllEnemies) HookDamage(en);
 
             _host.StartCoroutine(Pump());
+        }
+
+        /// Animation event on an enemy's main piece: execute the owner's
+        /// matching AnimationEvent abilities IMMEDIATELY (not queued) so the
+        /// effect lands on the exact clip frame — e.g. the Grunt's blast on
+        /// its death clip's explosion frame. Runs even for a removed owner,
+        /// like OnDeath rattles.
+        private void HandleAnimationAbilityEvent(Enemy en, string label)
+        {
+            if (en?.Definition?.Abilities == null || string.IsNullOrEmpty(label)) return;
+            foreach (var ability in en.Definition.Abilities)
+                if (ability != null && ability.Trigger == AbilityTrigger.AnimationEvent
+                    && string.Equals(ability.AnimationEventLabel, label, System.StringComparison.OrdinalIgnoreCase))
+                    _host.StartCoroutine(ExecuteImmediate(ability, en));
+        }
+
+        private IEnumerator ExecuteImmediate(EnemyAbility ability, Enemy enemy)
+        {
+            var ctx = new EnemyAbilityContext(enemy, _state, _views, _host, _combat);
+            yield return _host.StartCoroutine(ability.Execute(ctx, new AbilityResult()));
         }
 
         private void HandleSpawned(Enemy en)

@@ -15,9 +15,9 @@ MonoBehaviour:
   trigger: 0
   orderIndex: 7
   postDelay: 0.3
+  animationEventLabel: 
   branches:
   - conditions:
     - {fileID: 11400000, guid: a731b5df51b04ed4db7bcb028179625b, type: 2}
     abilities:
-    - {fileID: 11400000, guid: 16db053d66fe51049a2262a47fbd0407, type: 2}
     - {fileID: 11400000, guid: 07f9a9cb5d5f6824683780eb36cbddd1, type: 2}

@@ -82,19 +82,9 @@ namespace SlidingSiege
 
         private int _hp;
 
-        /// Current health. Changes only through ApplyDamage/Heal/KillInstantly
-        /// so every change raises OnHealthChanged(current, max).
+        /// Current health. Changes only through ChangeHP/SetHP (events) or
+        /// ChangeHpRaw/SetHpRaw (silent) below.
         public int HP => _hp;
-
-        private void SetHp(int value)
-        {
-            if (_hp == value) return;
-            int delta = value - _hp;
-            _hp = value;
-            OnHealthChanged?.Invoke(_hp, MaxHP);
-            if (delta < 0) OnHealthLost?.Invoke(-delta);
-            else OnHealthGained?.Invoke(delta);
-        }
 
         /// Routes incoming damage to a linking absorber when one exists
         /// (Golem rule) and marks this enemy as hit for cluster accounting;
@@ -105,28 +95,73 @@ namespace SlidingSiege
             return Rules.RouteDamage(state, this);
         }
 
-        /// Applies already-multiplied damage to THIS enemy (the recipient):
-        /// rounds, clamps via Rules, lowers HP, and reports whether this
-        /// leaves it dead per Rules.HandleZeroHp. Returns the damage dealt.
-        public int ApplyDamage(GridState state, float scaledAmount, out bool died)
+        /// Applies `delta` to HP with NO events and NO zero-HP resolution —
+        /// e.g. SpawnAbility replication, which must never look like a hit
+        /// or a heal (both drive gameplay hooks: hurt animations, floating
+        /// damage/heal numbers, OnDamaged-triggered abilities). A negative
+        /// delta's magnitude is clamped through Rules.ClampDamage first
+        /// (mirrors survive-at-zero rules), then the result is clamped into
+        /// [0, MaxHP]. Returns the change actually applied — may differ
+        /// from `delta` once clamped. Callers wanting critical/death
+        /// resolution check IsDead/PendingDetonation and call
+        /// Rules.HandleZeroHp themselves afterward.
+        public int ChangeHpRaw(int delta)
         {
-            int dmg = Rules.ClampDamage(this, Mathf.RoundToInt(scaledAmount));
-            SetHp(_hp - dmg);
-            died = _hp <= 0 && Rules.HandleZeroHp(state, this);
-            return dmg;
+            int target = delta < 0 ? _hp - Rules.ClampDamage(this, -delta) : _hp + delta;
+            target = Mathf.Clamp(target, 0, MaxHP);
+            int change = target - _hp;
+            _hp = target;
+            return change;
         }
 
-        /// Heals up to max HP; non-positive amounts are ignored.
-        public void Heal(int amount)
+        /// As ChangeHpRaw, but expressed as an absolute target instead of a
+        /// delta. Equivalent to ChangeHpRaw(target - HP).
+        public int SetHpRaw(int target) => ChangeHpRaw(target - _hp);
+
+        /// As ChangeHpRaw, but raises OnHealthChanged and OnHealthLost/
+        /// OnHealthGained for the change actually applied (skipped when it
+        /// clamps to zero, e.g. a no-room heal). Still never resolves
+        /// Rules.HandleZeroHp — callers check IsDead/PendingDetonation and
+        /// resolve it themselves (see CombatSystem.ResolveAttack).
+        public int ChangeHP(int delta)
         {
-            if (amount > 0) SetHp(Mathf.Min(MaxHP, _hp + amount));
+            int change = ChangeHpRaw(delta);
+            if (change != 0)
+            {
+                OnHealthChanged?.Invoke(_hp, MaxHP);
+                if (change < 0) OnHealthLost?.Invoke(-change);
+                else OnHealthGained?.Invoke(change);
+            }
+            return change;
         }
 
-        /// Drops straight to 0 HP, bypassing routing, clamps, and the
-        /// zero-HP rules (bomb-priority kills).
-        public void KillInstantly() => SetHp(0);
+        /// As ChangeHP, but expressed as an absolute target instead of a
+        /// delta. Equivalent to ChangeHP(target - HP).
+        public int SetHP(int target) => ChangeHP(target - _hp);
 
-        public int MaxHP => Definition != null ? Definition.MaxHP : 0;
+        /// Re-broadcasts OnHealthChanged for the CURRENT values with no
+        /// underlying change and no OnHealthLost/OnHealthGained. For silent
+        /// mutators (SpawnAbility replication via ChangeHpRaw/SetHpRaw) to
+        /// resync a health bar that bound before the silent write ran —
+        /// without ever looking like a hit or a heal.
+        public void RefreshHealthDisplay() => OnHealthChanged?.Invoke(_hp, MaxHP);
+
+        private int? _maxHpOverride;
+
+        /// Definition max HP unless overridden per-instance (SpawnAbility
+        /// replication). Health bars, heal caps, and threshold conditions
+        /// all read this.
+        public int MaxHP => _maxHpOverride ?? (Definition != null ? Definition.MaxHP : 0);
+
+        /// Per-instance max HP override (min 1). Raises OnHealthChanged so
+        /// health bars rebuild against the new max; current HP is clamped
+        /// down when it exceeds the new max.
+        public void OverrideMaxHP(int value)
+        {
+            _maxHpOverride = Mathf.Max(1, value);
+            if (_hp > MaxHP) _hp = MaxHP;
+            OnHealthChanged?.Invoke(_hp, MaxHP);
+        }
 
         /// (currentHP, maxHP) — raised whenever HP changes.
         public event Action<int, int> OnHealthChanged;
@@ -217,6 +252,7 @@ namespace SlidingSiege
         public int ChargeCounter { get; private set; }
         public void AdvanceCharge() => ChargeCounter++;
         public void ResetCharge() => ChargeCounter = 0;
+        public void SetCharge(int value) => ChargeCounter = Mathf.Max(0, value);
 
         /// Hitbox stored by SetHitboxAbility; persists until overwritten.
         /// Cast abilities and conditions resolve it at the current anchor.

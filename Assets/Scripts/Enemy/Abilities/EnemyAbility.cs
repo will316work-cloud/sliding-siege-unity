@@ -20,9 +20,13 @@ namespace SlidingSiege
         [Tooltip("Delay (seconds) after this ability, applied ONLY when it succeeds.")]
         [SerializeField, Min(0f)] private float postDelay = 1f;
 
+        [Tooltip("AnimationEvent trigger only: the ability runs when an animation event on the owner's piece fires this label (case-insensitive).")]
+        [SerializeField] private string animationEventLabel = "";
+
         public AbilityTrigger Trigger => trigger;
         public int OrderIndex => orderIndex;
         public float PostDelay => postDelay;
+        public string AnimationEventLabel => animationEventLabel;
 
         /// Coroutine-executed ability. Set result.Success = true if the
         /// ability actually did something (gates the post-delay).

@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dd31ffbddfb498691ec79ffb979ec6e, type: 3}
   m_Name: Grunt Blast Damage
   m_EditorClassIdentifier: Assembly-CSharp::SlidingSiege.HealthChangeAbility
-  trigger: 0
-  orderIndex: 8
+  trigger: 6
+  orderIndex: 6
   postDelay: 0.3
+  animationEventLabel: Explode
   targets: 0
   mode: 0
   amount: -10

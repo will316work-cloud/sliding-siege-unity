@@ -110,6 +110,9 @@ MonoBehaviour:
   idlePreset:
     presetLabel: Idle
     referenceClipLength: 1
+  criticalPreset:
+    presetLabel: Critical
+    referenceClipLength: 1
   remainsColorOverlay: {r: 0.61960787, g: 0.54901963, b: 0.9490196, a: 0.69803923}
   explosionFlakesColorOverlay: {r: 1, g: 1, b: 1, a: 1}
   explosionCloudColorOverlay: {r: 1, g: 1, b: 1, a: 1}

@@ -227,6 +227,23 @@ public class AnimationCaller : MonoBehaviour
         CacheParameterHashes();
     }
 
+    /// <summary>
+    /// Rebinds the Animator and drops the state machine back to the
+    /// controller's default state. For pooled objects on reuse: states with
+    /// Write Defaults off and no exit transition (e.g. Enemy Death) keep
+    /// re-sampling their final frame forever, and the pool's disable/enable
+    /// cycle is not guaranteed to rebind when an object is released and
+    /// re-acquired in quick succession.
+    /// </summary>
+    public void ResetToDefaultState()
+    {
+        if (_animator == null) _animator = GetComponent<Animator>();
+        if (_animator == null || !_animator.isActiveAndEnabled) return;
+        _activeRequest = null; // stale request from a previous life
+        _animator.Rebind();
+        _animator.Update(0f);
+    }
+
     public void CallAnimationEvent(string label)
     {
         foreach (AnimationEventParameters parameters in animationEvents)
