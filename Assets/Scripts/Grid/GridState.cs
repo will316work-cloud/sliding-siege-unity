@@ -290,6 +290,33 @@ namespace SlidingSiege
             return result;
         }
 
+        /// Reverses a previously-returned ShiftResult exactly: rotates the
+        /// same physical lines back and restores every moved enemy's old
+        /// anchor, then raises OnShifted with an undo result (same lines,
+        /// opposite direction, OldAnchors = the anchors just reverted FROM)
+        /// so the view layer animates the enemies sliding back. Pair with
+        /// DamageBonusSystem.RegisterUnshift to also un-count the lines.
+        public ShiftResult UnshiftResult(ShiftResult result)
+        {
+            var undo = new ShiftResult(result.IsRowShift, -result.Direction, result.ShiftedLines);
+            foreach (var id in result.MovedEnemyIds)
+                if (_enemies.TryGetValue(id, out var en))
+                    undo.OldAnchors[id] = en.Anchor;
+            undo.MovedEnemyIds.AddRange(result.MovedEnemyIds);
+
+            foreach (var line in result.ShiftedLines)
+            {
+                if (result.IsRowShift) RotateRow(line, -result.Direction);
+                else RotateCol(line, -result.Direction);
+            }
+            foreach (var id in result.MovedEnemyIds)
+                if (_enemies.TryGetValue(id, out var en) && result.OldAnchors.TryGetValue(id, out var oldAnchor))
+                    en.SetAnchor(oldAnchor);
+
+            OnShifted?.Invoke(undo);
+            return undo;
+        }
+
         private void RotateRow(int r, int dir)
         {
             var copy = new List<OccupantRef>[Cols];

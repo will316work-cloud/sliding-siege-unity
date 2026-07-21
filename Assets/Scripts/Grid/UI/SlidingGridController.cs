@@ -22,6 +22,8 @@ namespace SlidingSiege
         [SerializeField] private AbilityHighlightOverlay abilityHighlightOverlay;
         [SerializeField] private DamageTextSpawner damageTextSpawner;
         [SerializeField] private EnemyPhaseRunner enemyPhaseRunner;
+        [Tooltip("Optional: damage bonus that depletes as rows/columns are shifted.")]
+        [SerializeField] private DamageBonusSystem damageBonusSystem;
         [Tooltip("Optional: link-line display (Golem/Siren/Mage threads).")]
         [SerializeField] private LinkOverlay linkOverlay;
         [Tooltip("Optional: tint for slide-disabled rows/columns (Ghost/Phantom curses).")]
@@ -66,6 +68,8 @@ namespace SlidingSiege
             enemyPhaseRunner.Initialize(State, enemyViewManager);
             if (linkOverlay != null) linkOverlay.Initialize(State, targetingController.Combat, enemyViewManager);
             if (disabledLineOverlay != null) disabledLineOverlay.Initialize(State, uiBuilder.Metrics);
+            if (damageBonusSystem != null)
+                targetingController.Combat.DamageMultiplier = () => damageBonusSystem.CurrentMultiplier;
 
             // Event-triggered abilities (OnSpawn/OnDamaged/OnCritical/OnDeath)
             // run outside the phase runner; the dispatcher pumps on this host.
@@ -92,6 +96,8 @@ namespace SlidingSiege
             ShiftResult result = isRowShift
                 ? State.ShiftRow(index, direction)
                 : State.ShiftCol(index, direction);
+
+            if (damageBonusSystem != null) damageBonusSystem.RegisterShift(result);
 
             // 2) ...then visuals catch up from the anchor diff.
             uiBuilder.SetButtonsInteractable(false);
