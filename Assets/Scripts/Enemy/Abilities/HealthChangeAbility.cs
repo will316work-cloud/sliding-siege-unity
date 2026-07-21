@@ -54,7 +54,6 @@ namespace SlidingSiege
 
             yield return ctx.PlayOwnerPresetAndWait(castAnimationPreset);
 
-            var killed = new List<int>();
             foreach (var kv in factors)
             {
                 // Damage redirects to a linking absorber (Golem) — heals
@@ -80,11 +79,11 @@ namespace SlidingSiege
                 int delta = Mathf.RoundToInt(scaled);
                 if (delta < 0 && recipient != target) s.NotifyDamageRedirected(target, recipient);
                 recipient.ChangeHP(delta); // clamps damage via Rules and heals via MaxHP either way
-                bool died = recipient.HP <= 0 && recipient.Rules.HandleZeroHp(s, recipient);
-                if (died && !killed.Contains(recipient.Id))
-                    killed.Add(recipient.Id);
+                // Removal itself is owned by AbilityTriggerDispatcher, which
+                // waits for a dying enemy's OnCritical abilities (if any) to
+                // finish before taking it off the board.
+                if (recipient.HP <= 0) recipient.Rules.HandleZeroHp(s, recipient);
             }
-            foreach (var id in killed) s.RemoveEnemy(id);
             result.Success = true;
         }
     }

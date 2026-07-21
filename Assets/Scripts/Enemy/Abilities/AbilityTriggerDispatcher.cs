@@ -28,6 +28,11 @@ namespace SlidingSiege
             = new Dictionary<int, System.Action<int>>();
         private bool _flushing;
 
+        /// Dies-at-zero enemies (CombatRules.DiesAtZeroHP) waiting on their
+        /// own queued OnCritical abilities to finish before removal — see
+        /// HandleWentCritical/Flush.
+        private readonly HashSet<int> _pendingZeroHpRemoval = new HashSet<int>();
+
         public AbilityTriggerDispatcher(GridState state, EnemyViewManager views,
             EnemyPhaseRunner phaseRunner, CombatSystem combat, MonoBehaviour host)
         {
@@ -39,7 +44,7 @@ namespace SlidingSiege
 
             _state.OnEnemySpawned += HandleSpawned;
             _state.OnEnemyRemoved += HandleRemoved;
-            _state.OnEnemyWentCritical += en => Enqueue(en, AbilityTrigger.OnCritical);
+            _state.OnEnemyWentCritical += HandleWentCritical;
             if (_views != null) _views.OnPieceAbilityEvent += HandleAnimationAbilityEvent;
             foreach (var en in _state.AllEnemies) HookDamage(en);
 
@@ -66,6 +71,21 @@ namespace SlidingSiege
             yield return _host.StartCoroutine(ability.Execute(ctx, new AbilityResult()));
         }
 
+        /// Queues the enemy's OnCritical abilities. If its rules say it
+        /// dies at zero HP, either remove it right away (no OnCritical
+        /// abilities to wait for) or mark it for removal once Flush drains
+        /// them all.
+        private void HandleWentCritical(Enemy en)
+        {
+            int before = _queue.Count;
+            Enqueue(en, AbilityTrigger.OnCritical);
+            bool queuedAny = _queue.Count > before;
+
+            if (!en.Rules.DiesAtZeroHP) return;
+            if (queuedAny) _pendingZeroHpRemoval.Add(en.Id);
+            else _state.RemoveEnemy(en.Id);
+        }
+
         private void HandleSpawned(Enemy en)
         {
             HookDamage(en);
@@ -74,6 +94,7 @@ namespace SlidingSiege
 
         private void HandleRemoved(Enemy en)
         {
+            _pendingZeroHpRemoval.Remove(en.Id);
             if (_damageHooks.TryGetValue(en.Id, out var hook))
             {
                 en.OnHealthLost -= hook;
@@ -136,16 +157,85 @@ namespace SlidingSiege
                     if (!enemy.CanAct) continue;
                 }
 
-                var ctx = new EnemyAbilityContext(enemy, _state, _views, _host, _combat);
-                var result = new AbilityResult();
-                yield return _host.StartCoroutine(ability.Execute(ctx, result));
+                if (ability.RunSimultaneously)
+                {
+                    yield return RunSimultaneousBatch(ability, enemy, trigger);
+                }
+                else
+                {
+                    var ctx = new EnemyAbilityContext(enemy, _state, _views, _host, _combat);
+                    var result = new AbilityResult();
+                    yield return _host.StartCoroutine(ability.Execute(ctx, result));
 
-                while (_views != null && _views.IsAnimating) yield return null;
+                    while (_views != null && _views.IsAnimating) yield return null;
 
-                if (result.Success && ability.PostDelay > 0f)
-                    yield return new WaitForSeconds(ability.PostDelay);
+                    if (result.Success && ability.PostDelay > 0f)
+                        yield return new WaitForSeconds(ability.PostDelay);
+
+                    TryRemoveAfterCritical(trigger, enemy);
+                }
             }
             _flushing = false;
+        }
+
+        /// Gathers `first` plus every other entry still at the FRONT of the
+        /// queue tied on the same trigger that also has RunSimultaneously
+        /// on (any owner, any ability asset — e.g. several enemies' OnCritical
+        /// abilities going off together), starts all their Execute coroutines
+        /// the same frame, and waits for the whole batch (each entry's own
+        /// postDelay, then any resulting animations) before returning.
+        /// Entries at the front WITHOUT the toggle are left in the queue to
+        /// run one at a time as usual, right after this batch. Mirrors
+        /// EnemyPhaseRunner.RunSimultaneousBatch.
+        private IEnumerator RunSimultaneousBatch(EnemyAbility firstAbility, Enemy firstEnemy, AbilityTrigger trigger)
+        {
+            var batch = new List<(EnemyAbility ability, Enemy enemy)> { (firstAbility, firstEnemy) };
+
+            while (_queue.Count > 0 && _queue[0].trigger == trigger && _queue[0].ability.RunSimultaneously)
+            {
+                var (ability, enemy, _) = _queue[0];
+                _queue.RemoveAt(0);
+                if (trigger != AbilityTrigger.OnDeath)
+                {
+                    if (!_state.ContainsEnemy(enemy.Id)) continue;
+                    if (!enemy.CanAct) continue;
+                }
+                batch.Add((ability, enemy));
+            }
+
+            int pending = batch.Count;
+            foreach (var (ability, enemy) in batch)
+                _host.StartCoroutine(RunBatchEntry(ability, enemy, () => pending--));
+            while (pending > 0) yield return null;
+
+            // Wait out any death sequences the batch caused before moving on
+            // (deaths block game flow until finished), same as a solo entry.
+            while (_views != null && _views.IsAnimating) yield return null;
+
+            foreach (var (_, enemy) in batch)
+                TryRemoveAfterCritical(trigger, enemy);
+        }
+
+        private IEnumerator RunBatchEntry(EnemyAbility ability, Enemy enemy, System.Action onDone)
+        {
+            var ctx = new EnemyAbilityContext(enemy, _state, _views, _host, _combat);
+            var result = new AbilityResult();
+            yield return _host.StartCoroutine(ability.Execute(ctx, result));
+            if (result.Success && ability.PostDelay > 0f)
+                yield return new WaitForSeconds(ability.PostDelay);
+            onDone();
+        }
+
+        /// Last queued OnCritical ability for a dies-at-zero enemy just
+        /// finished — safe to remove it now.
+        private void TryRemoveAfterCritical(AbilityTrigger trigger, Enemy enemy)
+        {
+            if (trigger == AbilityTrigger.OnCritical && _pendingZeroHpRemoval.Contains(enemy.Id)
+                && !_queue.Exists(q => q.enemy.Id == enemy.Id && q.trigger == AbilityTrigger.OnCritical))
+            {
+                _pendingZeroHpRemoval.Remove(enemy.Id);
+                _state.RemoveEnemy(enemy.Id);
+            }
         }
     }
 }

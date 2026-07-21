@@ -15,7 +15,6 @@ MonoBehaviour:
   abilities:
   - {fileID: 11400000, guid: 16db053d66fe51049a2262a47fbd0407, type: 2}
   - {fileID: 11400000, guid: 8bbd8aa005ec9ba4d9defbfa440e95d6, type: 2}
-  - {fileID: 11400000, guid: 90f06a0d0947ba7409a0dbf3a3e26b39, type: 2}
   - {fileID: 11400000, guid: 11a4142c0dc953448a13f02b7f81c6d4, type: 2}
   - {fileID: 11400000, guid: 38209bc461c33c042b65f4f441147c0f, type: 2}
   maxHP: 15

@@ -167,7 +167,11 @@ namespace SlidingSiege
                 result.VoidedByBomb = true;
                 foreach (var id in bombIdsHit)
                 {
-                    if (_state.TryGetEnemy(id, out var bomb)) bomb.SetHP(0);
+                    if (_state.TryGetEnemy(id, out var bomb))
+                    {
+                        bomb.SetHP(0);
+                        bomb.Rules.HandleZeroHp(_state, bomb);
+                    }
                     result.HitEnemyIds.Add(id);
                     result.KilledEnemyIds.Add(id);
                 }
@@ -193,8 +197,10 @@ namespace SlidingSiege
                 }
             }
 
-            foreach (var id in result.KilledEnemyIds)
-                _state.RemoveEnemy(id);
+            // Removal itself is owned by AbilityTriggerDispatcher, which
+            // waits for a dying enemy's OnCritical abilities (if any) to
+            // finish before taking it off the board — see CombatRules.
+            // HandleZeroHp / AbilityTriggerDispatcher.HandleWentCritical.
 
             if (!InfiniteAttacks)
             {

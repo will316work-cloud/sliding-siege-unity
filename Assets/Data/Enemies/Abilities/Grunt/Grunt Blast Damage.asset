@@ -15,6 +15,7 @@ MonoBehaviour:
   trigger: 6
   orderIndex: 6
   postDelay: 0.3
+  runSimultaneously: 1
   animationEventLabel: Explode
   targets: 0
   mode: 0

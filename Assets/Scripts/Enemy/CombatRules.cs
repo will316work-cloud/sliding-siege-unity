@@ -48,19 +48,29 @@ namespace SlidingSiege
         public virtual int ClampDamage(Enemy en, int dmg) =>
             diesAtZeroHP ? dmg : Mathf.Min(dmg, en.HP);
 
-        /// Called when the enemy is at 0 HP or less. Non-dying enemies go
-        /// critical (pending detonation, links dropped, OnEnemyWentCritical
-        /// raised) and survive — returns false; returns true on real death.
+        /// Called when the enemy is at 0 HP or less. Always enters the
+        /// critical state exactly once (pending detonation, links dropped,
+        /// OnEnemyWentCritical raised — which queues OnCritical abilities),
+        /// regardless of diesAtZeroHP, so OnCritical abilities get a chance
+        /// to run before the enemy is actually removed. Returns whether the
+        /// enemy should die once that happens (true) or survive indefinitely
+        /// as PendingDetonation (false, Golem/Slime-style).
+        ///
+        /// Callers must NOT call GridState.RemoveEnemy themselves off this
+        /// result — AbilityTriggerDispatcher removes dies-at-zero enemies
+        /// once their queued OnCritical abilities finish executing (or
+        /// immediately, if the enemy has none).
         public virtual bool HandleZeroHp(GridState s, Enemy en)
         {
-            if (diesAtZeroHP) return true;
             if (!en.PendingDetonation)
             {
                 en.GoCritical();
-                Debug.Log($"[SlidingSiege] {en.Definition.name} is critically damaged and will explode next enemy phase!");
+                Debug.Log(diesAtZeroHP
+                    ? $"[SlidingSiege] {en.Definition.name} is critically damaged!"
+                    : $"[SlidingSiege] {en.Definition.name} is critically damaged and will explode next enemy phase!");
                 s.NotifyEnemyWentCritical(en);
             }
-            return false;
+            return diesAtZeroHP;
         }
     }
 }
