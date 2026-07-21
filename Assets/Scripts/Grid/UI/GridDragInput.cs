@@ -22,9 +22,11 @@ namespace SlidingSiege
     public class GridDragInput : MonoBehaviour,
         IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
-        [Header("Wiring")]
+        [Header("Wiring (required)")]
         [Tooltip("Rect whose area maps 1:1 onto the grid cells (the Enemy Layer / Grid Panel rect).")]
         [SerializeField] private RectTransform gridArea;
+
+        [Header("Wiring (optional)")]
         [Tooltip("Optional shift preview (highlight + arrows + nudge).")]
         [SerializeField] private ShiftPreviewOverlay previewOverlay;
         [Tooltip("Optional: cursed-line overlay, used for blocked-shift feedback (highlight while dragging, shake on release).")]

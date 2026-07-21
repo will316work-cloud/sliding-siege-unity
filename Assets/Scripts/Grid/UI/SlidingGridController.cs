@@ -13,7 +13,7 @@ namespace SlidingSiege
         [SerializeField, Min(2)] private int rows = 5;
         [SerializeField, Min(2)] private int cols = 5;
 
-        [Header("Wiring")]
+        [Header("Wiring (required)")]
         [SerializeField] private GridUIBuilder uiBuilder;
         [SerializeField] private EnemyViewManager enemyViewManager;
         [SerializeField] private GridDragInput dragInput;
@@ -22,6 +22,8 @@ namespace SlidingSiege
         [SerializeField] private AbilityHighlightOverlay abilityHighlightOverlay;
         [SerializeField] private DamageTextSpawner damageTextSpawner;
         [SerializeField] private EnemyPhaseRunner enemyPhaseRunner;
+
+        [Header("Wiring (optional)")]
         [Tooltip("Optional: damage bonus that depletes as rows/columns are shifted.")]
         [SerializeField] private DamageBonusSystem damageBonusSystem;
         [Tooltip("Optional: link-line display (Golem/Siren/Mage threads).")]

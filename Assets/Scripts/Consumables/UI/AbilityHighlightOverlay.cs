@@ -12,9 +12,11 @@ namespace SlidingSiege
     /// = plain colored square).
     public class AbilityHighlightOverlay : MonoBehaviour
     {
-        [Header("Wiring")]
+        [Header("Wiring (required)")]
         [Tooltip("Layer above the Enemy Layer (sibling after it; order vs the Shift Preview Overlay doesn't matter). Same rect as the Enemy Layer.")]
         [SerializeField] private RectTransform overlayRoot;
+
+        [Header("Wiring (optional)")]
         [Tooltip("Layer for enemy telegraph highlights: a stretched RectTransform, sibling ordered just BEFORE the Enemy Layer, same rect. Null falls back to the overlay root.")]
         [SerializeField] private RectTransform telegraphRoot;
 

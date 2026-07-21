@@ -21,13 +21,15 @@ namespace SlidingSiege
         #region Serialized Fields
 
 
-        [SerializeField] private Image spriteImage;
         [SerializeField] private Image faceImage;
         [SerializeField] private EnemyHealthBarDisplay healthBar;
+
+        [Header("Optional")]
+        [Tooltip("Optional: body sprite. Skipped if unassigned or its GameObject is inactive.")]
+        [SerializeField] private Image spriteImage;
         [Tooltip("Optional: lets enemy abilities play Animator presets on this piece.")]
         [SerializeField] private AnimationCaller animationCaller;
-
-        [Header("Enemy remains")]
+        [Tooltip("Optional: death particles. Each is skipped individually if unassigned.")]
         [SerializeField] private ParticleSystem enemyRemains;
         [SerializeField] private ParticleSystem explosionFlakes;
         [SerializeField] private ParticleSystem explosionCloud;

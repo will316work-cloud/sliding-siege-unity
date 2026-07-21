@@ -10,11 +10,14 @@ namespace SlidingSiege
     /// and an optional selection highlight object).
     public class AbilityCardUI : MonoBehaviour
     {
+        [Header("Required")]
         [SerializeField] private Image icon;
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private TextMeshProUGUI countText;
-        [SerializeField] private TextMeshProUGUI damageText;   // hidden for items
         [SerializeField] private Button button;
+
+        [Header("Optional")]
+        [SerializeField] private TextMeshProUGUI damageText;   // hidden for items
         [SerializeField] private GameObject selectedHighlight;
 
         private Action _onClick;

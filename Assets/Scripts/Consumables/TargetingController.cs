@@ -20,11 +20,13 @@ namespace SlidingSiege
         [SerializeField] private AttackDefinition[] attackDefinitions;
         [SerializeField] private ItemDefinition[] itemDefinitions;
 
-        [Header("UI wiring")]
+        [Header("UI wiring (required)")]
         [SerializeField] private AbilityListUI attackList;
         [SerializeField] private AbilityListUI itemList;
         [SerializeField] private AbilityHighlightOverlay highlightOverlay;
         [SerializeField] private Button confirmButton;              // Confirm button prefab instance
+
+        [Header("UI wiring (optional)")]
         [SerializeField] private TextMeshProUGUI confirmLabel;      // optional
 
         [Header("Highlight appearance")]
