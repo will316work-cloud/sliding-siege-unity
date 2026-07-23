@@ -59,6 +59,52 @@ namespace SlidingSiege
         public event Action<Enemy, Enemy> OnDamageRedirected;
         public void NotifyDamageRedirected(Enemy target, Enemy absorber) => OnDamageRedirected?.Invoke(target, absorber);
 
+        /// Raised the instant every cell holds at least one enemy (current
+        /// size/shape, not the definition default — a resized enemy fills
+        /// whatever it currently occupies). Edge-triggered: only fires on
+        /// the transition into full, not on every mutation while it stays
+        /// full. See IsGridFull to poll the current state instead.
+        public event Action OnGridFull;
+
+        /// Raised the instant no enemies remain. Edge-triggered like
+        /// OnGridFull. See IsGridEmpty to poll the current state instead.
+        public event Action OnGridEmpty;
+
+        private bool _wasGridFull;
+        private bool _wasGridEmpty;
+
+        public bool IsGridEmpty => _enemies.Count == 0;
+
+        /// True iff every cell has at least one enemy occupant right now.
+        public bool IsGridFull()
+        {
+            if (_enemies.Count == 0) return false;
+            for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Cols; c++)
+                {
+                    bool occupied = false;
+                    foreach (var rf in _cells[r, c])
+                        if (rf.Kind == OccupantKind.Enemy) { occupied = true; break; }
+                    if (!occupied) return false;
+                }
+            return true;
+        }
+
+        /// Re-evaluates full/empty and raises OnGridFull/OnGridEmpty on the
+        /// transition into that state. Called after every mutation that can
+        /// change cell occupancy (spawn, remove, move, reshape, shift).
+        private void CheckOccupancy()
+        {
+            bool isEmpty = IsGridEmpty;
+            bool isFull = IsGridFull();
+
+            if (isEmpty && !_wasGridEmpty) OnGridEmpty?.Invoke();
+            if (isFull && !_wasGridFull) OnGridFull?.Invoke();
+
+            _wasGridEmpty = isEmpty;
+            _wasGridFull = isFull;
+        }
+
         public void Initialize(int rows, int cols)
         {
             Rows = rows; Cols = cols;
@@ -68,7 +114,10 @@ namespace SlidingSiege
                     _cells[r, c] = new List<OccupantRef>(2);
             _enemies.Clear();
             _nextEnemyId = 1;
+            _wasGridFull = false;
+            _wasGridEmpty = false;
             OnRebuilt?.Invoke();
+            CheckOccupancy();
         }
 
         public IReadOnlyList<OccupantRef> RefsAt(int r, int c) => _cells[r, c];
@@ -112,6 +161,7 @@ namespace SlidingSiege
             WriteBody(enemy);
             _enemies[enemy.Id] = enemy;
             OnEnemySpawned?.Invoke(enemy);
+            CheckOccupancy();
             return enemy;
         }
 
@@ -125,6 +175,7 @@ namespace SlidingSiege
             enemy.SetAnchor(new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols)));
             WriteBody(enemy);
             OnEnemyMoved?.Invoke(enemy, old, style);
+            CheckOccupancy();
         }
 
         /// Re-lays an enemy's body with a new anchor and shape override
@@ -138,6 +189,7 @@ namespace SlidingSiege
             enemy.SetAnchor(new Vector2Int(Wrap(newAnchor.x, Rows), Wrap(newAnchor.y, Cols)));
             WriteBody(enemy);
             OnEnemyResized?.Invoke(enemy);
+            CheckOccupancy();
         }
 
         public void RemoveEnemy(int id)
@@ -147,6 +199,7 @@ namespace SlidingSiege
             _enemies.Remove(id);
             ClearDisabledLinesFrom(id); // death lifts its curses
             OnEnemyRemoved?.Invoke(enemy);
+            CheckOccupancy();
         }
 
         // ---------------- Disabled lines (Ghost/Phantom curses) ----------------
@@ -287,6 +340,7 @@ namespace SlidingSiege
             }
 
             OnShifted?.Invoke(result);
+            CheckOccupancy();
             return result;
         }
 
@@ -295,7 +349,7 @@ namespace SlidingSiege
         /// anchor, then raises OnShifted with an undo result (same lines,
         /// opposite direction, OldAnchors = the anchors just reverted FROM)
         /// so the view layer animates the enemies sliding back. Pair with
-        /// DamageBonusSystem.RegisterUnshift to also un-count the lines.
+        /// ShiftTracker.PopLastLine, which supplies the popped result.
         public ShiftResult UnshiftResult(ShiftResult result)
         {
             var undo = new ShiftResult(result.IsRowShift, -result.Direction, result.ShiftedLines);
@@ -314,6 +368,7 @@ namespace SlidingSiege
                     en.SetAnchor(oldAnchor);
 
             OnShifted?.Invoke(undo);
+            CheckOccupancy();
             return undo;
         }
 

@@ -23,11 +23,11 @@ namespace SlidingSiege
             if (combat == null || owner == null) yield break;
 
             combat.ClearDisablesFrom(owner.Id);
-            var pool = combat.AvailableAttacks().ToList();
+            var pool = combat.AvailableAbilities().OfType<AttackDefinition>().ToList();
             if (pool.Count == 0) yield break;
 
             var pick = pool[Random.Range(0, pool.Count)];
-            combat.DisableAttack(owner.Id, pick);
+            combat.Disable(owner.Id, pick);
             Debug.Log($"[SlidingSiege] {owner.Definition.name} casts a disabling spell on {pick.DisplayName}!");
             result.Success = true;
 

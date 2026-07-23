@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace SlidingSiege
 {
@@ -32,8 +33,9 @@ namespace SlidingSiege
         public AbilityTriggerDispatcher TriggerDispatcher { get; private set; }
         public void AttachTriggerDispatcher(AbilityTriggerDispatcher dispatcher) => TriggerDispatcher = dispatcher;
 
-        public event Action OnPhaseStarted;
-        public event Action OnPhaseFinished;
+        [Header("Events")]
+        public UnityEvent OnPhaseStarted = new UnityEvent();
+        public UnityEvent OnPhaseFinished = new UnityEvent();
 
         private GridState _state;
         private EnemyViewManager _views;
@@ -66,7 +68,7 @@ namespace SlidingSiege
         private IEnumerator Run()
         {
             IsRunning = true;
-            OnPhaseStarted?.Invoke();
+            OnPhaseStarted.Invoke();
 
             // Row/column curses from last phase expire before anyone acts.
             _state.TickDisabledLines();
@@ -120,7 +122,7 @@ namespace SlidingSiege
                 en.TickStatuses();
 
             IsRunning = false;
-            OnPhaseFinished?.Invoke();
+            OnPhaseFinished.Invoke();
         }
 
         /// Gathers `first` plus every other entry still at the FRONT of the

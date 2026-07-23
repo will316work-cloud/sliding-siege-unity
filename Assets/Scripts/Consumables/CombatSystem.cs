@@ -11,8 +11,7 @@ namespace SlidingSiege
     public class CombatSystem
     {
         private readonly GridState _state;
-        private readonly Dictionary<AttackDefinition, int> _charges = new Dictionary<AttackDefinition, int>();
-        private readonly Dictionary<ItemKind, int> _itemCounts = new Dictionary<ItemKind, int>();
+        private readonly Dictionary<AbilityDefinition, int> _counts = new Dictionary<AbilityDefinition, int>();
 
         public int AttacksRemaining { get; private set; } = 1;
 
@@ -45,88 +44,66 @@ namespace SlidingSiege
         // Registered per source enemy id so a kill lifts that enemy's
         // disables immediately; sources reroll by clearing then re-adding.
 
-        private readonly Dictionary<int, HashSet<AttackDefinition>> _attackDisables = new Dictionary<int, HashSet<AttackDefinition>>();
-        private readonly Dictionary<int, HashSet<ItemKind>> _itemDisables = new Dictionary<int, HashSet<ItemKind>>();
+        private readonly Dictionary<int, HashSet<AbilityDefinition>> _disables = new Dictionary<int, HashSet<AbilityDefinition>>();
 
-        public void DisableAttack(int sourceEnemyId, AttackDefinition def)
+        public void Disable(int sourceEnemyId, AbilityDefinition def)
         {
-            if (!_attackDisables.TryGetValue(sourceEnemyId, out var set))
-                _attackDisables[sourceEnemyId] = set = new HashSet<AttackDefinition>();
+            if (!_disables.TryGetValue(sourceEnemyId, out var set))
+                _disables[sourceEnemyId] = set = new HashSet<AbilityDefinition>();
             set.Add(def);
-            OnInventoryChanged?.Invoke();
-        }
-
-        public void DisableItem(int sourceEnemyId, ItemKind kind)
-        {
-            if (!_itemDisables.TryGetValue(sourceEnemyId, out var set))
-                _itemDisables[sourceEnemyId] = set = new HashSet<ItemKind>();
-            set.Add(kind);
             OnInventoryChanged?.Invoke();
         }
 
         public bool ClearDisablesFrom(int sourceEnemyId)
         {
-            bool removed = _attackDisables.Remove(sourceEnemyId);
-            removed |= _itemDisables.Remove(sourceEnemyId);
+            bool removed = _disables.Remove(sourceEnemyId);
             if (removed) OnInventoryChanged?.Invoke();
             return removed;
         }
 
-        public bool IsAttackDisabled(AttackDefinition def) =>
-            _attackDisables.Values.Any(set => set.Contains(def));
+        public bool IsDisabled(AbilityDefinition def) =>
+            _disables.Values.Any(set => set.Contains(def));
 
-        public bool IsItemDisabled(ItemKind kind) =>
-            _itemDisables.Values.Any(set => set.Contains(kind));
+        /// Abilities a disabling enemy may target: set up and with
+        /// charges/count left (all of them if that type's Infinite* toggle
+        /// is on).
+        public IEnumerable<AbilityDefinition> AvailableAbilities() =>
+            _counts.Where(kv => kv.Key.IsInfinite(this) || kv.Value > 0).Select(kv => kv.Key);
 
-        /// Attacks a disabling enemy may target: set up and with charges
-        /// left (all of them under InfiniteAttacks).
-        public IEnumerable<AttackDefinition> AvailableAttacks() =>
-            _charges.Where(kv => InfiniteAttacks || kv.Value > 0).Select(kv => kv.Key);
-
-        /// Items a disabling enemy may target: set up and in stock.
-        public IEnumerable<ItemKind> AvailableItems() =>
-            _itemCounts.Where(kv => InfiniteItems || kv.Value > 0).Select(kv => kv.Key);
-
-        /// All (source enemy, attack) disable pairs, for the link display.
-        public IEnumerable<(int SourceId, AttackDefinition Attack)> AttackDisableEntries()
+        /// All (source enemy, ability) disable pairs, for the link display.
+        public IEnumerable<(int SourceId, AbilityDefinition Def)> DisableEntries()
         {
-            foreach (var kv in _attackDisables)
+            foreach (var kv in _disables)
                 foreach (var def in kv.Value)
                     yield return (kv.Key, def);
         }
 
-        /// All (source enemy, item) disable pairs, for the link display.
-        public IEnumerable<(int SourceId, ItemKind Item)> ItemDisableEntries()
-        {
-            foreach (var kv in _itemDisables)
-                foreach (var kind in kv.Value)
-                    yield return (kv.Key, kind);
-        }
-
         // ---------------- Inventory ----------------
 
-        public void SetupAttack(AttackDefinition def) => _charges[def] = def.StartingCharges;
-        public void SetupItem(ItemDefinition def) => _itemCounts[def.Kind] = def.StartingCount;
+        public void Setup(AbilityDefinition def) => _counts[def] = def.StartingCount;
 
-        public int GetCharges(AttackDefinition def) => _charges.TryGetValue(def, out var v) ? v : 0;
-        public int GetItemCount(ItemKind kind) => _itemCounts.TryGetValue(kind, out var v) ? v : 0;
+        public int GetCount(AbilityDefinition def) => _counts.TryGetValue(def, out var v) ? v : 0;
 
-        public bool ConsumeItem(ItemKind kind)
+        /// Spends one charge/count of `def` (no-op success under that
+        /// type's Infinite* toggle). `notify`: false lets a caller that's
+        /// about to raise its own OnInventoryChanged (e.g. ResolveAttack)
+        /// skip the redundant one this would otherwise fire.
+        public bool Consume(AbilityDefinition def, bool notify = true)
         {
-            if (InfiniteItems) return true;
-            if (GetItemCount(kind) <= 0) return false;
-            _itemCounts[kind]--;
-            OnInventoryChanged?.Invoke();
+            if (def.IsInfinite(this)) return true;
+            if (GetCount(def) <= 0) return false;
+            _counts[def]--;
+            if (notify) OnInventoryChanged?.Invoke();
             return true;
         }
 
         public bool CanUseItem(ItemDefinition def) =>
-            (InfiniteItems || GetItemCount(def.Kind) > 0) && !IsItemDisabled(def.Kind);
+            (InfiniteItems || GetCount(def) > 0) && !IsDisabled(def);
 
         // ---------------- Attacks ----------------
 
         public bool CanAttack(AttackDefinition def) =>
-            (InfiniteAttacks || (AttacksRemaining > 0 && GetCharges(def) > 0)) && !IsAttackDisabled(def);
+            (InfiniteAttacks || (AttacksRemaining > 0 && GetCount(def) > 0)) && !IsDisabled(def);
 
         public AttackResult ResolveAttack(AttackDefinition def, Vector2Int anchor, int variantIndex)
         {
@@ -205,7 +182,7 @@ namespace SlidingSiege
             if (!InfiniteAttacks)
             {
                 AttacksRemaining--;
-                _charges[def] = GetCharges(def) - 1;
+                Consume(def, notify: false); // AttacksRemaining is attack-only; the shared count still lives on def
             }
             OnInventoryChanged?.Invoke();
             OnAttackResolved?.Invoke(result);

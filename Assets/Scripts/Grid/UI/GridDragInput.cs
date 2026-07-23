@@ -2,10 +2,15 @@ using System;
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
 namespace SlidingSiege
 {
+    [Serializable] public class ShiftPreviewShowEvent : UnityEvent<bool, int, int> { }
+    [Serializable] public class DisabledLineEvent : UnityEvent<bool, int> { }
+    [Serializable] public class DisabledLinesEvent : UnityEvent<IEnumerable<(bool IsRow, int Index)>> { }
+
     /// Pointer input surface for the grid. Attach to a full-grid-area
     /// raycastable Graphic (e.g. a transparent Image overlaying the Enemy
     /// Layer). Works with mouse and touch alike via the EventSystem — use
@@ -19,6 +24,11 @@ namespace SlidingSiege
     ///  - A press-and-release that never exceeds the EventSystem's drag
     ///    threshold is a TAP: it raises OnCellTapped with the tapped cell
     ///    (TargetingController decides what a tap means).
+    ///
+    /// No longer holds direct references to ShiftPreviewOverlay/
+    /// DisabledLineOverlay — every moment that used to call into them
+    /// directly is a UnityEvent instead; slot the overlays' methods into
+    /// them via the Inspector (see each event's tooltip for which method).
     public class GridDragInput : MonoBehaviour,
         IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
@@ -26,15 +36,19 @@ namespace SlidingSiege
         [Tooltip("Rect whose area maps 1:1 onto the grid cells (the Enemy Layer / Grid Panel rect).")]
         [SerializeField] private RectTransform gridArea;
 
-        [Header("Wiring (optional)")]
-        [Tooltip("Optional shift preview (highlight + arrows + nudge).")]
-        [SerializeField] private ShiftPreviewOverlay previewOverlay;
-        [Tooltip("Optional: cursed-line overlay, used for blocked-shift feedback (highlight while dragging, shake on release).")]
-        [SerializeField] private DisabledLineOverlay disabledLineOverlay;
-
         [Header("Events")]
         [Tooltip("Raised for every non-drag tap on a grid cell. Wire TargetingController.HandleCellTapped here (or in code).")]
         public CellTappedEvent OnCellTapped = new CellTappedEvent();
+        [Tooltip("Raised to show the shift preview (isRow, seed line, direction). Slot ShiftPreviewOverlay.Show here.")]
+        public ShiftPreviewShowEvent OnPreviewShowRequested = new ShiftPreviewShowEvent();
+        [Tooltip("Raised to hide the shift preview — mid-drag when inactive/blocked, and always at drag end. Slot ShiftPreviewOverlay.Hide here.")]
+        public UnityEvent OnPreviewHideRequested = new UnityEvent();
+        [Tooltip("Raised with the currently-blocking cursed lines (possibly empty) as the drag preview updates. Slot DisabledLineOverlay.SetHighlight here.")]
+        public DisabledLinesEvent OnDisabledLinesChanged = new DisabledLinesEvent();
+        [Tooltip("Raised once at drag end to clear any cursed-line highlight. Slot DisabledLineOverlay.ClearHighlight here.")]
+        public UnityEvent OnDisabledHighlightCleared = new UnityEvent();
+        [Tooltip("Raised once per blocking line when a drag release is rejected by a cursed line. Slot DisabledLineOverlay.Shake here.")]
+        public DisabledLineEvent OnDisabledLineShakeRequested = new DisabledLineEvent();
 
         private GridState _state;
         private GridLayoutMetrics _metrics;
@@ -86,8 +100,8 @@ namespace SlidingSiege
             if (!_dragActive) return;
             _dragActive = false;
             UpdatePreview(eventData);
-            previewOverlay?.Hide();
-            disabledLineOverlay?.ClearHighlight();
+            OnPreviewHideRequested.Invoke();
+            OnDisabledHighlightCleared.Invoke();
 
             if (_isInputLocked?.Invoke() ?? false) return;
             // Cancel: pointer never left (or returned to) the start cell.
@@ -98,9 +112,8 @@ namespace SlidingSiege
             if (blocking.Count > 0)
             {
                 // Cursed: no shift — the blocking line(s) shake instead.
-                if (disabledLineOverlay != null)
-                    foreach (var line in blocking)
-                        disabledLineOverlay.Shake(line.IsRow, line.Index);
+                foreach (var line in blocking)
+                    OnDisabledLineShakeRequested.Invoke(line.IsRow, line.Index);
                 return;
             }
 
@@ -131,12 +144,11 @@ namespace SlidingSiege
                 : BlockingDisabledLines(_dragIsHorizontal, index);
             bool blocked = blocking != null && blocking.Count > 0;
 
-            disabledLineOverlay?.SetHighlight(blocked ? blocking : null);
-            if (previewOverlay == null) return;
+            OnDisabledLinesChanged.Invoke(blocked ? blocking : null);
             if (inactive || blocked)
-                previewOverlay.Hide();
+                OnPreviewHideRequested.Invoke();
             else
-                previewOverlay.Show(_dragIsHorizontal, index, _currentDir);
+                OnPreviewShowRequested.Invoke(_dragIsHorizontal, index, _currentDir);
         }
 
         /// Cursed lines that block shifting the given line — the line itself

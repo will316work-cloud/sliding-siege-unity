@@ -45,9 +45,7 @@ namespace SlidingSiege
             }
 
             // Full charge: shriek. One combined pool, curseCount picks.
-            var pool = new List<(bool isAttack, AttackDefinition attack, ItemKind item)>();
-            foreach (var atk in combat.AvailableAttacks()) pool.Add((true, atk, default));
-            foreach (var item in combat.AvailableItems()) pool.Add((false, null, item));
+            var pool = combat.AvailableAbilities().ToList();
             if (pool.Count == 0) yield break;
 
             int picks = Mathf.Min(curseCount, pool.Count);
@@ -57,8 +55,8 @@ namespace SlidingSiege
                 int idx = Random.Range(0, pool.Count);
                 var pick = pool[idx];
                 pool.RemoveAt(idx);
-                if (pick.isAttack) { combat.DisableAttack(owner.Id, pick.attack); names.Add(pick.attack.DisplayName); }
-                else { combat.DisableItem(owner.Id, pick.item); names.Add(pick.item.ToString()); }
+                combat.Disable(owner.Id, pick);
+                names.Add(pick.DisplayName);
             }
             owner.ResetCharge();
             Debug.Log($"[SlidingSiege] {owner.Definition.name} shrieks! Cursed: {string.Join(", ", names)}");

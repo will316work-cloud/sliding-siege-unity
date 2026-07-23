@@ -7,20 +7,12 @@ namespace SlidingSiege
     /// Hitbox is one selectable arrangement (cycled by re-tapping the
     /// anchor), built from prioritized HitboxParts.
     [CreateAssetMenu(menuName = "SlidingSiege/Attack Definition")]
-    public class AttackDefinition : ScriptableObject
+    public class AttackDefinition : AbilityDefinition
     {
-        [SerializeField] private string displayName;
-        [SerializeField] private Sprite icon;
         [SerializeField, Min(0)] private int baseDamage = 10;
-        [SerializeField, Min(0)] private int startingCharges = 2;
-        [SerializeField, TextArea] private string description;
         [SerializeField] private Hitbox[] hitboxes = new Hitbox[0];
 
-        public string DisplayName => displayName;
-        public Sprite Icon => icon;
         public int BaseDamage => baseDamage;
-        public int StartingCharges => startingCharges;
-        public string Description => description;
 
         public int VariantCount => hitboxes != null && hitboxes.Length > 0 ? hitboxes.Length : 1;
 
@@ -38,5 +30,12 @@ namespace SlidingSiege
             if (hitboxes == null || hitboxes.Length == 0) return new List<HitCell>();
             return hitboxes[Mathf.Clamp(variantIndex, 0, hitboxes.Length - 1)].Resolve(state, anchor);
         }
+
+        public override bool IsInfinite(CombatSystem combat) => combat.InfiniteAttacks;
+        public override bool CanUse(CombatSystem combat) => combat.CanAttack(this);
+        public override string DamageLabel(CombatSystem combat) =>
+            Mathf.RoundToInt(baseDamage * combat.DamageMultiplier()) + " dmg";
+        public override string ConfirmLabel(int variantIndex) =>
+            DisplayName + " (" + VariantLabel(variantIndex) + ")";
     }
 }

@@ -16,10 +16,6 @@ namespace SlidingSiege
     /// While anything is armed, IsTargeting locks grid dragging.
     public class TargetingController : MonoBehaviour
     {
-        [Header("Content")]
-        [SerializeField] private AttackDefinition[] attackDefinitions;
-        [SerializeField] private ItemDefinition[] itemDefinitions;
-
         [Header("UI wiring (required)")]
         [SerializeField] private AbilityListUI attackList;
         [SerializeField] private AbilityListUI itemList;
@@ -69,8 +65,8 @@ namespace SlidingSiege
                 InfiniteAttacks = infiniteAttacks,
                 InfiniteItems = infiniteItems,
             };
-            foreach (var def in attackDefinitions) _combat.SetupAttack(def);
-            foreach (var def in itemDefinitions) _combat.SetupItem(def);
+            attackList.SetupAll(_combat);
+            itemList.SetupAll(_combat);
             if (_phaseRunner != null) _phaseRunner.AttachCombat(_combat);
             _combat.OnInventoryChanged += RefreshLists;
 
@@ -82,29 +78,51 @@ namespace SlidingSiege
             _state.OnShifted += HandleShifted;
             _state.OnRebuilt += RefreshHighlights;
             _state.OnEnemyHitboxChanged += HandleEnemyEvent;
-            if (_phaseRunner != null) _phaseRunner.OnPhaseFinished += RefreshHighlights;
+            // EnemyPhaseRunner.OnPhaseFinished is a UnityEvent — slot
+            // RefreshHighlights into it via the Inspector instead of a
+            // code-side subscription here.
 
             confirmButton.onClick.AddListener(Confirm);
+            // Mandatory wiring (selection wouldn't work at all without it),
+            // so default it in code like SlidingGridController's boot
+            // chain — still public/UnityEvent, so extra Inspector
+            // listeners (SFX, etc.) can be layered on too.
+            attackList.OnSelectionChanged.AddListener(HandleAttackSelectionChanged);
+            itemList.OnSelectionChanged.AddListener(HandleItemSelectionChanged);
+
             ClearSelection();
             RefreshLists();
         }
 
         // ---------------- Card clicks ----------------
+        // AbilityListUI owns the actual toggle/CanUse-gating logic and
+        // just tells us its new selection; we track it locally (other
+        // code needs the concrete type) and enforce mutual exclusivity —
+        // only clearing the OTHER list when this one just armed something,
+        // never when it's clearing itself, or the two would ping-pong.
 
-        private void SelectAttack(AttackDefinition def)
+        /// Slot this into attackList.OnSelectionChanged (done in code, see
+        /// Initialize — this is mandatory wiring, not decorative).
+        public void HandleAttackSelectionChanged(AbilityDefinition def)
         {
-            bool toggleOff = _selectedAttack == def;
-            ClearSelection();
-            if (!toggleOff && _combat.CanAttack(def)) _selectedAttack = def;
-            RefreshAll();
+            _selectedAttack = def as AttackDefinition;
+            _anchor = null;
+            _variantIndex = 0;
+            if (_selectedAttack != null) itemList.ClearSelection();
+            RefreshHighlights();
+            RefreshConfirm();
         }
 
-        private void SelectItem(ItemDefinition def)
+        /// Slot this into itemList.OnSelectionChanged (done in code, see
+        /// Initialize).
+        public void HandleItemSelectionChanged(AbilityDefinition def)
         {
-            bool toggleOff = _selectedItem == def;
-            ClearSelection();
-            if (!toggleOff && _combat.CanUseItem(def)) _selectedItem = def;
-            RefreshAll();
+            _selectedItem = def as ItemDefinition;
+            _itemFirst = null;
+            _itemSecond = null;
+            if (_selectedItem != null) attackList.ClearSelection();
+            RefreshHighlights();
+            RefreshConfirm();
         }
 
         // ---------------- Grid taps ----------------
@@ -187,7 +205,7 @@ namespace SlidingSiege
                     return;
                 }
                 Debug.Log("[SlidingSiege] " + message);
-                _combat.ConsumeItem(_selectedItem.Kind);
+                _combat.Consume(_selectedItem);
                 ClearSelection();
                 RefreshAll();
             }
@@ -195,6 +213,10 @@ namespace SlidingSiege
 
         // ---------------- Refresh ----------------
 
+        /// Resets local state directly (defense in depth — correct even if
+        /// the OnSelectionChanged wiring above is somehow missing) AND
+        /// clears both lists' visual selection (drives the corresponding
+        /// handler above too, which is a harmless no-op re-clear).
         private void ClearSelection()
         {
             _selectedAttack = null;
@@ -203,6 +225,8 @@ namespace SlidingSiege
             _selectedItem = null;
             _itemFirst = null;
             _itemSecond = null;
+            attackList.ClearSelection();
+            itemList.ClearSelection();
         }
 
         private void RefreshAll()
@@ -214,11 +238,12 @@ namespace SlidingSiege
 
         private void RefreshLists()
         {
-            attackList.RebuildAttacks(attackDefinitions, _combat, _selectedAttack, SelectAttack);
-            itemList.RebuildItems(itemDefinitions, _combat, _selectedItem, SelectItem);
+            attackList.Rebuild(_combat);
+            itemList.Rebuild(_combat);
         }
 
-        private void RefreshHighlights()
+        /// Public: slot this into EnemyPhaseRunner.OnPhaseFinished (Inspector).
+        public void RefreshHighlights()
         {
             var highlights = new List<(Vector2Int, Color, Sprite)>();
 
@@ -275,7 +300,6 @@ namespace SlidingSiege
                 _state.OnRebuilt -= RefreshHighlights;
                 _state.OnEnemyHitboxChanged -= HandleEnemyEvent;
             }
-            if (_phaseRunner != null) _phaseRunner.OnPhaseFinished -= RefreshHighlights;
         }
 
         /// Inspector toggle changes apply at runtime (deferred to Update —
@@ -304,13 +328,13 @@ namespace SlidingSiege
             if (_selectedAttack != null)
             {
                 ready = _anchor != null && _combat.CanAttack(_selectedAttack);
-                label = _selectedAttack.DisplayName + " (" + _selectedAttack.VariantLabel(_variantIndex) + ")";
+                label = _selectedAttack.ConfirmLabel(_variantIndex);
             }
             else if (_selectedItem != null)
             {
                 var effect = ItemEffectFactory.Get(_selectedItem.Kind);
                 ready = effect.CanApply(_state, _selectedItem, _combat, _itemFirst, _itemSecond);
-                label = _selectedItem.DisplayName;
+                label = _selectedItem.ConfirmLabel(_variantIndex);
             }
             confirmButton.gameObject.SetActive(IsTargeting);
             confirmButton.interactable = ready;

@@ -118,22 +118,15 @@ namespace SlidingSiege
                     }
                 }
 
-                // Enemy-to-card links (Mage spells, Siren curses).
+                // Enemy-to-card links (Mage spells, Siren curses) — one
+                // combined pass over every disabled ability, attack or item.
                 if (_combat != null)
-                {
-                    foreach (var (sourceId, attack) in _combat.AttackDisableEntries())
+                    foreach (var (sourceId, def) in _combat.DisableEntries())
                         if (_state.TryGetEnemy(sourceId, out var source)
                             && TryEnemyPoint(sourceId, out var from)
-                            && attackList != null && attackList.TryGetAttackCardRect(attack, out var cardRect)
+                            && TryFindCardRect(def, out var cardRect)
                             && TryCardPoint(cardRect, out var to))
                             Draw(from, to, source.Definition.LinkDisplay.LineImage, source.Definition.LinkDisplay.LineThickness);
-                    foreach (var (sourceId, item) in _combat.ItemDisableEntries())
-                        if (_state.TryGetEnemy(sourceId, out var source)
-                            && TryEnemyPoint(sourceId, out var from)
-                            && itemList != null && itemList.TryGetItemCardRect(item, out var itemRect)
-                            && TryCardPoint(itemRect, out var to))
-                            Draw(from, to, source.Definition.LinkDisplay.LineImage, source.Definition.LinkDisplay.LineThickness);
-                }
             }
             for (int i = _used; i < _pool.Count; i++)
                 if (_pool[i].gameObject.activeSelf) _pool[i].gameObject.SetActive(false);
@@ -255,6 +248,16 @@ namespace SlidingSiege
         }
 
         // ---------------- Line drawing ----------------
+
+        /// Checks whichever ability list actually holds `def` (an entry
+        /// only ever lives in one of the two).
+        private bool TryFindCardRect(AbilityDefinition def, out RectTransform rect)
+        {
+            if (attackList != null && attackList.TryGetCardRect(def, out rect)) return true;
+            if (itemList != null && itemList.TryGetCardRect(def, out rect)) return true;
+            rect = null;
+            return false;
+        }
 
         private bool TryEnemyPoint(int enemyId, out Vector2 local)
         {
